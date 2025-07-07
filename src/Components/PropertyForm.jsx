@@ -57,7 +57,9 @@ const PropertyForm = ({ property, onClose }) => {
         placeholder="Phone Number"
         className="p-2 border-white border-1 text-white rounded"/>
       <div  className="flex justify-center">
-        <button type="submit" className="text-stone-700 bg-white hover:bg-stone-700 hover:text-white justify-center border p-2 w-40 rounded">
+        <button type="submit" className="relative inline-block w-40 px-4 py-2 rounded text-sm text-stone-700 bg-white border z-10 overflow-hidden 
+              before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-700 
+              before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white">
           Submit Interest
         </button>
       </div>
