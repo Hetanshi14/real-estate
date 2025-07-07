@@ -21,7 +21,7 @@ const Home = () => {
             <button className="border rounded-r text-white px-4 py-2 hover:bg-white hover:text-stone-700">
               Search
             </button>
-          </div>  
+          </div>
         </div>
       </section>
 
@@ -43,24 +43,30 @@ const Home = () => {
         </div>
       </section>
 
-      <section className="max-w-6xl mx-auto py-12 px-4">
+      <section className="max-w-6xl max-h-7xl mx-auto py-12 px-4">
         <h2 className="text-2xl text-stone-700 font-semibold mb-6 text-center">Featured Properties</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           {allProperties.slice(0, 3).map((property) => (
-            <div key={property.id} className="bg-stone-700 shadow rounded pb-4 text-center">
-              <img
-                src={property.image}
-                alt={property.name}
-                className="h-80 w-full object-cover mb-4 rounded-t"/>
-              <h3 className="text-lg text-white font-semibold">{property.name}</h3>
-              <p className="text-sm text-white">
-                {property.location} • {property.bhk} BHK • ₹{Number(property.price).toLocaleString()}
-              </p>
-              <Link
-                to={`/detail/${property.id}`}
-                className="mt-2 inline-block text-rose-100 hover:underline">
-                View Details
-              </Link>
+            <div key={property.id} className="shadow rounded text-center">
+              <div className="relative group h-64 w-full overflow-hidden rounded-t">
+                <img
+                  src={property.image}
+                  alt={property.name}
+                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                <div className="absolute inset-0 bg-transparent bg-opacity- backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <div className="absolute bottom-4 left-4 text-left text-white">
+                    <h3 className="text-lg font-semibold">{property.name}</h3>
+                    <p className="text-sm">
+                      {property.location} • {property.bhk} BHK • ₹{Number(property.price).toLocaleString()}
+                    </p>
+                    <Link
+                      to={`/detail/${property.id}`}
+                      className="inline-block text-rose-100 hover:underline mt-1">
+                      View Details
+                    </Link>
+                  </div>
+                </div>
+              </div>
             </div>
           ))}
         </div>
