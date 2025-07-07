@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { allProperties } from '../data/properties';
-import ProgressBar from '../Components/PrograsBar';
+import ProgressBar from '../Components/ProgressBar';
 import PropertyForm from '../Components/PropertyForm';
 
 const Upcoming = () => {
