@@ -25,14 +25,18 @@ const Agents = () => {
 
           return (
             <div className="bg-stone-700 shadow p-2 rounded" key={agent.id}>
-              <img
-                src={agent.photo}
-                alt={agent.name}
-                className="w-full h-80 object-cover rounded mb-4"/>
               <h2 className="text-xl font-semibold text-white mb-1">{agent.name}</h2>
-              <p className="text-white mb-1"><strong>Contact:</strong> {agent.contact}</p>
-              <p className="text-white mb-1"><strong>Experience:</strong> {agent.experience}</p>
-              <p className="text-white mb-4"><strong>Rating:</strong> ⭐ {agent.rating}</p>
+              <div className="flex items-center gap-8">
+                <img
+                  src={agent.photo}
+                  alt={agent.name}
+                  className="w-20 h-20 object-cover rounded-full border" />
+                <div>
+                  <p className="text-white mb-1"><strong>Contact:</strong> {agent.contact}</p>
+                  <p className="text-white mb-1"><strong>Experience:</strong> {agent.experience}</p>
+                  <p className="text-white mb-4"><strong>Rating:</strong> ⭐ {agent.rating}</p>
+                </div>
+              </div>
 
               <div>
                 <strong className="text-white">Properties:</strong>
