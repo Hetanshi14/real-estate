@@ -28,16 +28,24 @@ const Home = () => {
       <section className="max-w-6xl mx-auto py-5 px-4 text-center">
         <h2 className="text-stone-700 text-2xl font-bold mb-6">Explore Options</h2>
         <div className="flex flex-wrap justify-center gap-6">
-          <Link to="/listings" className="bg-stone-700 text-white shadow p-4 rounded hover:bg-white hover:text-stone-700 min-w-[150px]">
+          <Link to="/listings" className="relative inline-block px-6 py-3 rounded text-white bg-stone-700 shadow min-w-[150px] z-10 overflow-hidden
+             before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-white
+             before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-stone-700">
             🏠 Buy
           </Link>
-          <Link to="/listings" className="bg-stone-700 text-white shadow p-4 rounded hover:bg-white hover:text-stone-700 min-w-[150px]">
+          <Link to="/listings" className="relative inline-block px-6 py-3 rounded text-white bg-stone-700 shadow min-w-[150px] z-10 overflow-hidden
+             before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-white
+             before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-stone-700">
             🏘️ Rent
           </Link>
-          <Link to="/booking" className="bg-stone-700 text-white shadow p-4 rounded hover:bg-white hover:text-stone-700 min-w-[150px]">
+          <Link to="/booking" className="relative inline-block px-6 py-3 rounded text-white bg-stone-700 shadow min-w-[150px] z-10 overflow-hidden
+             before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-white
+             before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-stone-700">
             🛒 Sell
           </Link>
-          <Link to="/upcoming" className="bg-stone-700 text-white shadow p-4 rounded hover:bg-white hover:text-stone-700 min-w-[150px]">
+          <Link to="/upcoming" className="relative inline-block px-6 py-3 rounded text-white bg-stone-700 shadow min-w-[150px] z-10 overflow-hidden
+             before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-white
+             before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-stone-700">
             🚧 Upcoming Projects
           </Link>
         </div>

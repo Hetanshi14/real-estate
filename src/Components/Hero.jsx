@@ -18,12 +18,16 @@ const Hero = () => {
           <div className="flex flex-col md:flex-row justify-center gap-4">
             <Link
               to="/listings"
-              className="bg-stone-700 text-white hover:bg-white hover:text-stone-700 py-2 px-6 rounded">
+              className="relative inline-block px-6 py-2 rounded font-medium text-white bg-stone-700 z-10 overflow-hidden
+             before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-white
+             before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-stone-700">
               Browse Listings
             </Link>
             <Link
               to="/booking"
-              className="bg-transparent border border-stone-700 hover:bg-stone-700 hover:text-white text-stone-700 py-2 px-6 rounded">
+              className="relative inline-block px-6 py-2 rounded font-medium text-stone-700 border border-stone-700 z-10 overflow-hidden
+             before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-700
+             before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white">
               Book a Visit
             </Link>
           </div>
