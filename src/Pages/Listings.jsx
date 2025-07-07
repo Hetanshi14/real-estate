@@ -12,13 +12,13 @@ const Listing = () => {
     return stored
       ? JSON.parse(stored)
       : {
-          location: '',
-          price: '',
-          bhk: '',
-          type: '',
-          status: '',
-          sort: '',
-        };
+        location: '',
+        price: '',
+        bhk: '',
+        type: '',
+        status: '',
+        sort: '',
+      };
   });
 
   useEffect(() => {
