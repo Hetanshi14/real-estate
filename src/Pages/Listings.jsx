@@ -64,7 +64,7 @@ const Listing = () => {
     <div className="min-h-screen bg-rose-50 px-4 py-6">
       <h1 className="text-3xl font-bold text-stone-700 mb-6 text-center">Available Properties</h1>
       <FilterBar filters={filters} setFilters={setFilters} />
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
         {filteredProperties.map(property => (
           <PropertyCard key={property.id} property={property} />
         ))}
