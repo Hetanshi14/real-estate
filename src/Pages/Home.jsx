@@ -91,7 +91,9 @@ const Home = () => {
         <p className="mb-6">Get expert advice and see properties firsthand.</p>
         <Link
           to="/booking"
-          className="bg-white text-rose-300 font-medium px-6 py-2 rounded hover:bg-rose-200 hover:text-stone-700"
+          className="relative inline-block px-6 py-2 rounded font-medium text-rose-300 bg-white z-10 overflow-hidden
+             before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-rose-200 
+             before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-stone-700"
         >
           Book Now
         </Link>

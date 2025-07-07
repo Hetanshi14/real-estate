@@ -27,8 +27,8 @@ const Header = () => {
               to={link.path}
               className={({ isActive }) =>
                 isActive
-                  ? 'text-white font-semibold'
-                  : 'text-white hover:bg-stone-900'
+                  ? 'text-rose-100 font-semibold'
+                  : 'text-white relative inline-block after:absolute after:left-0 after:bottom-0 after:h-[1px] after:w-0 after:bg-rose-200 after:transition-all after:duration-300 hover:after:w-full'
               }
             >
               {link.name}

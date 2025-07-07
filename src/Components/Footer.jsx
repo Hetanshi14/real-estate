@@ -15,12 +15,12 @@ const Footer = () => {
         <div>
           <h3 className="text-lg font-medium mb-3">Quick Links</h3>
           <ul className="space-y-2">
-            <li><Link to="/" className="hover:bg-stone-900">Home</Link></li>
-            <li><Link to="/listings" className="hover:bg-stone-900">Listings</Link></li>
-            <li><Link to="/upcoming" className="hover:bg-stone-900">Upcoming Projects</Link></li>
-            <li><Link to="/detail/1" className="hover:bg-stone-900">Details</Link></li>
-            <li><Link to="/agents" className="hover:bg-stone-900">Agents</Link></li>
-            <li><Link to="/booking" className="hover:bg-stone-900">Book Visit</Link></li>
+            <li><Link to="/" className="relative inline-block after:absolute after:left-0 after:bottom-0 after:h-[1.5px] after:w-0 after:bg-white after:transition-all after:duration-300 hover:after:w-full">Home</Link></li>
+            <li><Link to="/listings" className="relative inline-block after:absolute after:left-0 after:bottom-0 after:h-[1.5px] after:w-0 after:bg-white after:transition-all after:duration-300 hover:after:w-full">Listings</Link></li>
+            <li><Link to="/upcoming" className="relative inline-block after:absolute after:left-0 after:bottom-0 after:h-[1.5px] after:w-0 after:bg-white after:transition-all after:duration-300 hover:after:w-full">Upcoming Projects</Link></li>
+            <li><Link to="/detail/1" className="relative inline-block after:absolute after:left-0 after:bottom-0 after:h-[1.5px] after:w-0 after:bg-white after:transition-all after:duration-300 hover:after:w-full">Details</Link></li>
+            <li><Link to="/agents" className="relative inline-block after:absolute after:left-0 after:bottom-0 after:h-[1.5px] after:w-0 after:bg-white after:transition-all after:duration-300 hover:after:w-full">Agents</Link></li>
+            <li><Link to="/booking" className="relative inline-block after:absolute after:left-0 after:bottom-0 after:h-[1.5px] after:w-0 after:bg-white after:transition-all after:duration-300 hover:after:w-full">Book Visit</Link></li>
           </ul>
         </div>
 
