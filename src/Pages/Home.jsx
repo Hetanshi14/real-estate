@@ -43,17 +43,17 @@ const Home = () => {
         </div>
       </section>
 
-      <section className="max-w-6xl max-h-7xl mx-auto py-12 px-4">
+      <section className="max-w-4xl max-h-5xl mx-auto py-12 px-4">
         <h2 className="text-2xl text-stone-700 font-semibold mb-6 text-center">Featured Properties</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           {allProperties.slice(0, 3).map((property) => (
             <div key={property.id} className="shadow rounded text-center">
-              <div className="relative group h-64 w-full overflow-hidden rounded-t">
+              <div className="relative group h-80 w-full overflow-hidden rounded">
                 <img
                   src={property.image}
                   alt={property.name}
                   className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
-                <div className="absolute inset-0 bg-transparent bg-opacity- backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <div className="absolute inset-0 bg-transparent opacity-100 md:backdrop-blur md:opacity-0 group-hover:opacity-100 transition-opacity duration-400">
                   <div className="absolute bottom-4 left-4 text-left text-white">
                     <h3 className="text-lg font-semibold">{property.name}</h3>
                     <p className="text-sm">
