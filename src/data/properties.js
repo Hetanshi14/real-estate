@@ -1,0 +1,62 @@
+export const allProperties = [
+  {
+    id: 1,
+    name: 'Sky Heights',
+    location: 'Ahmedabad',
+    price: 5000000,
+    bhk: 3,
+    type: 'Flat',
+    status: 'Ready',
+    year: '2025',
+    builder: 'Zivaas Group',
+    progress: 100,
+    agentId: 1,
+    image: '/public/readyFlat.jpg',
+    amenities: ['24/7 Security', 'Lift', 'Parking', 'Garden']
+  },
+  {
+    id: 2,
+    name: 'Green Villa',
+    location: 'Ahmedabad',
+    price: 7000000,
+    bhk: 5,
+    type: 'Villa',
+    status: 'Under Construction',
+    year: '2026',
+    builder: 'Zivaas Infra',
+    progress: 60,
+    agentId: 2,
+    image: '/public/villa.jpg',
+    amenities: ['Swimming Pool', 'Gym', 'Clubhouse', 'Parking']
+  },
+  {
+    id: 3,
+    name: 'River View',
+    location: 'Ahmedabad',
+    price: 10000000,
+    bhk: 6,
+    type: 'Villa',
+    status: 'Ready',
+    year: '2024',
+    builder: 'ABC Realtors',
+    progress: 100,
+    agentId: 1,
+    image: '/public/readyVilla.jpg',
+    amenities: ['Garden', 'Lift', 'CCTV Surveillance']
+  },
+  {
+    id: 4,
+    name: 'Palm Enclave',
+    location: 'Ahmedabad',
+    price: 3000000,
+    bhk: 4,
+    type: 'Plot',
+    status: 'Under Construction',
+    year: '2027',
+    builder: 'Palm Group',
+    progress: 45,
+    agentId: 3,
+    image: '/public/plotConst.jpg',
+    amenities: ['Gated Entry', 'Park Area', 'Security Guard']
+  }
+];
