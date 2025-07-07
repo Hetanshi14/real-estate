@@ -44,7 +44,7 @@ const Upcoming = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {projects.map((project) => (
           <div key={project.id} className="bg-stone-700 p-6 shadow rounded">
-            <img src={project.image} alt={project.name} className="w-full h-60 object-cover rounded mb-4" />
+            <img src={project.image} alt={project.name} className="w-full h-150 object-cover rounded mb-4" />
             <h2 className="text-xl font-semibold text-white mb-2">{project.name}</h2>
             <p className="text-white mb-1"><strong>Builder:</strong> {project.builder || 'Zivaas Developers'}</p>
             <p className="text-white mb-1"><strong>Location:</strong> {project.location}</p>

@@ -47,11 +47,11 @@ const Home = () => {
         <h2 className="text-2xl text-stone-700 font-semibold mb-6 text-center">Featured Properties</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           {allProperties.slice(0, 3).map((property) => (
-            <div key={property.id} className="bg-stone-700 shadow rounded p-4 text-center">
+            <div key={property.id} className="bg-stone-700 shadow rounded pb-4 text-center">
               <img
                 src={property.image}
                 alt={property.name}
-                className="h-80 w-full object-cover mb-4 rounded"/>
+                className="h-80 w-full object-cover mb-4 rounded-t"/>
               <h3 className="text-lg text-white font-semibold">{property.name}</h3>
               <p className="text-sm text-white">
                 {property.location} • {property.bhk} BHK • ₹{Number(property.price).toLocaleString()}
