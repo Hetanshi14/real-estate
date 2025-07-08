@@ -6,7 +6,7 @@ import Home from './Pages/Home';
 import Listings from './Pages/Listings';
 import Upcoming from './Pages/Upcoming';
 import Detail from './Pages/Detail';
-import Agents from './Pages/Agents';
+import AboutUs from './Pages/AboutUs';
 import Booking from './Pages/Booking';
 
 const App = () => {
@@ -18,7 +18,7 @@ const App = () => {
         <Route path="/listings" element={<Listings />} />
         <Route path="/upcoming" element={<Upcoming />} />
         <Route path="/detail/:id" element={<Detail />} />
-        <Route path="/agents" element={<Agents />} />
+        <Route path="/about" element={<AboutUs />} />
         <Route path="/booking" element={<Booking />} />
       </Routes>
 
