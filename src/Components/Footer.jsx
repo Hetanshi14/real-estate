@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { FaPhoneAlt, FaEnvelope, FaMapMarkerAlt, FaPaperPlane } from 'react-icons/fa';
 
 const Footer = () => {
   return (
@@ -18,15 +19,35 @@ const Footer = () => {
             <li><Link to="/" className="relative inline-block after:absolute after:left-0 after:bottom-0 after:h-[1.5px] after:w-0 after:bg-white after:transition-all after:duration-300 hover:after:w-full">Home</Link></li>
             <li><Link to="/listings" className="relative inline-block after:absolute after:left-0 after:bottom-0 after:h-[1.5px] after:w-0 after:bg-white after:transition-all after:duration-300 hover:after:w-full">Listings</Link></li>
             <li><Link to="/about" className="relative inline-block after:absolute after:left-0 after:bottom-0 after:h-[1.5px] after:w-0 after:bg-white after:transition-all after:duration-300 hover:after:w-full">About Us</Link></li>
+            <li><Link to="/contact" className="relative inline-block after:absolute after:left-0 after:bottom-0 after:h-[1.5px] after:w-0 after:bg-white after:transition-all after:duration-300 hover:after:w-full">Contact</Link></li>
             <li><Link to="/booking" className="relative inline-block after:absolute after:left-0 after:bottom-0 after:h-[1.5px] after:w-0 after:bg-white after:transition-all after:duration-300 hover:after:w-full">Book Visit</Link></li>
           </ul>
         </div>
 
         <div>
           <h3 className="text-lg font-medium mb-3">Contact Us</h3>
-          <p className="text-gray-400">📍 Ahmedabad, Gujarat, India</p>
-          <p className="text-gray-400">📞 +91 98765 43210</p>
-          <p className="text-gray-400">📧 contact@zivaas.in</p>
+          <div className="flex items-center gap-4">
+            <FaPhoneAlt className="text-white text-xl" />
+            <div>
+              <p className="font-semibold text-gray-400">Phone</p>
+              <p className="text-gray-400">+91 98765 43210</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <FaEnvelope className="text-white text-xl" />
+            <div>
+              <p className="font-semibold text-gray-400">Email</p>
+              <p className="text-gray-400">contact@zivaas.in</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-4">
+            <FaMapMarkerAlt className="text-white text-xl" />
+            <div>
+              <p className="font-semibold text-gray-400">Office</p>
+              <p className="text-gray-400">Ahmedabad, Gujarat, India</p>
+            </div>
+          </div>
         </div>
       </div>
 

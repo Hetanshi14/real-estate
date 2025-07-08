@@ -7,16 +7,16 @@ const FilterBar = ({ filters, setFilters }) => {
   };
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-6 gap-3 justify-center items-center p-4 max-w-7xl mx-auto">
+    <div className="grid grid-cols-2 md:grid-cols-6 gap-3 justify-center items-center p-4 max-w-8xl mx-auto">
       <input
         type="text"
         name="location"
         value={filters.location}
         onChange={handleChange}
         placeholder="Location"
-        className="border bg-stone-200 text-stone-700 border-stone-300 p-2 rounded w-[150px] md:w-[200px]" />
+        className="border bg-stone-200 text-stone-700 border-stone-300 p-2 rounded w-[150px] md:w-[170px]" />
 
-      <select name="price" value={filters.price} onChange={handleChange} className="border bg-stone-200 text-stone-700 border-stone-300 p-2 rounded w-[150px] md:w-[200px]">
+      <select name="price" value={filters.price} onChange={handleChange} className="border bg-stone-200 text-stone-700 border-stone-300 p-2 rounded w-[150px] md:w-[170px]">
         <option value="">Price</option>
         <option value="0-3000000">0-₹30L</option>
         <option value="3000000-5000000">₹30L-₹50L</option>
@@ -25,7 +25,7 @@ const FilterBar = ({ filters, setFilters }) => {
         <option value="10000000+">₹1cr+</option>
       </select>
 
-      <select name="bhk" value={filters.bhk} onChange={handleChange} className="border bg-stone-200 text-stone-700 border-stone-300 p-2 rounded w-[150px] md:w-[200px]">
+      <select name="bhk" value={filters.bhk} onChange={handleChange} className="border bg-stone-200 text-stone-700 border-stone-300 p-2 rounded w-[150px] md:w-[170px]">
         <option value="">BHK</option>
         <option value="1">1 BHK</option>
         <option value="2">2 BHK</option>
@@ -33,7 +33,7 @@ const FilterBar = ({ filters, setFilters }) => {
         <option value="4">4+ BHK</option>
       </select>
 
-      <select name="type" value={filters.type} onChange={handleChange} className="border bg-stone-200 text-stone-700 border-stone-300 p-2 rounded w-[150px] md:w-[200px]">
+      <select name="type" value={filters.type} onChange={handleChange} className="border bg-stone-200 text-stone-700 border-stone-300 p-2 rounded w-[150px] md:w-[170px]">
         <option value="">Type</option>
         <option value="Flat">Flat</option>
         <option value="Villa">Villa</option>
@@ -41,14 +41,14 @@ const FilterBar = ({ filters, setFilters }) => {
         <option value="Commercial">Commercial</option>
       </select>
 
-      <select name="status" value={filters.status} onChange={handleChange} className="border bg-stone-200 text-stone-700 border-stone-300 p-2 rounded w-[150px] md:w-[200px]">
+      <select name="status" value={filters.status} onChange={handleChange} className="border bg-stone-200 text-stone-700 border-stone-300 p-2 rounded w-[150px] md:w-[170px]">
         <option value="">Status</option>
         <option value="Ready">Ready to Move</option>
         <option value="Under Construction">Under Construction</option>
         <option value="Upcoming">Upcoming</option>
       </select>
 
-      <select name="sort" value={filters.sort} onChange={handleChange} className="border bg-stone-200 text-stone-700 border-stone-300 p-2 rounded w-[150px] md:w-[200px]">
+      <select name="sort" value={filters.sort} onChange={handleChange} className="border bg-stone-200 text-stone-700 border-stone-300 p-2 rounded w-[150px] md:w-[170px]">
         <option value="">Sort</option>
         <option value="priceLowHigh">Price: Low to High</option>
         <option value="priceHighLow">Price: High to Low</option>
