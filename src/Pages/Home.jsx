@@ -51,7 +51,7 @@ const Home = () => {
         </div>
       </section>
 
-      <section className="text-stone-700 shadow py-16 px-6">
+      <section className="text-stone-700 bg-stone-200 shadow-md py-16 px-6">
         <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-10 items-center">
           <div>
             <h2 className="text-3xl md:text-4xl font-bold text-stone-800 mb-4">

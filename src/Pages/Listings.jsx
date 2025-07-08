@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import FilterBar from '../Components/FilterBar';
-import PropertyCard from '../components/PropertyCard';
+import PropertyCard from '../Components/PropertyCard';
 import { allProperties as staticProperties } from '../data/properties';
 
 const Listing = () => {
