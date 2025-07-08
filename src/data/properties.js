@@ -223,5 +223,66 @@ export const allProperties = [
     agentId: 3,
     image: '/public/flat7.jpg',
     amenities: ['Gym', 'Parking', 'Lift']
-  }
+  },
+  {
+  id: 16,
+  name: 'Zivaas Business Hub',
+  location: 'Ahmedabad',
+  price: 15000000,
+  bhk: 0,
+  type: 'Commercial - Office',
+  status: 'Ready',
+  year: '2024',
+  builder: 'Zivaas Group',
+  progress: 100,
+  agentId: 1,
+  image: '/public/office1.jpg',
+  amenities: ['Conference Hall', 'Lift', 'Power Backup', 'Parking']
+},
+{
+  id: 17,
+  name: 'City Centre Showrooms',
+  location: 'Ahmedabad',
+  price: 22000000,
+  bhk: 0,
+  type: 'Commercial - Showroom',
+  status: 'Under Construction',
+  year: '2026',
+  builder: 'Urban Developers',
+  progress: 45,
+  agentId: 2,
+  image: '/public/showroom1.jpg',
+  amenities: ['Main Road Facing', 'Parking', 'Security']
+},
+{
+  id: 18,
+  name: 'Tech Plaza',
+  location: 'Ahmedabad',
+  price: 18000000,
+  bhk: 0,
+  type: 'Commercial - IT Office',
+  status: 'Ready',
+  year: '2023',
+  builder: 'TechLine Builders',
+  progress: 100,
+  agentId: 3,
+  image: '/public/techoffice1.jpg',
+  amenities: ['Wi-Fi', 'CCTV Surveillance', 'Backup Generator', 'Basement Parking']
+},
+{
+  id: 19,
+  name: 'Retail Park',
+  location: 'Ahmedabad',
+  price: 13500000,
+  bhk: 0,
+  type: 'Commercial - Shop',
+  status: 'Under Construction',
+  year: '2025',
+  builder: 'Retail Solutions',
+  progress: 65,
+  agentId: 1,
+  image: '/public/retailshop.jpg',
+  amenities: ['Footfall Area', 'Power Backup', 'Parking']
+}
+
 ];

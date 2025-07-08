@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Hero from '../Components/Hero';
+import heroImg from '../assets/heroImg.jpg';
 import { allProperties } from '../data/properties';
 
 const Home = () => {
@@ -17,7 +18,8 @@ const Home = () => {
     <div className="min-h-screen">
       <Hero />
 
-      <section className="bg-cover bg-center h-[60vh] flex items-center justify-center text-white text-center px-4">
+      {/* Search Section with Background Image */}
+      <section className="bg-cover bg-center h-[60vh] pt-24 flex items-center justify-center text-white text-center px-4">
         <div className="bg-white shadow-md p-6 rounded">
           <h1 className="text-4xl md:text-5xl text-stone-700 font-bold mb-4">Find Your Dream Property</h1>
           <p className="mb-6 text-lg text-stone-700">Buy | Sell | Rent | Upcoming Projects</p>
@@ -27,19 +29,20 @@ const Home = () => {
               placeholder="Search by location, builder, or project..."
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              className="px-4 py-2 w-full max-w-md rounded-l border text-stone-700 bg-stone-80" />
+              className="px-4 py-2 w-full max-w-md rounded-l border text-stone-700 bg-stone-50 shadow"
+            />
             <button
               onClick={handleSearch}
-              className="border rounded-r text-stone-700 px-4 py-2 hover:bg-stone-700 hover:text-white">
+              className="border rounded-r text-stone-700 px-4 py-2 hover:bg-stone-700 hover:text-white shadow">
               Search
             </button>
           </div>
         </div>
       </section>
-      
+
+      {/* About Us Summary + Stats */}
       <section className="text-stone-700 shadow py-16 px-6">
         <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-10 items-center">
-
           <div>
             <h2 className="text-3xl md:text-4xl font-bold text-stone-800 mb-4">
               Our Legacy of <span className="text-stone-500">Excellence</span>
@@ -55,7 +58,6 @@ const Home = () => {
               className="inline-block bg-stone-700 text-white px-5 py-2 rounded hover:bg-stone-500 transition">
               Discover Our Story
             </Link>
-
           </div>
 
           <div className="grid grid-cols-2 gap-6">
@@ -74,6 +76,7 @@ const Home = () => {
         </div>
       </section>
 
+      {/* Explore Options */}
       <section className="max-w-6xl mx-auto py-5 px-4 text-center">
         <h2 className="text-stone-700 text-2xl font-bold mb-6">Explore Options</h2>
         <div className="flex flex-wrap justify-center gap-6">
@@ -95,6 +98,7 @@ const Home = () => {
         </div>
       </section>
 
+      {/* Featured Properties */}
       <section className="max-w-4xl mx-auto py-12 px-4">
         <h2 className="text-2xl text-stone-700 font-semibold mb-6 text-center">Featured Properties</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
@@ -104,7 +108,8 @@ const Home = () => {
                 <img
                   src={property.image}
                   alt={property.name}
-                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                />
                 <div className="absolute inset-0 bg-black opacity-40 md:opacity-0 md:group-hover:opacity-40 transition-opacity duration-300 z-0"></div>
                 <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
                   <div className="absolute bottom-4 left-4 text-left text-white">
@@ -119,13 +124,57 @@ const Home = () => {
                     </Link>
                   </div>
                 </div>
-
               </div>
             </div>
           ))}
         </div>
       </section>
 
+      {/* Building Dreams Hero Section */}
+      <section
+        className="relative h-screen bg-cover bg-center text-white flex flex-col justify-center items-center text-center px-4"
+        style={{ backgroundImage: `url(${heroImg})` }}>
+        <div className="absolute inset-0 bg-black/60 z-0" />
+        <div className="relative z-10 max-w-4xl mx-auto">
+          <h1 className="text-4xl md:text-5xl font-bold leading-tight mb-4">
+            Building Dreams with Zivaas
+          </h1>
+          <p className="mb-6 text-lg">
+            Explore thoughtfully designed spaces crafted for comfort, elegance, and modern living.
+          </p>
+          <div className="flex justify-center gap-4 flex-wrap mb-10">
+            <a
+              href="/listings"
+              className="bg-yellow-600 hover:bg-yellow-700 transition text-white font-medium px-6 py-3 rounded shadow"
+            >
+              View Projects →
+            </a>
+            <a
+              href="/booking"
+              className="border border-white text-white hover:bg-white hover:text-stone-700 transition font-medium px-6 py-3 rounded"
+            >
+              Schedule a Visit
+            </a>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-8 max-w-3xl mx-auto">
+            {[
+              { number: '20+', label: 'Years of Experience' },
+              { number: '500+', label: 'Happy Clients' },
+              { number: '100%', label: 'Client Satisfaction' },
+            ].map(({ number, label }, i) => (
+              <div
+                key={i}
+                className="bg-black/50 backdrop-blur-sm rounded px-6 py-4 text-white shadow-md"
+              >
+                <h3 className="text-3xl font-bold mb-1">{number}</h3>
+                <p className="text-sm">{label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials */}
       <section className="py-12 px-4 text-center">
         <h2 className="text-2xl text-stone-700 font-bold mb-6">What Our Clients Say</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
@@ -147,6 +196,7 @@ const Home = () => {
         </div>
       </section>
 
+      {/* Call to Action */}
       <section className="text-stone-700 py-12 text-center px-4">
         <h2 className="text-2xl font-bold mb-4">Ready to Book a Site Visit?</h2>
         <p className="mb-6">Get expert advice and see properties firsthand.</p>
@@ -159,6 +209,7 @@ const Home = () => {
         </Link>
       </section>
 
+      {/* Footer Contact */}
       <section className="text-stone-700 py-10 text-center">
         <h2 className="text-xl font-bold mb-2">Have Questions?</h2>
         <p className="mb-4">We’d love to help you find your dream property.</p>
