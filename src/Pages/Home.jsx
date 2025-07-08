@@ -27,12 +27,10 @@ const Home = () => {
               placeholder="Search by location, builder, or project..."
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              className="px-4 py-2 w-full max-w-md rounded-l border text-white"
-            />
+              className="px-4 py-2 w-full max-w-md rounded-l border text-white bg-stone-800 placeholder-white" />
             <button
               onClick={handleSearch}
-              className="border rounded-r text-white px-4 py-2 hover:bg-white hover:text-stone-700"
-            >
+              className="border rounded-r text-white px-4 py-2 hover:bg-white hover:text-stone-700">
               Search
             </button>
           </div>
@@ -69,9 +67,9 @@ const Home = () => {
                 <img
                   src={property.image}
                   alt={property.name}
-                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-transparent opacity-0 md:backdrop-blur group-hover:opacity-100 transition-opacity duration-400">
+                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                <div className="absolute inset-0 bg-black opacity-40 md:opacity-0 md:group-hover:opacity-40 transition-opacity duration-300 z-0"></div>
+                <div className="absolute inset-0 opacity-100 group-hover:opacity-100 transition-opacity duration-300 z-10">
                   <div className="absolute bottom-4 left-4 text-left text-white">
                     <h3 className="text-lg font-semibold">{property.name}</h3>
                     <p className="text-sm">
@@ -79,12 +77,12 @@ const Home = () => {
                     </p>
                     <Link
                       to={`/detail/${property.id}`}
-                      className="inline-block text-rose-100 hover:underline mt-1"
-                    >
+                      className="inline-block text-rose-100 hover:underline mt-1">
                       View Details
                     </Link>
                   </div>
                 </div>
+
               </div>
             </div>
           ))}
@@ -119,8 +117,7 @@ const Home = () => {
           to="/booking"
           className="relative inline-block px-6 py-2 rounded font-medium text-rose-300 bg-white z-10 overflow-hidden
             before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-rose-200 
-            before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-stone-700"
-        >
+            before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-stone-700">
           Book Now
         </Link>
       </section>

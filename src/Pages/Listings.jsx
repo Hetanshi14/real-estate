@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom'; // ✅ NEW
+import { useLocation } from 'react-router-dom';
 import FilterBar from '../Components/FilterBar';
 import PropertyCard from '../components/PropertyCard';
 import { allProperties as staticProperties } from '../data/properties';
 
 const Listing = () => {
-  const location = useLocation(); // ✅ NEW
-  const searchParams = new URLSearchParams(location.search); // ✅ NEW
-  const searchQuery = searchParams.get('search')?.toLowerCase() || ''; // ✅ NEW
+  const location = useLocation(); 
+  const searchParams = new URLSearchParams(location.search); 
+  const searchQuery = searchParams.get('search')?.toLowerCase() || ''; 
 
   const [filteredProperties, setFilteredProperties] = useState([]);
   const [allProps, setAllProps] = useState([]);
@@ -37,7 +37,6 @@ const Listing = () => {
 
     let result = [...allProps];
 
-    // ✅ Search by location, builder, or project name
     if (searchQuery) {
       result = result.filter(
         (p) =>
@@ -47,7 +46,6 @@ const Listing = () => {
       );
     }
 
-    // ✅ Apply filters
     if (filters.location) {
       result = result.filter((p) =>
         p.location.toLowerCase().includes(filters.location.toLowerCase())
@@ -67,7 +65,6 @@ const Listing = () => {
       result = result.filter((p) => p.status === filters.status);
     }
 
-    // ✅ Sorting
     if (filters.sort === 'priceLowHigh') {
       result.sort((a, b) => a.price - b.price);
     } else if (filters.sort === 'priceHighLow') {
@@ -75,7 +72,7 @@ const Listing = () => {
     }
 
     setFilteredProperties(result);
-  }, [filters, allProps, searchQuery]); // ✅ include searchQuery
+  }, [filters, allProps, searchQuery]); 
 
   return (
     <div className="min-h-screen bg-rose-50 px-4 py-6">

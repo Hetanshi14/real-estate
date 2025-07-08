@@ -48,9 +48,9 @@ const Upcoming = () => {
               <img
                 src={project.image}
                 alt={project.name}
-                className="w-full h-80 object-cover transition-transform duration-300 group-hover:scale-105"/>
-
-              <div className="absolute inset-0 bg-transparent opacity-100 md:backdrop-blur bg-opacity-50 md:opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4 space-y-3">
+                className="w-full h-80 object-cover transition-transform duration-300 group-hover:scale-105" />
+              <div className="absolute inset-0 bg-black opacity-40 md:opacity-0 md:group-hover:opacity-40 transition-opacity duration-300 z-0"></div>
+              <div className="absolute inset-0 opacity-100 bg-opacity-50 md:opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4 space-y-3">
                 <div className="text-white text-left">
                   <h2 className="text-xl font-semibold">{project.name}</h2>
                   <p className="text-sm">{project.location}</p>

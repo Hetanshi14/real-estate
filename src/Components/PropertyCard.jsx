@@ -9,8 +9,9 @@ const PropertyCard = ({ property }) => {
         <img
           src={property.image}
           alt={property.name}
-          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105 rounded"/>
-        <div className="absolute inset-0 bg-transparent opacity-100 md:backdrop-blur md:opacity-0 group-hover:opacity-100 transition-opacity duration-400">
+          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105 rounded" />
+        <div className="absolute inset-0 bg-black opacity-40 md:opacity-0 md:group-hover:opacity-40 transition-opacity duration-300 z-0"></div>
+        <div className="absolute inset-0 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity duration-400">
           <div className="absolute bottom-4 left-4 text-left">
             <h3 className="text-lg font-semibold">{property.name}</h3>
             <p className="text-sm">{property.location}</p>
