@@ -38,6 +38,7 @@ const FilterBar = ({ filters, setFilters }) => {
         <option value="Flat">Flat</option>
         <option value="Villa">Villa</option>
         <option value="Plot">Plot</option>
+        <option value="Commercial">Commercial</option>
       </select>
 
       <select name="status" value={filters.status} onChange={handleChange} className="border bg-stone-200 text-stone-700 border-stone-300 p-2 rounded w-[150px] md:w-[200px]">
