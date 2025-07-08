@@ -3,12 +3,12 @@ import { useLocation } from 'react-router-dom';
 import FilterBar from '../Components/FilterBar';
 import PropertyCard from '../Components/PropertyCard';
 import { allProperties as staticProperties } from '../data/properties';
-import bglisting from '../assets/bglisting.jpg'; // ✅ Add an image in your assets folder
+import bglisting from '../assets/bglisting.jpg';
 
 const Listing = () => {
-  const location = useLocation(); 
-  const searchParams = new URLSearchParams(location.search); 
-  const searchQuery = searchParams.get('search')?.toLowerCase() || ''; 
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const searchQuery = searchParams.get('search')?.toLowerCase() || '';
 
   const [filteredProperties, setFilteredProperties] = useState([]);
   const [allProps, setAllProps] = useState([]);
@@ -52,18 +52,25 @@ const Listing = () => {
         p.location.toLowerCase().includes(filters.location.toLowerCase())
       );
     }
+
     if (filters.price) {
       const max = parseInt(filters.price);
       result = result.filter((p) => parseInt(p.price) <= max);
     }
+
     if (filters.bhk) {
       result = result.filter((p) => p.bhk.toString() === filters.bhk);
     }
+
     if (filters.type) {
       result = result.filter((p) => p.type === filters.type);
     }
-    if (filters.status) {
-      result = result.filter((p) => p.status === filters.status);
+
+    // ✅ Updated upcoming logic
+    if (filters.status === 'Upcoming') {
+      result = result.filter((p) => p.progress === 0);
+    } else if (filters.status) {
+      result = result.filter((p) => p.status === filters.status && p.progress > 0);
     }
 
     if (filters.sort === 'priceLowHigh') {
@@ -73,11 +80,11 @@ const Listing = () => {
     }
 
     setFilteredProperties(result);
-  }, [filters, allProps, searchQuery]); 
+  }, [filters, allProps, searchQuery]);
 
   return (
     <div className="min-h-screen">
-      {/* 🔷 Top banner with image and title */}
+      {/* 🔷 Top banner */}
       <section
         className="relative bg-cover bg-center text-white h-[80vh] flex items-center p-20 justify-items-start"
         style={{ backgroundImage: `url(${bglisting})` }}

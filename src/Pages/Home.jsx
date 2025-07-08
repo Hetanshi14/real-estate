@@ -22,6 +22,7 @@ const Home = () => {
     if (selectedFilter === 'Commercial') return ['Office', 'Shop', 'Commercial'].includes(property.type);
     if (selectedFilter === 'Ready') return property.status === 'Ready';
     if (selectedFilter === 'Ongoing') return property.status === 'Under Construction';
+     if (selectedFilter === 'Upcoming') return property.status === 'Upcoming' && property.progress === 0;
     return true;
   });
 
@@ -94,7 +95,7 @@ const Home = () => {
         </p>
 
         <div className="flex justify-center gap-2 mb-6 flex-wrap">
-          {['All', 'Residential', 'Commercial', 'Ready', 'Ongoing'].map((filter) => (
+          {['All', 'Residential', 'Commercial', 'Ready', 'Ongoing', 'Upcoming'].map((filter) => (
             <button
               key={filter}
               onClick={() => setSelectedFilter(filter)}
