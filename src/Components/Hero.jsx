@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import heroImg from '../assets/heroImg.jpg';
+import { motion } from 'framer-motion';
 
 const Hero = () => {
   return (
@@ -10,15 +11,32 @@ const Hero = () => {
 
       <div className="absolute inset-0 bg-black opacity-60 z-0"></div>
 
-      <div className="relative z-10  max-w-6xl mx-auto">
+      <div className="relative z-10 max-w-6xl mx-auto">
         <div className="p-8 rounded-lg text-center max-w-2xl mx-auto">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
+          <motion.h1
+            className="text-4xl md:text-5xl font-bold mb-4"
+            initial={{ opacity: 0, y: -50 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
             Find Your Dream Property with Zivaas
-          </h1>
-          <p className="text-lg mb-6">
+          </motion.h1>
+
+          <motion.p
+            className="text-lg mb-6"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.5 }}
+          >
             Explore luxury flats, spacious plots, and premium upcoming projects across India.
-          </p>
-          <div className="flex flex-col md:flex-row justify-center gap-4">
+          </motion.p>
+
+          <motion.div
+            className="flex flex-col md:flex-row justify-center gap-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.8 }}
+          >
             <Link
               to="/listings"
               className="relative inline-block px-6 py-2 rounded font-medium text-white bg-stone-700 z-10 overflow-hidden
@@ -33,7 +51,7 @@ const Hero = () => {
                 before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:border-none hover:text-white">
               Book a Visit
             </Link>
-          </div>
+          </motion.div>
         </div>
       </div>
     </section>
