@@ -84,7 +84,7 @@ const Booking = () => {
               value={formData.propertyId}
               onChange={handleChange}
               required
-              className="w-full border-1 border-white text-white px-3 py-2 rounded">
+              className="w-full border-1 border-white text-white bg-stone-700 px-3 py-2 rounded">
               <option value="">-- Select --</option>
               {allProperties.map(p => (
                 <option key={p.id} value={p.id}>
