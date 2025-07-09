@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { agents as defaultAgents } from '../data/agents';
-import { allProperties as defaultProperties } from '../data/properties';
 import { Link } from 'react-router-dom';
+import { supabase } from '../supabaseClient';
 import bgabout from '../assets/bgabout.jpg';
 import img1 from '../assets/img1.jpg';
 import img2 from '../assets/img2.jpg';
@@ -13,6 +12,8 @@ import resident1 from '../assets/resident1.jpg';
 const AboutUs = () => {
   const [agents, setAgents] = useState([]);
   const [properties, setProperties] = useState([]);
+  const [errorAgents, setErrorAgents] = useState(null);
+  const [errorProperties, setErrorProperties] = useState(null);
 
   const sectionRefs = useRef([]);
   const [visibleSections, setVisibleSections] = useState([]);
@@ -22,11 +23,52 @@ const AboutUs = () => {
 
   useEffect(() => {
     document.title = 'About Us - Zivaas Properties';
-    const storedAgents = JSON.parse(localStorage.getItem('zivaas_agents')) || [];
-    setAgents([...defaultAgents, ...storedAgents]);
 
-    const storedProperties = JSON.parse(localStorage.getItem('zivaas_properties')) || [];
-    setProperties([...defaultProperties, ...storedProperties]);
+    const fetchData = async () => {
+      try {
+        console.log('Fetching agents from Supabase');
+        const { data: agentsData, error: agentsError } = await supabase
+          .from('agents')
+          .select('*');
+
+        if (agentsError) {
+          console.error('Agents fetch error:', agentsError.message);
+          throw new Error('Failed to fetch agents.');
+        }
+
+        console.log('Fetched agents:', agentsData);
+        setAgents(agentsData.map(a => ({
+          ...a,
+          photo: a.photo || 'https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=200&q=80'
+        })));
+        setErrorAgents(null);
+
+        console.log('Fetching properties from Supabase');
+        const { data: propertiesData, error: propertiesError } = await supabase
+          .from('properties')
+          .select('*');
+
+        if (propertiesError) {
+          console.error('Properties fetch error:', propertiesError.message);
+          throw new Error('Failed to fetch properties.');
+        }
+
+        console.log('Fetched properties:', propertiesData);
+        setProperties(propertiesData.map(p => ({
+          ...p,
+          agentId: p.agent_id
+        })));
+        setErrorProperties(null);
+      } catch (error) {
+        console.error('Error fetching data:', error.message);
+        setErrorAgents(error.message);
+        setErrorProperties(error.message);
+        setAgents([]);
+        setProperties([]);
+      }
+    };
+
+    fetchData();
   }, []);
 
   useEffect(() => {
@@ -233,46 +275,60 @@ const AboutUs = () => {
         <p className="max-w-3xl mx-auto text-center text-stone-600 mb-12">
           At Zivaas Properties, our dedicated agents bring years of experience and a passion for real estate to help you find the perfect home. Get to know the people who make your dreams a reality.
         </p>
-
+        {(errorAgents || errorProperties) && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6 text-center">
+            {errorAgents || errorProperties}
+          </div>
+        )}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-          {agents.map((agent) => {
-            const agentProperties = properties.filter(p => p.agentId === agent.id);
-            return (
-              <div className="shadow-md p-4 rounded-lg" key={agent.id}>
-                <h2 className="text-xl font-semibold text-stone-700 mb-2">{agent.name}</h2>
-                <div className="flex items-center gap-6 mb-3">
-                  <img
-                    src={agent.photo}
-                    alt={agent.name}
-                    className="w-20 h-20 object-cover rounded-full border" />
+          {agents.length > 0 ? (
+            agents.map((agent) => {
+              const agentProperties = properties.filter(p => p.agentId === agent.id);
+              return (
+                <div className="shadow-md p-4 rounded-lg" key={agent.id}>
+                  <h2 className="text-xl font-semibold text-stone-700 mb-2">{agent.name}</h2>
+                  <div className="flex items-center gap-6 mb-3">
+                    <img
+                      src={agent.photo}
+                      alt={agent.name}
+                      className="w-20 h-20 object-cover rounded-full border"
+                      onError={(e) => {
+                        console.error('Failed to load agent photo:', e.target.src);
+                        e.target.src = 'https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=200&q=80';
+                      }}
+                    />
+                    <div>
+                      <p className="text-stone-700"><strong>Contact:</strong> {agent.contact}</p>
+                      <p className="text-stone-700"><strong>Experience:</strong> {agent.experience}</p>
+                      <p className="text-stone-700"><strong>Rating:</strong> ⭐ {agent.rating}</p>
+                    </div>
+                  </div>
                   <div>
-                    <p className="text-stone-700"><strong>Contact:</strong> {agent.contact}</p>
-                    <p className="text-stone-700"><strong>Experience:</strong> {agent.experience}</p>
-                    <p className="text-stone-700"><strong>Rating:</strong> ⭐ {agent.rating}</p>
+                    <strong className="text-stone-700">Properties:</strong>
+                    {agentProperties.length > 0 ? (
+                      <ul className="list-disc list-inside text-stone-700 mt-2">
+                        {agentProperties.map((prop) => (
+                          <li key={prop.id}>
+                            <Link
+                              to={`/listings/${prop.id}`}
+                              className="text-stone-700 hover:underline">
+                              {prop.name}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-sm text-stone-700 mt-2">No properties listed yet.</p>
+                    )}
                   </div>
                 </div>
-
-                <div>
-                  <strong className="text-stone-700">Properties:</strong>
-                  {agentProperties.length > 0 ? (
-                    <ul className="list-disc list-inside text-stone-700 mt-2">
-                      {agentProperties.map((prop) => (
-                        <li key={prop.id}>
-                          <Link
-                            to={`/detail/${prop.id}`}
-                            className="text-stone-700 hover:underline">
-                            {prop.name}
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="text-sm text-stone-700 mt-2">No properties listed yet.</p>
-                  )}
-                </div>
-              </div>
-            );
-          })}
+              );
+            })
+          ) : (
+            <p className="text-center text-stone-600 text-lg col-span-full">
+              No agents found.
+            </p>
+          )}
         </div>
       </section>
     </div>

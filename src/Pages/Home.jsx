@@ -1,14 +1,15 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import Hero from "../Components/Hero";
-import PropertyCard from "../Components/PropertyCard";
-import { allProperties } from "../data/properties";
+import { supabase } from '../supabaseClient';
 import heroImg from "../assets/heroImg.jpg";
 import { motion } from "framer-motion";
 
 const Home = () => {
   const [searchInput, setSearchInput] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("All");
+  const [properties, setProperties] = useState([]);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [statsInView, setStatsInView] = useState(false);
   const [counts, setCounts] = useState([0, 0, 0, 0]);
   const cardRefs = useRef([]);
@@ -18,6 +19,82 @@ const Home = () => {
   const zivaasRef = useRef(null);
   const [zivaasInView, setZivaasInView] = useState(false);
   const [zivaasCounts, setZivaasCounts] = useState([0, 0, 0]);
+
+  useEffect(() => {
+    const fetchProperties = async () => {
+      try {
+        console.log('Fetching properties from Supabase');
+        setLoading(true);
+        const { data: propertiesData, error: propertiesError } = await supabase
+          .from('properties')
+          .select('*');
+
+        if (propertiesError) {
+          console.error('Properties fetch error:', propertiesError.message);
+          throw new Error(`Failed to fetch properties: ${propertiesError.message}`);
+        }
+
+        if (!propertiesData || propertiesData.length === 0) {
+          console.warn('No properties returned from Supabase');
+          throw new Error('No properties available.');
+        }
+
+        const mappedProperties = await Promise.all(
+          propertiesData.map(async (p) => {
+            const bhkMatch = (p.configuration || '').match(/\d+/);
+            let imageUrl = 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80';
+
+            // Try to use images array if available
+            if (p.images && p.images.length > 0 && p.images[0]) {
+              imageUrl = p.images[0];
+            } else {
+              // Fallback to Supabase Storage
+              const { data: files } = await supabase.storage
+                .from('property-images')
+                .list(`${p.id}/`, { limit: 1 });
+              if (files && files.length > 0) {
+                const { data: publicUrlData } = supabase.storage
+                  .from('property-images')
+                  .getPublicUrl(`${p.id}/${files[0].name}`);
+                imageUrl = publicUrlData.publicUrl;
+                console.log(`Storage image URL for ${p.name}: ${imageUrl}`);
+              } else {
+                console.warn(`No storage image found for property ${p.id}`);
+              }
+            }
+
+            // Validate image URL
+            try {
+              await fetch(imageUrl, { method: 'HEAD' });
+            } catch (err) {
+              console.warn(`Invalid image URL for ${p.name}: ${imageUrl}, using fallback`);
+              imageUrl = 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80';
+            }
+
+            return {
+              ...p,
+              bhk: bhkMatch ? parseInt(bhkMatch[0]) : 0,
+              type: (p.property_type || '').trim().toLowerCase(),
+              progress: p.progress !== undefined ? p.progress : (p.status === 'Upcoming' ? 0 : 1),
+              image: imageUrl,
+            };
+          })
+        );
+
+        console.log('Mapped properties:', mappedProperties);
+        setProperties(mappedProperties);
+        setError(null);
+      } catch (error) {
+        console.error('Error fetching properties:', error.message);
+        setError(error.message);
+        setProperties([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProperties();
+  }, []);
 
   useEffect(() => {
     const section = document.getElementById("legacy-section");
@@ -130,7 +207,6 @@ const Home = () => {
     return () => clearInterval(counter);
   }, [zivaasInView]);
 
-  // Featured card animation
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -162,24 +238,79 @@ const Home = () => {
     }
   };
 
-  const filteredProperties = allProperties.filter((property) => {
+  const filteredProperties = properties.filter((property) => {
+    const type = (property.type || '').toLowerCase();
+    const status = (property.status || '').toLowerCase();
+    console.log(`Filtering property: ${property.name}, type: ${type}, status: ${status}, progress: ${property.progress}`);
     if (selectedFilter === "All") return true;
     if (selectedFilter === "Residential")
-      return ["Flat", "Villa", "Plot"].includes(property.type);
+      return ["flat", "villa", "plot"].includes(type);
     if (selectedFilter === "Commercial")
-      return ["Office", "Shop", "Commercial"].includes(property.type);
-    if (selectedFilter === "Ready") return property.status === "Ready";
+      return ["office", "shop", "commercial"].includes(type);
+    if (selectedFilter === "Ready") return status === "ready";
     if (selectedFilter === "Ongoing")
-      return property.status === "Under Construction";
+      return status === "under construction";
     if (selectedFilter === "Upcoming")
-      return property.status === "Upcoming" && property.progress === 0;
+      return status === "upcoming" && property.progress === 0;
     return true;
   });
 
+  console.log('Filtered properties:', filteredProperties);
+
   return (
     <div className="min-h-screen">
-      <Hero />
+      {/* Hero Section */}
+      <section
+        className="relative bg-cover bg-center text-white h-[100vh] flex items-center justify-center"
+        style={{ backgroundImage: `url(${heroImg})` }}
+      >
+        <div className="absolute inset-0 bg-black opacity-60 z-0"></div>
+        <div className="relative z-10 max-w-6xl mx-auto">
+          <div className="p-8 rounded-lg text-center max-w-2xl mx-auto">
+            <motion.h1
+              className="text-4xl md:text-5xl font-bold mb-4"
+              initial={{ opacity: 0, y: -50 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+            >
+              Find Your Dream Property with Zivaas
+            </motion.h1>
+            <motion.p
+              className="text-lg mb-6"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.5 }}
+            >
+              Explore luxury flats, spacious plots, and premium upcoming projects across India.
+            </motion.p>
+            <motion.div
+              className="flex flex-col md:flex-row justify-center gap-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.8 }}
+            >
+              <Link
+                to="/listings"
+                className="relative inline-block px-6 py-2 rounded font-medium text-white bg-stone-700 z-10 overflow-hidden
+                  before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-white
+                  before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-stone-700"
+              >
+                Browse Listings
+              </Link>
+              <Link
+                to="/booking"
+                className="relative inline-block px-6 py-2 rounded font-medium text-white border border-white z-10 overflow-hidden
+                  before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-700
+                  before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:border-none hover:text-white"
+              >
+                Book a Visit
+              </Link>
+            </motion.div>
+          </div>
+        </div>
+      </section>
 
+      {/* Search Section */}
       <section className="bg-cover bg-center h-[60vh] pt-24 flex items-center justify-center text-white text-center px-4">
         <div className="bg-white shadow-md p-6 rounded">
           <h1 className="text-4xl md:text-5xl text-stone-700 font-bold mb-4">
@@ -191,16 +322,19 @@ const Home = () => {
           <div className="flex justify-center gap-1">
             <input
               type="text"
+              name="search"
+              id="search"
               placeholder="Search by location, builder, or project..."
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
+              autoComplete="search"
               className="px-4 py-2 w-full max-w-md rounded-l border text-stone-700 bg-stone-50 placeholder:text-stone-500 shadow"
             />
             <button
               onClick={handleSearch}
               className="relative inline-block px-6 py-2 rounded font-medium text-white bg-stone-700 z-10 overflow-hidden
-              before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600 
-              before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
+                before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600 
+                before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
             >
               Search
             </button>
@@ -208,6 +342,7 @@ const Home = () => {
         </div>
       </section>
 
+      {/* Legacy Section */}
       <section
         id="legacy-section"
         className="text-stone-700 bg-stone-200 shadow-md py-16 px-6 opacity-0 translate-y-8 transition-all duration-1000"
@@ -230,8 +365,8 @@ const Home = () => {
             <Link
               to="/about"
               className="relative inline-block px-6 py-2 rounded font-medium text-white bg-stone-700 z-10 overflow-hidden
-              before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600 
-              before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
+                before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600 
+                before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
             >
               Discover Our Story
             </Link>
@@ -261,6 +396,7 @@ const Home = () => {
         </div>
       </section>
 
+      {/* Featured Properties Section */}
       <section className="max-w-6xl mx-auto py-12 px-4">
         <h2 className="text-4xl text-stone-700 font-semibold mb-2 text-center">
           Featured Properties
@@ -270,16 +406,21 @@ const Home = () => {
           innovation and built with precision.
         </p>
 
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6 text-center">
+            {error}
+          </div>
+        )}
+
         <div className="flex justify-center gap-2 mb-6 flex-wrap">
           {["All", "Residential", "Commercial", "Ready", "Ongoing", "Upcoming"].map((filter) => (
             <button
               key={filter}
               onClick={() => setSelectedFilter(filter)}
-              className={`px-4 py-2 rounded-full border ${
-                selectedFilter === filter
-                  ? "bg-stone-700 text-white"
-                  : "bg-white text-stone-700"
-              }`}
+              className={`px-4 py-2 rounded-full border ${selectedFilter === filter
+                ? "bg-stone-700 text-white"
+                : "bg-white text-stone-700"
+                }`}
             >
               {filter}
             </button>
@@ -287,30 +428,73 @@ const Home = () => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {filteredProperties.slice(0, 3).map((property, i) => (
-            <div
-              key={property.id}
-              ref={(el) => (featuredRefs.current[i] = el)}
-              className="opacity-0 translate-y-6 transition-all duration-700"
-              style={{ transitionDelay: `${i * 100}ms` }}
-            >
-              <PropertyCard property={property} />
-            </div>
-          ))}
+          {filteredProperties.length > 0 && !loading ? (
+            filteredProperties.slice(0, 3).map((property, i) => (
+              <div
+                key={property.id}
+                ref={(el) => (featuredRefs.current[i] = el)}
+                className="opacity-100 translate-y-0 transition-all duration-700"
+              >
+
+                {loading && (
+                  <p className="text-center text-stone-600 text-lg col-span-full">
+                    Loading properties...
+                  </p>
+                )}
+
+                <div className="rounded shadow hover:shadow-lg transition text-white">
+                  <div className="relative group h-64 w-full overflow-hidden rounded">
+                    <img
+                      src={property.image}
+                      alt={property.name || 'Property'}
+                      className="w-full h-64 object-cover transition-transform duration-300 group-hover:scale-105 rounded"
+                      onError={(e) => {
+                        console.error('Failed to load property image:', e.target.src);
+                        e.target.src =
+                          'https://images.unsplash.com/photo-1568605114967-8130f3a36994?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80';
+                      }}
+                    />
+                    <div className="absolute inset-0 bg-black opacity-40 md:opacity-0 md:group-hover:opacity-40 transition-opacity duration-300 z-0"></div>
+                    <div className="absolute inset-0 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity duration-400">
+                      <div className="absolute bottom-4 left-4 text-left">
+                        <h3 className="text-lg font-semibold">{property.name || 'Unnamed Property'}</h3>
+                        <p className="text-sm">{property.location || 'Unknown Location'}</p>
+                        <p className="text-sm">{property.bhk} BHK • ₹{(property.price || 0).toLocaleString()}</p>
+                        <p className="text-sm">{property.type || 'Unknown Type'} • {property.status || 'Unknown Status'}</p>
+                        <Link
+                          to={`/listings/${property.id}`}
+                          className="inline-block text-rose-100 hover:underline mt-1"
+                        >
+                          View Details
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            !loading && (
+              <p className="text-center text-stone-600 text-lg col-span-full">
+                No properties found for the selected filter.
+              </p>
+            )
+          )}
         </div>
 
         <div className="flex justify-center mt-8 mb-8">
           <Link
             to="/listings"
             className="relative inline-block px-6 py-2 rounded font-medium text-white bg-stone-700 z-10 overflow-hidden
-            before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600 
-            before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
+              before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600 
+              before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
           >
             View All
           </Link>
         </div>
       </section>
 
+      {/* Building Dreams Section */}
       <section
         ref={zivaasRef}
         className="relative h-screen bg-cover bg-center text-white flex flex-col justify-center items-center text-center px-4"
@@ -358,6 +542,7 @@ const Home = () => {
         </div>
       </section>
 
+      {/* Testimonials Section */}
       <section className="py-12 px-4 text-center">
         <h2 className="text-2xl text-stone-700 font-bold mb-6">
           What Our Clients Say
@@ -383,6 +568,7 @@ const Home = () => {
         </div>
       </section>
 
+      {/* Book a Visit Section */}
       <section className="text-stone-700 py-12 text-center px-4">
         <h2 className="text-2xl font-bold mb-4">Ready to Book a Site Visit?</h2>
         <p className="mb-6">Get expert advice and see properties firsthand.</p>
@@ -396,6 +582,7 @@ const Home = () => {
         </Link>
       </section>
 
+      {/* Contact Section */}
       <section className="text-stone-700 py-10 text-center">
         <h2 className="text-xl font-bold mb-2">Have Questions?</h2>
         <p className="mb-4">We’d love to help you find your dream property.</p>
