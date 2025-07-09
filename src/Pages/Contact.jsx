@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { FaPhoneAlt, FaEnvelope, FaMapMarkerAlt, FaPaperPlane } from 'react-icons/fa';
 import bgcontact from '../assets/bgcontact.jpg';
 
@@ -9,6 +9,36 @@ const ContactUs = () => {
         subject: '',
         message: ''
     });
+
+    const [visibleSections, setVisibleSections] = useState([]);
+    const bannerRef = useRef(null);
+    const contactRef = useRef(null);
+    const formRef = useRef(null);
+
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            (entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting && !visibleSections.includes(entry.target.id)) {
+                        setVisibleSections(prev => [...prev, entry.target.id]);
+                    }
+                });
+            },
+            { threshold: 0.2 }
+        );
+
+        if (bannerRef.current) observer.observe(bannerRef.current);
+        if (contactRef.current) observer.observe(contactRef.current);
+        if (formRef.current) observer.observe(formRef.current);
+
+        return () => {
+            if (bannerRef.current) observer.unobserve(bannerRef.current);
+            if (contactRef.current) observer.unobserve(contactRef.current);
+            if (formRef.current) observer.unobserve(formRef.current);
+        };
+    }, [visibleSections]);
+
+    const isVisible = (id) => visibleSections.includes(id);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -30,7 +60,11 @@ const ContactUs = () => {
     return (
         <div className="bg-white">
             <section
-                className="relative h-[80vh] bg-cover bg-center flex p-20 items-center"
+                id="contactBanner"
+                ref={bannerRef}
+                className={`relative h-[80vh] bg-cover bg-center flex p-20 items-center transition-all duration-1000 transform ${
+                    isVisible('contactBanner') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+                }`}
                 style={{ backgroundImage: `url(${bgcontact})` }}
             >
                 <div className="absolute inset-0 bg-black/60" />
@@ -43,11 +77,17 @@ const ContactUs = () => {
             </section>
 
             <section className="py-16 px-6 max-w-7xl mx-auto grid md:grid-cols-2 gap-12 items-start">
-                <div>
+                <div
+                    id="contactInfo"
+                    ref={contactRef}
+                    className={`transition-all duration-1000 transform ${
+                        isVisible('contactInfo') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+                    }`}
+                >
                     <h2 className="text-3xl font-bold text-stone-700 mb-6">Contact Information</h2>
                     <div className="space-y-6">
                         <div className="flex items-center gap-4">
-                            <FaPhoneAlt className="text-yellow-600 text-xl" />
+                            <FaPhoneAlt className="text-stone-700 text-xl" />
                             <div>
                                 <p className="font-semibold text-stone-700">Phone</p>
                                 <p className="text-stone-600">+91 98765 43210</p>
@@ -55,7 +95,7 @@ const ContactUs = () => {
                         </div>
 
                         <div className="flex items-center gap-4">
-                            <FaEnvelope className="text-yellow-600 text-xl" />
+                            <FaEnvelope className="text-stone-700 text-xl" />
                             <div>
                                 <p className="font-semibold text-stone-700">Email</p>
                                 <p className="text-stone-600">info@realestate.com</p>
@@ -63,7 +103,7 @@ const ContactUs = () => {
                         </div>
 
                         <div className="flex items-center gap-4">
-                            <FaMapMarkerAlt className="text-yellow-600 text-xl" />
+                            <FaMapMarkerAlt className="text-stone-700 text-xl" />
                             <div>
                                 <p className="font-semibold text-stone-700">Office</p>
                                 <p className="text-stone-600">123 Builder Avenue</p>
@@ -73,7 +113,14 @@ const ContactUs = () => {
                     </div>
                 </div>
 
-                <form onSubmit={handleSubmit} className="bg-white shadow-md p-6 rounded space-y-5 w-full">
+                <form
+                    id="contactForm"
+                    ref={formRef}
+                    onSubmit={handleSubmit}
+                    className={`bg-white shadow-md p-6 rounded space-y-5 w-full transition-all duration-1000 transform ${
+                        isVisible('contactForm') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+                    }`}
+                >
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label className="block text-stone-700 font-medium mb-1">Full Name</label>
@@ -83,7 +130,7 @@ const ContactUs = () => {
                                 value={formData.name}
                                 onChange={handleChange}
                                 required
-                                className="w-full border border-stone-300 px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-yellow-600"
+                                className="w-full border border-stone-300 px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-stone-500"
                             />
                         </div>
 
@@ -95,7 +142,7 @@ const ContactUs = () => {
                                 value={formData.email}
                                 onChange={handleChange}
                                 required
-                                className="w-full border border-stone-300 px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-yellow-600"
+                                className="w-full border border-stone-300 px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-stone-500"
                             />
                         </div>
                     </div>
@@ -108,7 +155,7 @@ const ContactUs = () => {
                             value={formData.subject}
                             onChange={handleChange}
                             required
-                            className="w-full border border-stone-300 px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-yellow-600"
+                            className="w-full border border-stone-300 px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-stone-500"
                         />
                     </div>
 
@@ -120,21 +167,23 @@ const ContactUs = () => {
                             value={formData.message}
                             onChange={handleChange}
                             required
-                            className="w-full border border-stone-300 px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-yellow-600"
+                            className="w-full border border-stone-300 px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-stone-500"
                             placeholder="Tell us about your project or inquiry..."
                         />
                     </div>
 
                     <button
                         type="submit"
-                        className="bg-yellow-600 text-white font-semibold px-6 py-2 rounded hover:bg-yellow-500 flex items-center gap-2"
+                        className="relative px-6 py-2 rounded font-medium text-white bg-stone-700 z-10 overflow-hidden
+             before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600 
+             before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white flex items-center gap-2"
                     >
                         Send Inquiry <FaPaperPlane />
                     </button>
                 </form>
             </section>
 
-            <div className="bg-yellow-50 text-center py-12 text-stone-500 text-sm">
+            <div className="bg-stone-50 text-center py-12 text-stone-500 text-sm">
                 Interactive map would be displayed here. <br />
                 Consider embedding Google Maps for a live implementation.
             </div>

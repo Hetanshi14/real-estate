@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { agents as defaultAgents } from '../data/agents';
 import { allProperties as defaultProperties } from '../data/properties';
 import { Link } from 'react-router-dom';
@@ -8,11 +8,17 @@ import img2 from '../assets/img2.jpg';
 import img3 from '../assets/img3.jpg';
 import img4 from '../assets/img4.jpg';
 import comm1 from '../assets/comm1.jpg';
-import resident1 from '../assets/resident1.jpg'
+import resident1 from '../assets/resident1.jpg';
 
 const AboutUs = () => {
   const [agents, setAgents] = useState([]);
   const [properties, setProperties] = useState([]);
+
+  const sectionRefs = useRef([]);
+  const [visibleSections, setVisibleSections] = useState([]);
+
+  const bannerRef = useRef(null);
+  const [bannerInView, setBannerInView] = useState(false);
 
   useEffect(() => {
     document.title = 'About Us - Zivaas Properties';
@@ -23,10 +29,44 @@ const AboutUs = () => {
     setProperties([...defaultProperties, ...storedProperties]);
   }, []);
 
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.target === bannerRef.current && entry.isIntersecting) {
+            setBannerInView(true);
+          }
+
+          if (entry.isIntersecting && !visibleSections.includes(entry.target.id)) {
+            setVisibleSections((prev) => [...prev, entry.target.id]);
+          }
+        });
+      },
+      { threshold: 0.2 }
+    );
+
+    if (bannerRef.current) observer.observe(bannerRef.current);
+    sectionRefs.current.forEach((ref) => {
+      if (ref) observer.observe(ref);
+    });
+
+    return () => {
+      if (bannerRef.current) observer.unobserve(bannerRef.current);
+      sectionRefs.current.forEach((ref) => {
+        if (ref) observer.unobserve(ref);
+      });
+    };
+  }, [visibleSections]);
+
+  const isVisible = (id) => visibleSections.includes(id);
+
   return (
     <div className="min-h-screen">
       <section
-        className="relative bg-cover bg-center text-white h-[80vh] flex items-center p-20"
+        ref={bannerRef}
+        className={`relative bg-cover bg-center text-white h-[80vh] flex items-center p-20 transition-all duration-1000 transform ${
+          bannerInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+        }`}
         style={{ backgroundImage: `url(${bgabout})` }}>
         <div className="absolute inset-0 bg-black/60 z-0" />
         <div className="relative z-10 px-6 max-w-3xl">
@@ -50,7 +90,13 @@ const AboutUs = () => {
         </div>
       </section>
 
-      <section className="py-16 px-6 max-w-7xl mx-auto grid md:grid-cols-2 gap-10 items-center">
+      <section
+        id="section1"
+        ref={(el) => (sectionRefs.current[0] = el)}
+        className={`py-16 px-6 max-w-7xl mx-auto grid md:grid-cols-2 gap-10 items-center transition-all duration-1000 transform ${
+          isVisible('section1') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+        }`}
+      >
         <div>
           <h2 className="text-4xl font-bold mb-4">
             Turning Blueprints into <span className="text-yellow-600">Landmarks</span>
@@ -89,7 +135,13 @@ const AboutUs = () => {
         </div>
       </section>
 
-      <section className="bg-stone-100 py-16 px-6">
+      <section
+        id="section2"
+        ref={(el) => (sectionRefs.current[1] = el)}
+        className={`bg-stone-100 py-16 px-6 transition-all duration-1000 transform ${
+          isVisible('section2') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+        }`}
+      >
         <h2 className="text-4xl font-bold text-center text-stone-700 mb-4">Our Purpose & Promise</h2>
         <p className="text-center text-stone-500 mb-12 max-w-3xl mx-auto">
           Our purpose is to create exceptional spaces that inspire, empower communities, and enrich everyday living.
@@ -121,7 +173,13 @@ const AboutUs = () => {
         </div>
       </section>
 
-      <section className="py-16 px-6 bg-white">
+      <section
+        id="section3"
+        ref={(el) => (sectionRefs.current[2] = el)}
+        className={`py-16 px-6 bg-white transition-all duration-1000 transform ${
+          isVisible('section3') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+        }`}
+      >
         <h2 className="text-4xl font-bold text-center text-stone-800 mb-4">Our Expertise</h2>
         <p className="text-center text-stone-500 mb-12 max-w-3xl mx-auto">
           With specialized teams and extensive experience, we deliver exceptional results across various construction sectors.
@@ -164,7 +222,13 @@ const AboutUs = () => {
         </div>
       </section>
 
-      <section className="px-6 py-12">
+      <section
+        id="section4"
+        ref={(el) => (sectionRefs.current[3] = el)}
+        className={`px-6 py-12 transition-all duration-1000 transform ${
+          isVisible('section4') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+        }`}
+      >
         <h2 className="text-4xl font-bold text-stone-700 text-center mb-8">Meet Our Team</h2>
         <p className="max-w-3xl mx-auto text-center text-stone-600 mb-12">
           At Zivaas Properties, our dedicated agents bring years of experience and a passion for real estate to help you find the perfect home. Get to know the people who make your dreams a reality.

@@ -12,6 +12,7 @@ const Home = () => {
   const [statsInView, setStatsInView] = useState(false);
   const [counts, setCounts] = useState([0, 0, 0, 0]);
   const cardRefs = useRef([]);
+  const featuredRefs = useRef([]);
   const navigate = useNavigate();
 
   const zivaasRef = useRef(null);
@@ -128,6 +129,32 @@ const Home = () => {
 
     return () => clearInterval(counter);
   }, [zivaasInView]);
+
+  // Featured card animation
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const el = entry.target;
+          if (entry.isIntersecting) {
+            el.classList.add("opacity-100", "translate-y-0");
+            el.classList.remove("opacity-0", "translate-y-6");
+          }
+        });
+      },
+      { threshold: 0.2 }
+    );
+
+    featuredRefs.current.forEach((el) => {
+      if (el) observer.observe(el);
+    });
+
+    return () => {
+      featuredRefs.current.forEach((el) => {
+        if (el) observer.unobserve(el);
+      });
+    };
+  }, []);
 
   const handleSearch = () => {
     if (searchInput.trim() !== "") {
@@ -260,8 +287,15 @@ const Home = () => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {filteredProperties.slice(0, 3).map((property) => (
-            <PropertyCard key={property.id} property={property} />
+          {filteredProperties.slice(0, 3).map((property, i) => (
+            <div
+              key={property.id}
+              ref={(el) => (featuredRefs.current[i] = el)}
+              className="opacity-0 translate-y-6 transition-all duration-700"
+              style={{ transitionDelay: `${i * 100}ms` }}
+            >
+              <PropertyCard property={property} />
+            </div>
           ))}
         </div>
 
