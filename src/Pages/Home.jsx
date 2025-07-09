@@ -1,28 +1,151 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import Hero from '../Components/Hero';
-import PropertyCard from '../Components/PropertyCard';
-import { allProperties } from '../data/properties';
-import heroImg from '../assets/heroImg.jpg';
+import React, { useState, useEffect, useRef } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import Hero from "../Components/Hero";
+import PropertyCard from "../Components/PropertyCard";
+import { allProperties } from "../data/properties";
+import heroImg from "../assets/heroImg.jpg";
+import { motion } from "framer-motion";
 
 const Home = () => {
-  const [searchInput, setSearchInput] = useState('');
-  const [selectedFilter, setSelectedFilter] = useState('All');
+  const [searchInput, setSearchInput] = useState("");
+  const [selectedFilter, setSelectedFilter] = useState("All");
+  const [statsInView, setStatsInView] = useState(false);
+  const [counts, setCounts] = useState([0, 0, 0, 0]);
+  const cardRefs = useRef([]);
   const navigate = useNavigate();
 
+  const zivaasRef = useRef(null);
+  const [zivaasInView, setZivaasInView] = useState(false);
+  const [zivaasCounts, setZivaasCounts] = useState([0, 0, 0]);
+
+  useEffect(() => {
+    const section = document.getElementById("legacy-section");
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          section.classList.remove("opacity-0", "translate-y-8");
+          section.classList.add("opacity-100", "translate-y-0");
+          setStatsInView(true);
+        }
+      },
+      { threshold: 0.2 }
+    );
+
+    if (section) observer.observe(section);
+    return () => {
+      if (section) observer.unobserve(section);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!statsInView) return;
+
+    const targets = [20, 100, 75, 40];
+    const interval = 30;
+    const steps = 50;
+    const increments = targets.map((t) => Math.ceil(t / steps));
+    let current = [0, 0, 0, 0];
+
+    const counter = setInterval(() => {
+      current = current.map((val, i) => {
+        const next = val + increments[i];
+        return next >= targets[i] ? targets[i] : next;
+      });
+
+      setCounts([...current]);
+
+      if (current.every((val, i) => val >= targets[i])) {
+        clearInterval(counter);
+      }
+    }, interval);
+
+    return () => clearInterval(counter);
+  }, [statsInView]);
+
+  useEffect(() => {
+    const options = { threshold: 0.2 };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        const target = entry.target;
+        if (entry.isIntersecting) {
+          target.classList.add("opacity-100", "translate-y-0");
+          target.classList.remove("opacity-0", "translate-y-6");
+        }
+      });
+    }, options);
+
+    cardRefs.current.forEach((ref) => {
+      if (ref) observer.observe(ref);
+    });
+
+    return () => {
+      cardRefs.current.forEach((ref) => {
+        if (ref) observer.unobserve(ref);
+      });
+    };
+  }, [statsInView]);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setZivaasInView(true);
+        } else {
+          setZivaasInView(false);
+        }
+      },
+      { threshold: 0.3 }
+    );
+
+    if (zivaasRef.current) observer.observe(zivaasRef.current);
+    return () => {
+      if (zivaasRef.current) observer.unobserve(zivaasRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!zivaasInView) return;
+
+    const targets = [20, 500, 100];
+    const interval = 30;
+    const steps = 50;
+    const increments = targets.map((t) => Math.ceil(t / steps));
+    let current = [0, 0, 0];
+
+    const counter = setInterval(() => {
+      current = current.map((val, i) => {
+        const next = val + increments[i];
+        return next >= targets[i] ? targets[i] : next;
+      });
+
+      setZivaasCounts([...current]);
+
+      if (current.every((val, i) => val >= targets[i])) {
+        clearInterval(counter);
+      }
+    }, interval);
+
+    return () => clearInterval(counter);
+  }, [zivaasInView]);
+
   const handleSearch = () => {
-    if (searchInput.trim() !== '') {
+    if (searchInput.trim() !== "") {
       navigate(`/listings?search=${encodeURIComponent(searchInput.trim())}`);
     }
   };
 
   const filteredProperties = allProperties.filter((property) => {
-    if (selectedFilter === 'All') return true;
-    if (selectedFilter === 'Residential') return ['Flat', 'Villa', 'Plot'].includes(property.type);
-    if (selectedFilter === 'Commercial') return ['Office', 'Shop', 'Commercial'].includes(property.type);
-    if (selectedFilter === 'Ready') return property.status === 'Ready';
-    if (selectedFilter === 'Ongoing') return property.status === 'Under Construction';
-     if (selectedFilter === 'Upcoming') return property.status === 'Upcoming' && property.progress === 0;
+    if (selectedFilter === "All") return true;
+    if (selectedFilter === "Residential")
+      return ["Flat", "Villa", "Plot"].includes(property.type);
+    if (selectedFilter === "Commercial")
+      return ["Office", "Shop", "Commercial"].includes(property.type);
+    if (selectedFilter === "Ready") return property.status === "Ready";
+    if (selectedFilter === "Ongoing")
+      return property.status === "Under Construction";
+    if (selectedFilter === "Upcoming")
+      return property.status === "Upcoming" && property.progress === 0;
     return true;
   });
 
@@ -32,19 +155,25 @@ const Home = () => {
 
       <section className="bg-cover bg-center h-[60vh] pt-24 flex items-center justify-center text-white text-center px-4">
         <div className="bg-white shadow-md p-6 rounded">
-          <h1 className="text-4xl md:text-5xl text-stone-700 font-bold mb-4">Find Your Dream Property</h1>
-          <p className="mb-6 text-lg text-stone-700">Buy | Sell | Rent | Upcoming Projects</p>
+          <h1 className="text-4xl md:text-5xl text-stone-700 font-bold mb-4">
+            Find Your Dream Property
+          </h1>
+          <p className="mb-6 text-lg text-stone-700">
+            Buy | Sell | Rent | Upcoming Projects
+          </p>
           <div className="flex justify-center gap-1">
             <input
               type="text"
               placeholder="Search by location, builder, or project..."
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              className="px-4 py-2 w-full max-w-md rounded-l border text-stone-700 bg-stone-50 shadow"
+              className="px-4 py-2 w-full max-w-md rounded-l border text-stone-700 bg-stone-50 placeholder:text-stone-500 shadow"
             />
             <button
               onClick={handleSearch}
-              className="border rounded-r text-stone-700 px-4 py-2 hover:bg-stone-700 hover:text-white shadow"
+              className="relative inline-block px-6 py-2 rounded font-medium text-white bg-stone-700 z-10 overflow-hidden
+              before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600 
+              before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
             >
               Search
             </button>
@@ -52,35 +181,52 @@ const Home = () => {
         </div>
       </section>
 
-      <section className="text-stone-700 bg-stone-200 shadow-md py-16 px-6">
+      <section
+        id="legacy-section"
+        className="text-stone-700 bg-stone-200 shadow-md py-16 px-6 opacity-0 translate-y-8 transition-all duration-1000"
+      >
         <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-10 items-center">
           <div>
             <h2 className="text-3xl md:text-4xl font-bold text-stone-800 mb-4">
               Our Legacy of <span className="text-stone-500">Excellence</span>
             </h2>
             <p className="mb-4 text-lg">
-              For over two decades, Zivaas Properties has been crafting exceptional living spaces that balance
-              aesthetic beauty with practical functionality. Our commitment to quality and attention to detail
-              has established us as leaders in luxury real estate development.
+              For over two decades, Zivaas Properties has been crafting
+              exceptional living spaces that balance aesthetic beauty with
+              practical functionality.
             </p>
             <p className="mb-6 text-base">
-              From conceptualization to completion, we partner with our clients to transform their vision into
-              reality, creating spaces that reflect their unique lifestyle and aspirations.
+              From conceptualization to completion, we partner with our clients
+              to transform their vision into reality, creating spaces that
+              reflect their unique lifestyle and aspirations.
             </p>
-            <Link to="/about" className="inline-block bg-stone-700 text-white px-5 py-2 rounded hover:bg-stone-500 transition">
+            <Link
+              to="/about"
+              className="relative inline-block px-6 py-2 rounded font-medium text-white bg-stone-700 z-10 overflow-hidden
+              before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600 
+              before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
+            >
               Discover Our Story
             </Link>
           </div>
 
           <div className="grid grid-cols-2 gap-6">
             {[
-              { stat: '20+', label: 'Years of Experience' },
-              { stat: '100+', label: 'Projects Completed' },
-              { stat: '75+', label: 'Happy Clients' },
-              { stat: '40+', label: 'Industry Awards' },
-            ].map(({ stat, label }, i) => (
-              <div key={i} className="bg-white rounded shadow p-6 text-center">
-                <div className="text-3xl font-bold text-stone-800 mb-2">{stat}</div>
+              { label: "Years of Experience", suffix: "+" },
+              { label: "Projects Completed", suffix: "+" },
+              { label: "Happy Clients", suffix: "+" },
+              { label: "Industry Awards", suffix: "+" },
+            ].map(({ label, suffix }, i) => (
+              <div
+                key={i}
+                ref={(el) => (cardRefs.current[i] = el)}
+                className="bg-white rounded shadow p-6 text-center opacity-0 translate-y-6 transition-all duration-1000"
+                style={{ transitionDelay: `${i * 150}ms` }}
+              >
+                <div className="text-3xl font-bold text-stone-800 mb-2">
+                  {counts[i]}
+                  {suffix}
+                </div>
                 <p className="text-sm font-medium text-stone-500">{label}</p>
               </div>
             ))}
@@ -89,20 +235,24 @@ const Home = () => {
       </section>
 
       <section className="max-w-6xl mx-auto py-12 px-4">
-        <h2 className="text-4xl text-stone-700 font-semibold mb-2 text-center">Featured Properties</h2>
+        <h2 className="text-4xl text-stone-700 font-semibold mb-2 text-center">
+          Featured Properties
+        </h2>
         <p className="text-center text-lg text-stone-500 mb-6">
-          Discover our portfolio of exceptional properties designed with innovation and built with precision.
+          Discover our portfolio of exceptional properties designed with
+          innovation and built with precision.
         </p>
 
         <div className="flex justify-center gap-2 mb-6 flex-wrap">
-          {['All', 'Residential', 'Commercial', 'Ready', 'Ongoing', 'Upcoming'].map((filter) => (
+          {["All", "Residential", "Commercial", "Ready", "Ongoing", "Upcoming"].map((filter) => (
             <button
               key={filter}
               onClick={() => setSelectedFilter(filter)}
-              className={`px-4 py-2 rounded-full border ${selectedFilter === filter
-                ? 'bg-yellow-600 text-white'
-                : 'bg-white text-stone-700 hover:bg-stone-100'
-                } transition`}
+              className={`px-4 py-2 rounded-full border ${
+                selectedFilter === filter
+                  ? "bg-stone-700 text-white"
+                  : "bg-white text-stone-700"
+              }`}
             >
               {filter}
             </button>
@@ -118,7 +268,9 @@ const Home = () => {
         <div className="flex justify-center mt-8 mb-8">
           <Link
             to="/listings"
-            className="bg-yellow-600 text-white px-6 py-3 rounded hover:bg-yellow-700 transition font-medium shadow"
+            className="relative inline-block px-6 py-2 rounded font-medium text-white bg-stone-700 z-10 overflow-hidden
+            before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600 
+            before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
           >
             View All
           </Link>
@@ -126,42 +278,45 @@ const Home = () => {
       </section>
 
       <section
+        ref={zivaasRef}
         className="relative h-screen bg-cover bg-center text-white flex flex-col justify-center items-center text-center px-4"
         style={{ backgroundImage: `url(${heroImg})` }}
       >
         <div className="absolute inset-0 bg-black/60 z-0" />
         <div className="relative z-10 max-w-4xl mx-auto">
-          <h1 className="text-4xl md:text-5xl font-bold leading-tight mb-4">
+          <motion.h1
+            className="text-4xl md:text-5xl font-bold leading-tight mb-4"
+            initial={{ opacity: 0, y: -50 }}
+            animate={zivaasInView ? { opacity: 1, y: 0 } : { opacity: 0, y: -50 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
             Building Dreams with Zivaas
-          </h1>
-          <p className="mb-6 text-lg">
-            Explore thoughtfully designed spaces crafted for comfort, elegance, and modern living.
-          </p>
-          <div className="flex justify-center gap-4 flex-wrap mb-10">
-            <Link
-              to="/listings"
-              className="bg-yellow-600 hover:bg-yellow-700 transition text-white font-medium px-6 py-3 rounded shadow"
-            >
-              View Projects →
-            </Link>
-            <Link
-              to="/booking"
-              className="border border-white text-white hover:bg-white hover:text-stone-700 transition font-medium px-6 py-3 rounded"
-            >
-              Schedule a Visit
-            </Link>
-          </div>
+          </motion.h1>
+
+          <motion.p
+            className="mb-6 text-lg"
+            initial={{ opacity: 0, y: 30 }}
+            animate={zivaasInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+            transition={{ duration: 0.6, delay: 0.5 }}
+          >
+            Explore thoughtfully designed spaces crafted for comfort, elegance,
+            and modern living.
+          </motion.p>
+
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-8 max-w-3xl mx-auto">
             {[
-              { number: '20+', label: 'Years of Experience' },
-              { number: '500+', label: 'Happy Clients' },
-              { number: '100%', label: 'Client Satisfaction' },
-            ].map(({ number, label }, i) => (
+              { label: "Years of Experience", suffix: "+" },
+              { label: "Happy Clients", suffix: "+" },
+              { label: "Client Satisfaction", suffix: "%" },
+            ].map(({ label, suffix }, i) => (
               <div
                 key={i}
                 className="bg-black/50 backdrop-blur-sm rounded px-6 py-4 text-white shadow-md"
               >
-                <h3 className="text-3xl font-bold mb-1">{number}</h3>
+                <h3 className="text-3xl font-bold mb-1">
+                  {zivaasCounts[i]}
+                  {suffix}
+                </h3>
                 <p className="text-sm">{label}</p>
               </div>
             ))}
@@ -170,15 +325,19 @@ const Home = () => {
       </section>
 
       <section className="py-12 px-4 text-center">
-        <h2 className="text-2xl text-stone-700 font-bold mb-6">What Our Clients Say</h2>
+        <h2 className="text-2xl text-stone-700 font-bold mb-6">
+          What Our Clients Say
+        </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
           {[
             {
-              quote: "Zivaas helped me find the perfect flat in my budget. Great service!",
+              quote:
+                "Zivaas helped me find the perfect flat in my budget. Great service!",
               author: "— Ramesh Patel",
             },
             {
-              quote: "Very professional team and quick response. Highly recommended!",
+              quote:
+                "Very professional team and quick response. Highly recommended!",
               author: "— Riya Shah",
             },
           ].map(({ quote, author }, i) => (
@@ -206,7 +365,10 @@ const Home = () => {
       <section className="text-stone-700 py-10 text-center">
         <h2 className="text-xl font-bold mb-2">Have Questions?</h2>
         <p className="mb-4">We’d love to help you find your dream property.</p>
-        <a href="tel:+919999999999" className="hover:font-bold underline text-stone-700">
+        <a
+          href="tel:+919999999999"
+          className="hover:font-bold underline text-stone-700"
+        >
           Call Us Now
         </a>
       </section>

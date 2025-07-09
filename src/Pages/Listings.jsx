@@ -4,8 +4,9 @@ import FilterBar from '../Components/FilterBar';
 import PropertyCard from '../Components/PropertyCard';
 import { allProperties as staticProperties } from '../data/properties';
 import bglisting from '../assets/bglisting.jpg';
+import { motion } from 'framer-motion'; 
 
-const Listing = () => {
+const Listings = () => {
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const searchQuery = searchParams.get('search')?.toLowerCase() || '';
@@ -66,7 +67,6 @@ const Listing = () => {
       result = result.filter((p) => p.type === filters.type);
     }
 
-    // ✅ Updated upcoming logic
     if (filters.status === 'Upcoming') {
       result = result.filter((p) => p.progress === 0);
     } else if (filters.status) {
@@ -84,17 +84,31 @@ const Listing = () => {
 
   return (
     <div className="min-h-screen">
-      {/* 🔷 Top banner */}
       <section
         className="relative bg-cover bg-center text-white h-[80vh] flex items-center p-20 justify-items-start"
         style={{ backgroundImage: `url(${bglisting})` }}
       >
         <div className="absolute inset-0 bg-black/60 z-0" />
-        <div className="relative z-10 px-4">
-          <h1 className="text-3xl md:text-5xl font-bold mb-3">Explore Properties</h1>
-          <p className="text-2xl max-w-xl mx-auto">
+        <div className="relative z-10 px-4 max-w-4xl">
+          <motion.h1
+            className="text-3xl md:text-5xl font-bold mb-3"
+            initial={{ opacity: 0, y: -50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
+            Explore Properties
+          </motion.h1>
+
+          <motion.p
+            className="text-2xl max-w-xl mx-auto"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ duration: 0.6, delay: 0.5 }}
+          >
             Discover a wide range of premium residential and commercial properties curated by Zivaas Properties.
-          </p>
+          </motion.p>
         </div>
       </section>
 
@@ -116,4 +130,4 @@ const Listing = () => {
   );
 };
 
-export default Listing;
+export default Listings;
