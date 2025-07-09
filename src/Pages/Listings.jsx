@@ -4,7 +4,7 @@ import FilterBar from '../Components/FilterBar';
 import PropertyCard from '../Components/PropertyCard';
 import { allProperties as staticProperties } from '../data/properties';
 import bglisting from '../assets/bglisting.jpg';
-import { motion } from 'framer-motion'; 
+import { motion } from 'framer-motion';
 
 const Listings = () => {
   const location = useLocation();
@@ -89,41 +89,29 @@ const Listings = () => {
         style={{ backgroundImage: `url(${bglisting})` }}
       >
         <div className="absolute inset-0 bg-black/60 z-0" />
-        <div className="relative z-10 px-4 max-w-4xl">
-          <motion.h1
-            className="text-3xl md:text-5xl font-bold mb-3"
-            initial={{ opacity: 0, y: -50 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-          >
-            Explore Properties
-          </motion.h1>
 
-          <motion.p
-            className="text-2xl max-w-xl mx-auto"
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 0.6, delay: 0.5 }}
-          >
+        <motion.div
+          className="relative z-10 px-4 max-w-4xl"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: 0.6 }}
+        >
+          <h1 className="text-3xl md:text-5xl font-bold mb-3">Explore Properties</h1>
+          <p className="text-2xl max-w-xl mx-auto">
             Discover a wide range of premium residential and commercial properties curated by Zivaas Properties.
-          </motion.p>
-        </div>
+          </p>
+        </motion.div>
       </section>
 
-      <div className="px-3 py-5">
-        <h2 className="text-2xl font-bold text-stone-700 mb-6 text-center">Available Properties</h2>
+      <div className="max-w-6xl mx-auto py-12 px-4">
+        <h2 className="text-4xl font-bold text-stone-700 mb-6 text-center">Available Properties</h2>
         <FilterBar filters={filters} setFilters={setFilters} />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
-          {filteredProperties.length === 0 ? (
-            <p className="text-center col-span-full text-stone-500">No matching properties found.</p>
-          ) : (
-            filteredProperties.map((property) => (
-              <PropertyCard key={property.id} property={property} />
-            ))
-          )}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+          {filteredProperties.slice(0, 9).map((property) => (
+            <PropertyCard key={property.id} property={property} />
+          ))}
         </div>
       </div>
     </div>
