@@ -299,43 +299,6 @@ const Detail = () => {
   if (loading) return <div className="min-h-screen flex items-center justify-center text-stone-700">Loading...</div>;
   if (error || !property) return <div className="min-h-screen flex items-center justify-center text-red-700">{error || 'Property not found'}</div>;
 
-  const amenityIcons = {
-    '24/7 Security': 'ri-shield-check-line',
-    'Lift': 'ri-elevator-line',
-    'Parking': 'ri-parking-box-line',
-    'Garden': 'ri-leaf-line',
-    'Swimming Pool': 'ri-swim-line',
-    'Gym': 'ri-dumbbell-line',
-    'Clubhouse': 'ri-community-line',
-    'CCTV Surveillance': 'ri-camera-line',
-    'Childrens Play Area': 'ri-playground-line',
-    'Mini Theater Room': 'ri-film-line',
-    'Power Backup': 'ri-battery-line',
-    'Motion Sensor Lighting': 'ri-lightbulb-line',
-    'Indoor Games Room': 'ri-gamepad-line',
-    'Fire Safety Systems': 'ri-fire-line',
-    'Smart Lock Access': 'ri-lock-line',
-    'Home Theater Room': 'ri-film-line',
-    'Private Garden Seating Area': 'ri-leaf-line',
-    'Rooftop Garden': 'ri-leaf-line',
-    'Air Conditioning in all Rooms': 'ri-air-conditioner-line',
-    'CCTV': 'ri-camera-line',
-    'Gated Entry': 'ri-gate-line',
-    'Park Area': 'ri-leaf-line',
-    'Security Guard': 'ri-shield-check-line',
-    'Rainwater Harvesting': 'ri-water-flash-line',
-    'Terrace/Balcony Sit-out': 'ri-home-5-line',
-    'Video Door Phone': 'ri-video-line',
-    'Wi-Fi': 'ri-wifi-line',
-    'Backup Generator': 'ri-battery-line',
-    'Basement Parking': 'ri-parking-box-line',
-    'Main Road Facing': 'ri-road-map-line',
-    'Outdoor Seating Space': 'ri-home-5-line',
-    'Double Height Ceiling': 'ri-building-line',
-    'Visitor Parking': 'ri-parking-box-line',
-    'Multiple Showroom Floors': 'ri-building-4-line',
-  };
-
   return (
     <div className="min-h-screen">
       <section className="pt-16">
@@ -458,7 +421,8 @@ const Detail = () => {
               {property.amenities.map((amenity, index) => (
                 <div key={index} className="bg-stone-50 p-4 rounded-lg text-center hover:shadow-md transition-shadow">
                   <div className="w-12 h-12 bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <i className={`${amenityIcons[amenity] || 'ri-building-line'} text-xl text-blue-500`}></i>
+                    {/* <i className={`${amenityIcons[amenity] || 'ri-building-line'} text-xl text-blue-500`}></i> */}
+                    {amenityIcons[index]}
                   </div>
                   <h3 className="font-semibold text-stone-700">{amenity}</h3>
                 </div>
