@@ -4,14 +4,14 @@ import { supabase } from '../supabaseClient';
 import bglisting from '../assets/bglisting.jpg';
 import { motion } from 'framer-motion';
 
-const FilterBar = ({ filters, setFilters }) => {
+const FilterBar = ({ filters, setFilters, clearFilters }) => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFilters((prev) => ({ ...prev, [name]: value }));
   };
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-6 gap-3 justify-center items-center p-4 max-w-8xl mx-auto">
+    <div className="grid grid-cols-2 md:grid-cols-5 gap-3 justify-center items-center p-4 max-w-6xl mx-auto">
       <input
         type="text"
         name="location"
@@ -34,27 +34,13 @@ const FilterBar = ({ filters, setFilters }) => {
         <option value="15000000+">₹1.5cr+</option>
       </select>
       <select
-        name="bhk"
-        value={filters.bhk}
-        onChange={handleChange}
-        className="border bg-stone-200 text-stone-700 border-stone-300 p-2 rounded w-[150px] md:w-[170px]"
-      >
-        <option value="">BHK</option>
-        <option value="1">1 BHK</option>
-        <option value="2">2 BHK</option>
-        <option value="3">3 BHK</option>
-        <option value="4">4+ BHK</option>
-      </select>
-      <select
         name="type"
         value={filters.type}
         onChange={handleChange}
         className="border bg-stone-200 text-stone-700 border-stone-300 p-2 rounded w-[150px] md:w-[170px]"
       >
         <option value="">Type</option>
-        <option value="Flat">Flat</option>
-        <option value="Villa">Villa</option>
-        <option value="Plot">Plot</option>
+        <option value="Residential">Residential</option>
         <option value="Commercial">Commercial</option>
       </select>
       <select
@@ -68,16 +54,24 @@ const FilterBar = ({ filters, setFilters }) => {
         <option value="Under Construction">Under Construction</option>
         <option value="Upcoming">Upcoming</option>
       </select>
-      <select
-        name="sort"
-        value={filters.sort}
-        onChange={handleChange}
-        className="border bg-stone-200 text-stone-700 border-stone-300 p-2 rounded w-[150px] md:w-[170px]"
-      >
-        <option value="">Sort</option>
-        <option value="priceLowHigh">Price: Low to High</option>
-        <option value="priceHighLow">Price: High to Low</option>
-      </select>
+      <div className="flex space-x-2">
+        <select
+          name="sort"
+          value={filters.sort}
+          onChange={handleChange}
+          className="border bg-stone-200 text-stone-700 border-stone-300 p-2 rounded w-[150px] md:w-[170px]"
+        >
+          <option value="">Sort</option>
+          <option value="priceLowHigh">Price: Low to High</option>
+          <option value="priceHighLow">Price: High to Low</option>
+        </select>
+        <button
+          onClick={clearFilters}
+          className="bg-yellow-600 text-white px-4 py-2 rounded shadow hover:bg-yellow-500 transition"
+        >
+          Clear Filters
+        </button>
+      </div>
     </div>
   );
 };
@@ -90,6 +84,8 @@ const Listings = () => {
   const [filteredProperties, setFilteredProperties] = useState([]);
   const [allProps, setAllProps] = useState([]);
   const [error, setError] = useState(null);
+  const [page, setPage] = useState(1);
+  const perPage = 9;
 
   const [filters, setFilters] = useState(() => {
     const stored = localStorage.getItem('zivaasFilters');
@@ -98,7 +94,6 @@ const Listings = () => {
       : {
           location: '',
           price: '',
-          bhk: '',
           type: '',
           status: '',
           sort: '',
@@ -111,25 +106,33 @@ const Listings = () => {
   useEffect(() => {
     const fetchProperties = async () => {
       try {
-        console.log('Fetching all properties from Supabase');
+        console.log('Fetching properties with builders from Supabase');
         const { data: propertiesData, error: propertiesError } = await supabase
           .from('properties')
-          .select('*');
+          .select(`
+            id, name, property_type, images, builder_id, price, location, status, configuration,
+            builders (id, name, logo_url)
+          `);
 
         if (propertiesError) {
           console.error('Properties fetch error:', propertiesError.message);
-          throw new Error('Failed to fetch properties.');
+          throw new Error('Failed to fetch properties: ' + propertiesError.message);
         }
 
         const mappedProperties = propertiesData.map((p) => ({
-          ...p,
-          builder: p.developer_name,
-          type: p.property_type,
-          bhk: parseInt(p.configuration) || 0,
+          id: p.id,
+          name: p.name,
+          type: p.property_type || 'Unknown',
+          bhk: p.configuration ? parseInt(p.configuration) || 0 : 0,
+          price: p.price ? parseFloat(p.price) : 0,
+          location: p.location || 'Unknown',
+          status: p.status || 'Unknown',
           progress: p.status === 'Upcoming' ? 0 : 1,
           image: p.images && p.images.length > 0
             ? p.images[0]
             : 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
+          builder: p.builders?.name || 'Unknown Builder',
+          builder_logo: p.builders?.logo_url || 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images//logo.png',
         }));
 
         console.log('Mapped properties:', mappedProperties);
@@ -143,7 +146,7 @@ const Listings = () => {
     };
 
     fetchProperties();
-  }, []);
+  }, [location]);
 
   useEffect(() => {
     localStorage.setItem('zivaasFilters', JSON.stringify(filters));
@@ -154,7 +157,7 @@ const Listings = () => {
       result = result.filter(
         (p) =>
           p.name.toLowerCase().includes(searchQuery) ||
-          p.builder?.toLowerCase().includes(searchQuery) ||
+          p.builder.toLowerCase().includes(searchQuery) ||
           p.location.toLowerCase().includes(searchQuery)
       );
     }
@@ -168,16 +171,9 @@ const Listings = () => {
     if (filters.price) {
       const [min, max] = filters.price.split('-').map(Number);
       result = result.filter((p) => {
-        const price = parseFloat(p.price);
-        if (filters.price === '10000000') return price >= 10000000;
+        const price = p.price;
+        if (filters.price === '15000000+') return price >= 15000000;
         return price >= min && (max ? price <= max : true);
-      });
-    }
-
-    if (filters.bhk) {
-      result = result.filter((p) => {
-        if (filters.bhk === '4') return p.bhk >= 4;
-        return p.bhk.toString() === filters.bhk;
       });
     }
 
@@ -223,7 +219,22 @@ const Listings = () => {
     };
   }, [visibleSections]);
 
+  const clearFilters = () => {
+    setFilters({
+      location: '',
+      price: '',
+      type: '',
+      status: '',
+      sort: '',
+    });
+    localStorage.removeItem('zivaasFilters');
+    setPage(1);
+  };
+
   const isVisible = (id) => visibleSections.includes(id);
+
+  const totalPages = Math.ceil(filteredProperties.length / perPage);
+  const paginatedProperties = filteredProperties.slice((page - 1) * perPage, page * perPage);
 
   return (
     <div className="min-h-screen">
@@ -236,7 +247,7 @@ const Listings = () => {
         style={{ backgroundImage: `url(${bglisting})` }}
       >
         <div className="absolute inset-0 bg-black/60 z-0" />
-        <div className="relative z-10 px-4 max-w-4xl">
+        <div className="relative z-10 px-4 max-w-6xl mx-auto">
           <h1 className="text-3xl md:text-5xl font-bold mb-3">Explore Properties</h1>
           <p className="text-2xl max-w-xl mx-auto">
             Discover a wide range of premium residential and commercial properties curated by Zivaas Properties.
@@ -257,12 +268,12 @@ const Listings = () => {
             {error}
           </div>
         )}
-        <FilterBar filters={filters} setFilters={setFilters} />
+        <FilterBar filters={filters} setFilters={setFilters} clearFilters={clearFilters} />
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mt-10">
-          {filteredProperties.length > 0 ? (
-            filteredProperties.slice(0, 9).map((property) => (
-              <div key={property.id} className="rounded max-w-6xl max-h-8xl shadow hover:shadow-lg transition text-white">
-                <div className="relative group h-100 w-full overflow-hidden rounded">
+          {paginatedProperties.length > 0 ? (
+            paginatedProperties.map((property) => (
+              <div key={property.id} className="rounded shadow hover:shadow-lg transition text-white">
+                <div className="relative group h-[300px] w-full overflow-hidden rounded">
                   <img
                     src={property.image}
                     alt={property.name}
@@ -278,14 +289,29 @@ const Listings = () => {
                     <div className="absolute bottom-4 left-4 text-left">
                       <h3 className="text-lg font-semibold">{property.name}</h3>
                       <p className="text-sm">{property.location}</p>
-                      <p className="text-sm">{property.bhk} BHK • ₹{property.price.toLocaleString()}</p>
+                      <p className="text-sm">
+                        {property.bhk ? `${property.bhk} BHK • ` : ''}₹{property.price.toLocaleString()}
+                      </p>
                       <p className="text-sm">{property.type} • {property.status}</p>
+                      <p className="text-sm">Built by: {property.builder}</p>
                       <Link
                         to={`/listings/${property.id}`}
                         className="inline-block text-rose-100 hover:underline mt-1"
                       >
                         View Details
                       </Link>
+                    </div>
+                    <div className="absolute top-4 left-4">
+                      <img
+                        src={property.builder_logo}
+                        alt={`${property.builder} logo`}
+                        className="w-12 h-12 rounded-full object-cover"
+                        onError={(e) => {
+                          console.error('Failed to load builder logo:', e.target.src);
+                          e.target.src =
+                            'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images//default%20logo.jpg';
+                        }}
+                      />
                     </div>
                   </div>
                 </div>
@@ -297,6 +323,27 @@ const Listings = () => {
             </p>
           )}
         </div>
+        {filteredProperties.length > perPage && (
+          <div className="flex justify-center mt-6 space-x-4">
+            <button
+              onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+              disabled={page === 1}
+              className="bg-yellow-600 text-white px-4 py-2 rounded shadow hover:bg-yellow-500 transition disabled:opacity-50"
+            >
+              Previous
+            </button>
+            <span className="text-stone-700">
+              Page {page} of {totalPages}
+            </span>
+            <button
+              onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
+              disabled={page === totalPages}
+              className="bg-yellow-600 text-white px-4 py-2 rounded shadow hover:bg-yellow-500 transition disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
+        )}
       </section>
     </div>
   );

@@ -26,34 +26,47 @@ const AboutUs = () => {
         // Fetch builders
         const { data: buildersData, error: buildersError } = await supabase
           .from('builders')
-          .select('*')
+          .select('id, name, contact, logo_url, tagline, experience')
           .order('name', { ascending: true });
+        console.log('Builders Data:', buildersData);
+        console.log('Builders Error:', buildersError);
 
         if (buildersError) {
           console.error('Builders fetch error:', buildersError.message);
           throw new Error('Failed to fetch builders.');
         }
 
-        setBuilders(buildersData.map(b => ({
-          ...b,
-          logo_url: b.logo_url || 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images//default%20logo.jpg'
-        })));
+        setBuilders(
+          buildersData.map((b) => ({
+            ...b,
+            logo_url:
+              b.logo_url ||
+              'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images//logo.png',
+          }))
+        );
 
         // Fetch properties
         const { data: propertiesData, error: propertiesError } = await supabase
           .from('properties')
-          .select('*')
+          .select('id, name, property_type, builder_id, images')
           .order('name', { ascending: true });
+        console.log('Properties Data:', propertiesData);
+        console.log('Properties Error:', propertiesError);
 
         if (propertiesError) {
           console.error('Properties fetch error:', propertiesError.message);
           throw new Error('Failed to fetch properties.');
         }
 
-        setProperties(propertiesData.map(p => ({
-          ...p,
-          image_url: p.image_url || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80'
-        })));
+        setProperties(
+          propertiesData.map((p) => ({
+            ...p,
+            image_url:
+              p.images && p.images.length > 0
+                ? p.images[0]
+                : '',
+          }))
+        );
         setError(null);
       } catch (err) {
         console.error('Error fetching data:', err.message);
@@ -298,7 +311,8 @@ const AboutUs = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
           {builders.length > 0 ? (
             builders.map((builder) => {
-              const builderProperties = properties.filter(p => p.builder_id === builder.id);
+              const builderProperties = properties.filter((p) => p.builder_id === builder.id);
+              console.log(`Builder ${builder.name} Properties:`, builderProperties);
               return (
                 <div key={builder.id} className="bg-white rounded-lg shadow-md p-6">
                   <div className="flex items-center gap-4 mb-4">
@@ -308,12 +322,17 @@ const AboutUs = () => {
                       className="w-16 h-16 object-cover rounded-full border"
                       onError={(e) => {
                         console.error(`Failed to load builder logo: ${e.target.src}`);
-                        e.target.src = 'https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=200&q=80';
+                        e.target.src =
+                          'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images//default%20logo.jpg';
                       }}
                     />
                     <div>
                       <h3 className="text-xl font-semibold text-stone-700">{builder.name}</h3>
                       <p className="text-stone-600 text-sm">{builder.contact}</p>
+                      <p className="text-stone-600 text-sm">{builder.tagline || 'No tagline'}</p>
+                      <p className="text-stone-600 text-sm">
+                        Experience: {builder.experience || 0} years
+                      </p>
                     </div>
                   </div>
                   <div>
@@ -326,7 +345,7 @@ const AboutUs = () => {
                               to={`/listings/${property.id}`}
                               className="text-stone-600 hover:text-yellow-600 hover:underline"
                             >
-                              {property.name} ({property.type})
+                              {property.name} ({property.property_type})
                             </Link>
                           </li>
                         ))}

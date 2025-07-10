@@ -6,7 +6,9 @@ import Listings from './Pages/Listings';
 import Detail from './Pages/Detail';
 import AboutUs from './Pages/AboutUs';
 import Contact from './Pages/Contact';
+import AddProperty from './Pages/AddProperty';
 import Signup from './Pages/Signup';
+
 
 const App = () => {
   return (
@@ -18,7 +20,8 @@ const App = () => {
         <Route path="/listings/:id" element={<Detail />} />
         <Route path="/about" element={<AboutUs />} />
         <Route path="/contact" element={<Contact />} />
-        <Route path="/signup" element={<Signup />}/>
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/add-property" element={<AddProperty />} />
       </Routes>
       <Footer />
     </>

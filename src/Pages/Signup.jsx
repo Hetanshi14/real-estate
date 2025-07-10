@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import bgabout from '../assets/bgabout.jpg';
 
@@ -43,7 +43,6 @@ const SignUp = () => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    // Clear error for the field being edited
     setErrors((prev) => ({ ...prev, [name]: '' }));
   };
 
@@ -53,11 +52,10 @@ const SignUp = () => {
     if (!formData.contact.trim()) {
       newErrors.contact = 'Contact is required';
     } else {
-      // Basic email or phone validation
+      // Prefer email validation
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      const phoneRegex = /^\+?\d{10,15}$/;
-      if (!emailRegex.test(formData.contact) && !phoneRegex.test(formData.contact)) {
-        newErrors.contact = 'Please enter a valid email or phone number';
+      if (!emailRegex.test(formData.contact)) {
+        newErrors.contact = 'Please enter a valid email address';
       }
     }
     if (formData.experience && (isNaN(formData.experience) || formData.experience < 0)) {
@@ -103,7 +101,22 @@ const SignUp = () => {
         return;
       }
 
-      setSubmissionStatus({ type: 'success', message: 'Builder registered successfully!' });
+      setSubmissionStatus({
+        type: 'success',
+        message: (
+          <>
+            Builder registered successfully! Your profile is now visible on the{' '}
+            <Link to="/about" className="underline text-green-600 hover:text-green-800">
+              About Us
+            </Link>{' '}
+            page. Add properties to appear on the{' '}
+            <Link to="/add-property" className="underline text-green-600 hover:text-green-800">
+              Add Property
+            </Link>{' '}
+            page.
+          </>
+        ),
+      });
       setFormData({
         name: '',
         contact: '',
@@ -114,7 +127,7 @@ const SignUp = () => {
         happy_families: '',
       });
       setErrors({});
-      setTimeout(() => navigate('/about'), 2000); // Redirect to /about after 2 seconds
+      setTimeout(() => navigate('/about'), 10000); // Redirect after 3 seconds
     } catch (err) {
       console.error('Unexpected error:', err.message);
       setSubmissionStatus({ type: 'error', message: 'An unexpected error occurred' });
@@ -132,9 +145,11 @@ const SignUp = () => {
       >
         <div className="absolute inset-0 bg-black/60 z-0" />
         <div className="relative z-10 max-w-6xl mx-auto">
-          <h1 className="text-3xl md:text-5xl font-semibold mb-4 text-center">Join Zivaas Properties as a Builder</h1>
+          <h1 className="text-3xl md:text-5xl font-semibold mb-4 text-center">
+            Join Zivaas Properties as a Builder
+          </h1>
           <p className="text-lg md:text-xl text-gray-200 mb-8 text-center">
-            Showcase your projects and connect with customers. Fill out the form below to register your builder profile.
+            Showcase your projects and connect with customers. Your profile will appear on our About Us page, and your properties will be featured on our Listings page.
           </p>
 
           {submissionStatus && (
@@ -169,16 +184,16 @@ const SignUp = () => {
 
               <div>
                 <label htmlFor="contact" className="block text-sm font-medium text-stone-700">
-                  Contact (Email or Phone) <span className="text-red-600">*</span>
+                  Contact Email <span className="text-red-600">*</span>
                 </label>
                 <input
-                  type="text"
+                  type="email"
                   id="contact"
                   name="contact"
                   value={formData.contact}
                   onChange={handleInputChange}
                   className="mt-1 block w-full rounded-md border-stone-300 shadow-sm focus:border-yellow-600 focus:ring-yellow-600"
-                  placeholder="Enter email or phone number"
+                  placeholder="Enter email address"
                 />
                 {errors.contact && <p className="mt-1 text-sm text-red-600">{errors.contact}</p>}
               </div>
@@ -194,9 +209,12 @@ const SignUp = () => {
                   value={formData.logo_url}
                   onChange={handleInputChange}
                   className="mt-1 block w-full rounded-md border-stone-300 shadow-sm focus:border-yellow-600 focus:ring-yellow-600"
-                  placeholder="Enter logo image URL"
+                  placeholder="Enter logo image URL (png, jpg, jpeg, gif)"
                 />
                 {errors.logo_url && <p className="mt-1 text-sm text-red-600">{errors.logo_url}</p>}
+                <p className="mt-1 text-sm text-stone-600">
+                  Leave blank to use our default logo.
+                </p>
               </div>
 
               <div>
