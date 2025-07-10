@@ -36,7 +36,7 @@ const AboutUs = () => {
 
         setBuilders(buildersData.map(b => ({
           ...b,
-          logo_url: b.logo_url || 'https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&h=200&q=80'
+          logo_url: b.logo_url || 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images//default%20logo.jpg'
         })));
 
         // Fetch properties
