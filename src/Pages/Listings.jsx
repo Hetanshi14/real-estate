@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import bglisting from '../assets/bglisting.jpg';
@@ -105,6 +105,9 @@ const Listings = () => {
         };
   });
 
+  const sectionRefs = useRef([]);
+  const [visibleSections, setVisibleSections] = useState([]);
+
   useEffect(() => {
     const fetchProperties = async () => {
       try {
@@ -118,16 +121,15 @@ const Listings = () => {
           throw new Error('Failed to fetch properties.');
         }
 
-        // Map data to match filtering and PropertyCard expectations
         const mappedProperties = propertiesData.map((p) => ({
           ...p,
-          builder: p.developer_name, // Map developer_name to builder
-          type: p.property_type, // Map property_type to type
-          bhk: parseInt(p.configuration) || 0, // Extract number from configuration (e.g., "3BHK" → 3)
-          progress: p.status === 'Upcoming' ? 0 : 1, // Set progress based on status
+          builder: p.developer_name,
+          type: p.property_type,
+          bhk: parseInt(p.configuration) || 0,
+          progress: p.status === 'Upcoming' ? 0 : 1,
           image: p.images && p.images.length > 0
             ? p.images[0]
-            : 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80', // Use first image or fallback
+            : 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80',
         }));
 
         console.log('Mapped properties:', mappedProperties);
@@ -198,28 +200,57 @@ const Listings = () => {
     setFilteredProperties(result);
   }, [filters, allProps, searchQuery]);
 
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && !visibleSections.includes(entry.target.id)) {
+            setVisibleSections((prev) => [...prev, entry.target.id]);
+          }
+        });
+      },
+      { threshold: 0.2 }
+    );
+
+    sectionRefs.current.forEach((ref) => {
+      if (ref) observer.observe(ref);
+    });
+
+    return () => {
+      sectionRefs.current.forEach((ref) => {
+        if (ref) observer.unobserve(ref);
+      });
+    };
+  }, [visibleSections]);
+
+  const isVisible = (id) => visibleSections.includes(id);
+
   return (
     <div className="min-h-screen">
       <section
-        className="relative bg-cover bg-center text-white h-[80vh] flex items-center p-20 justify-items-start"
+        id="section1"
+        ref={(el) => (sectionRefs.current[0] = el)}
+        className={`relative bg-cover bg-center text-white h-[80vh] flex items-center p-20 transition-all duration-1000 transform ${
+          isVisible('section1') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+        }`}
         style={{ backgroundImage: `url(${bglisting})` }}
       >
         <div className="absolute inset-0 bg-black/60 z-0" />
-        <motion.div
-          className="relative z-10 px-4 max-w-4xl"
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.3 }}
-          transition={{ duration: 0.6 }}
-        >
+        <div className="relative z-10 px-4 max-w-4xl">
           <h1 className="text-3xl md:text-5xl font-bold mb-3">Explore Properties</h1>
           <p className="text-2xl max-w-xl mx-auto">
             Discover a wide range of premium residential and commercial properties curated by Zivaas Properties.
           </p>
-        </motion.div>
+        </div>
       </section>
 
-      <div className="max-w-6xl mx-auto py-12 px-4">
+      <section
+        id="section2"
+        ref={(el) => (sectionRefs.current[1] = el)}
+        className={`max-w-6xl mx-auto py-12 px-4 transition-all duration-1000 transform ${
+          isVisible('section2') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+        }`}
+      >
         <h2 className="text-4xl font-bold text-stone-700 mb-6 text-center">Available Properties</h2>
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6 text-center">
@@ -227,7 +258,7 @@ const Listings = () => {
           </div>
         )}
         <FilterBar filters={filters} setFilters={setFilters} />
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mt-10">
           {filteredProperties.length > 0 ? (
             filteredProperties.slice(0, 9).map((property) => (
               <div key={property.id} className="rounded max-w-6xl max-h-8xl shadow hover:shadow-lg transition text-white">
@@ -266,7 +297,7 @@ const Listings = () => {
             </p>
           )}
         </div>
-      </div>
+      </section>
     </div>
   );
 };
