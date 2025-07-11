@@ -3,6 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { supabase } from '../supabaseClient';
 import heroImg from "../assets/heroImg.jpg";
 import { motion } from "framer-motion";
+import { Home as HomeIcon, CalendarDays, ClipboardList, MessageCircle, FileCheck2 } from 'lucide-react';
+
 
 const Home = () => {
   const [searchInput, setSearchInput] = useState("");
@@ -298,100 +300,14 @@ const Home = () => {
                 Browse Listings
               </Link>
               <Link
-                to="/booking"
+                to="/contact"
                 className="relative inline-block px-6 py-2 rounded font-medium text-white border border-white z-10 overflow-hidden
                   before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-700
                   before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:border-none hover:text-white"
               >
-                Book a Visit
+               Contact Us 
               </Link>
             </motion.div>
-          </div>
-        </div>
-      </section>
-
-      {/* Search Section */}
-      <section className="bg-cover bg-center h-[60vh] pt-24 flex items-center justify-center text-white text-center px-4">
-        <div className="bg-white shadow-md p-6 rounded">
-          <h1 className="text-4xl md:text-5xl text-stone-700 font-bold mb-4">
-            Find Your Dream Property
-          </h1>
-          <p className="mb-6 text-lg text-stone-700">
-            Buy | Sell | Rent | Upcoming Projects
-          </p>
-          <div className="flex justify-center gap-1">
-            <input
-              type="text"
-              name="search"
-              id="search"
-              placeholder="Search by location, builder, or project..."
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              autoComplete="search"
-              className="px-4 py-2 w-full max-w-md rounded-l border text-stone-700 bg-stone-50 placeholder:text-stone-500 shadow"
-            />
-            <button
-              onClick={handleSearch}
-              className="relative inline-block px-6 py-2 rounded font-medium text-white bg-stone-700 z-10 overflow-hidden
-                before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600 
-                before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
-            >
-              Search
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* Legacy Section */}
-      <section
-        id="legacy-section"
-        className="text-stone-700 bg-stone-200 shadow-md py-16 px-6 opacity-0 translate-y-8 transition-all duration-1000"
-      >
-        <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-10 items-center">
-          <div>
-            <h2 className="text-3xl md:text-4xl font-bold text-stone-800 mb-4">
-              Our Legacy of <span className="text-stone-500">Excellence</span>
-            </h2>
-            <p className="mb-4 text-lg">
-              For over two decades, Zivaas Properties has been crafting
-              exceptional living spaces that balance aesthetic beauty with
-              practical functionality.
-            </p>
-            <p className="mb-6 text-base">
-              From conceptualization to completion, we partner with our clients
-              to transform their vision into reality, creating spaces that
-              reflect their unique lifestyle and aspirations.
-            </p>
-            <Link
-              to="/about"
-              className="relative inline-block px-6 py-2 rounded font-medium text-white bg-stone-700 z-10 overflow-hidden
-                before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600 
-                before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
-            >
-              Discover Our Story
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-2 gap-6">
-            {[
-              { label: "Years of Experience", suffix: "+" },
-              { label: "Projects Completed", suffix: "+" },
-              { label: "Happy Clients", suffix: "+" },
-              { label: "Industry Awards", suffix: "+" },
-            ].map(({ label, suffix }, i) => (
-              <div
-                key={i}
-                ref={(el) => (cardRefs.current[i] = el)}
-                className="bg-white rounded shadow p-6 text-center opacity-0 translate-y-6 transition-all duration-1000"
-                style={{ transitionDelay: `${i * 150}ms` }}
-              >
-                <div className="text-3xl font-bold text-stone-800 mb-2">
-                  {counts[i]}
-                  {suffix}
-                </div>
-                <p className="text-sm font-medium text-stone-500">{label}</p>
-              </div>
-            ))}
           </div>
         </div>
       </section>
@@ -497,7 +413,7 @@ const Home = () => {
       {/* Building Dreams Section */}
       <section
         ref={zivaasRef}
-        className="relative h-screen bg-cover bg-center text-white flex flex-col justify-center items-center text-center px-4"
+        className="relative h-100 bg-cover bg-center text-white flex flex-col justify-center items-center text-center px-4"
         style={{ backgroundImage: `url(${heroImg})` }}
       >
         <div className="absolute inset-0 bg-black/60 z-0" />
@@ -542,6 +458,171 @@ const Home = () => {
         </div>
       </section>
 
+      {/* Search Section */}
+      <section className="bg-cover bg-center h-[50vh] flex items-center justify-center text-white text-center px-4">
+        <div className="bg-white shadow-md p-6 rounded">
+          <h1 className="text-4xl md:text-5xl text-stone-700 font-bold mb-4">
+            Find Your Dream Property
+          </h1>
+          <p className="mb-6 text-lg text-stone-700">
+            Buy | Sell | Ongoing | Upcoming Projects
+          </p>
+          <div className="flex justify-center gap-1">
+            <input
+              type="text"
+              name="search"
+              id="search"
+              placeholder="Search by location, builder, or project..."
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              autoComplete="search"
+              className="px-4 py-2 w-full max-w-md rounded-l border text-stone-700 bg-stone-50 placeholder:text-stone-500 shadow"
+            />
+            <button
+              onClick={handleSearch}
+              className="relative inline-block px-6 py-2 rounded font-medium text-white bg-stone-700 z-10 overflow-hidden
+                before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600 
+                before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
+            >
+              Search
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Legacy Section */}
+      <section
+        id="legacy-section"
+        className="text-stone-700 bg-stone-200 shadow-md py-16 px-6 opacity-0 translate-y-8 transition-all duration-1000"
+      >
+        <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-10 items-center">
+          <div>
+            <h2 className="text-3xl md:text-4xl font-bold text-stone-800 mb-4">
+              Our Legacy of <span className="text-stone-500">Excellence</span>
+            </h2>
+            <p className="mb-4 text-lg">
+              For over two decades, Zivaas Properties has been crafting
+              exceptional living spaces that balance aesthetic beauty with
+              practical functionality.
+            </p>
+            <p className="mb-6 text-base">
+              From conceptualization to completion, we partner with our clients
+              to transform their vision into reality, creating spaces that
+              reflect their unique lifestyle and aspirations.
+            </p>
+            <Link
+              to="/about"
+              className="relative inline-block px-6 py-2 rounded font-medium text-white bg-stone-700 z-10 overflow-hidden
+                before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600 
+                before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
+            >
+              Discover Our Story
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-2 gap-6">
+            {[
+              { label: "Years of Experience", suffix: "+" },
+              { label: "Projects Completed", suffix: "+" },
+              { label: "Happy Clients", suffix: "+" },
+              { label: "Industry Awards", suffix: "+" },
+            ].map(({ label, suffix }, i) => (
+              <div
+                key={i}
+                ref={(el) => (cardRefs.current[i] = el)}
+                className="bg-white rounded shadow p-6 text-center opacity-0 translate-y-6 transition-all duration-1000"
+                style={{ transitionDelay: `${i * 150}ms` }}
+              >
+                <div className="text-3xl font-bold text-stone-800 mb-2">
+                  {counts[i]}
+                  {suffix}
+                </div>
+                <p className="text-sm font-medium text-stone-500">{label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Our Process Section */}
+<section className="bg-stone-100 py-16 px-4">
+  <div className="max-w-7xl mx-auto text-center mb-12">
+    <h2 className="text-4xl font-bold text-stone-800 mb-4">Our Process: Simple & Transparent</h2>
+    <p className="text-lg text-stone-600">
+      We guide you step-by-step to ensure a smooth and confident real estate journey.
+    </p>
+  </div>
+
+  <div className="relative max-w-7xl mx-auto">
+    {/* Connecting line on medium screens and above */}
+    <div className="hidden md:block absolute top-1/2 left-0 w-full h-1 bg-stone-300 z-0 transform -translate-y-1/2" />
+
+    <div className="grid grid-cols-1 md:grid-cols-5 gap-6 relative z-10">
+      {/* Step 1 */}
+      <div className="bg-white p-6 rounded shadow text-center flex flex-col items-center">
+        <div className="bg-stone-200 text-stone-700 w-14 h-14 flex items-center justify-center rounded-full mb-4 text-2xl font-bold">
+          1
+        </div>
+        <ClipboardList className="w-10 h-10 text-stone-700 mb-3" />
+        <h3 className="text-lg font-semibold text-stone-800 mb-2">Browse Listings</h3>
+        <p className="text-sm text-stone-600">Explore verified listings tailored to your preferences and budget.</p>
+      </div>
+
+      {/* Step 2 */}
+      <div className="bg-white p-6 rounded shadow text-center flex flex-col items-center">
+        <div className="bg-stone-200 text-stone-700 w-14 h-14 flex items-center justify-center rounded-full mb-4 text-2xl font-bold">
+          2
+        </div>
+        <CalendarDays className="w-10 h-10 text-stone-700 mb-3" />
+        <h3 className="text-lg font-semibold text-stone-800 mb-2">Schedule Visit</h3>
+        <p className="text-sm text-stone-600">Book a site visit to experience the property in person.</p>
+      </div>
+
+      {/* Step 3 */}
+      <div className="bg-white p-6 rounded shadow text-center flex flex-col items-center">
+        <div className="bg-stone-200 text-stone-700 w-14 h-14 flex items-center justify-center rounded-full mb-4 text-2xl font-bold">
+          3
+        </div>
+        <MessageCircle className="w-10 h-10 text-stone-700 mb-3" />
+        <h3 className="text-lg font-semibold text-stone-800 mb-2">Discuss Requirements</h3>
+        <p className="text-sm text-stone-600">Our experts will understand your needs and suggest ideal options.</p>
+      </div>
+
+      {/* Step 4 */}
+      <div className="bg-white p-6 rounded shadow text-center flex flex-col items-center">
+        <div className="bg-stone-200 text-stone-700 w-14 h-14 flex items-center justify-center rounded-full mb-4 text-2xl font-bold">
+          4
+        </div>
+        <FileCheck2 className="w-10 h-10 text-stone-700 mb-3" />
+        <h3 className="text-lg font-semibold text-stone-800 mb-2">Finalize Deal</h3>
+        <p className="text-sm text-stone-600">We assist with price negotiation, paperwork, and legalities.</p>
+      </div>
+
+      {/* Step 5 */}
+      <div className="bg-white p-6 rounded shadow text-center flex flex-col items-center">
+        <div className="bg-stone-200 text-stone-700 w-14 h-14 flex items-center justify-center rounded-full mb-4 text-2xl font-bold">
+          5
+        </div>
+        <HomeIcon className="w-10 h-10 text-stone-700 mb-3" />
+        <h3 className="text-lg font-semibold text-stone-800 mb-2">Move In</h3>
+        <p className="text-sm text-stone-600">Take possession with peace of mind and full documentation.</p>
+      </div>
+    </div>
+  </div>
+
+  <div className="mt-10 text-center">
+    <Link
+      to="/listings"
+      className="relative inline-block px-6 py-2 rounded font-medium text-white bg-stone-700 z-10 overflow-hidden
+        before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600 
+        before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
+    >
+      Start Exploring
+    </Link>
+  </div>
+</section>
+
+
       {/* Testimonials Section */}
       <section className="py-12 px-4 text-center">
         <h2 className="text-2xl text-stone-700 font-bold mb-6">
@@ -560,7 +641,7 @@ const Home = () => {
               author: "— Riya Shah",
             },
           ].map(({ quote, author }, i) => (
-            <div key={i} className="bg-stone-700 p-6 rounded shadow">
+            <div key={i} className="bg-stone-600 p-6 rounded shadow">
               <p className="italic text-white mb-3">"{quote}"</p>
               <h4 className="font-semibold text-rose-200">{author}</h4>
             </div>
@@ -570,13 +651,13 @@ const Home = () => {
 
       {/* Contact Section */}
       <section className="text-stone-700 py-10 text-center">
-        <h2 className="text-xl font-bold mb-2">Have Questions?</h2>
+        <h2 className="text-xl font-bold mb-2">FAQs – Everything You Need to Know</h2>
         <p className="mb-4">We’d love to help you find your dream property.</p>
         <a
           href="tel:+919999999999"
           className="hover:font-bold underline text-stone-700"
         >
-          Call Us Now
+          Contact Us
         </a>
       </section>
     </div>
