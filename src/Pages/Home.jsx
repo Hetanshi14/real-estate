@@ -5,7 +5,6 @@ import heroImg from "../assets/heroImg.jpg";
 import { motion } from "framer-motion";
 import { Home as HomeIcon, CalendarDays, ClipboardList, MessageCircle, FileCheck2 } from 'lucide-react';
 
-
 const Home = () => {
   const [searchInput, setSearchInput] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("All");
@@ -621,7 +620,6 @@ const Home = () => {
     </Link>
   </div>
 </section>
-
 
       {/* Testimonials Section */}
       <section className="py-12 px-4 text-center">
