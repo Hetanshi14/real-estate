@@ -296,7 +296,7 @@ const AddProperty = () => {
           <div className="mt-4 space-x-4">
             <Link
               to="/signup"
-              className="inline-block bg-yellow-600 text-white px-6 py-2 rounded shadow hover:bg-yellow-500 transition"
+              className="inline-block bg-stone-600 text-white px-6 py-2 rounded shadow hover:bg-stone-500 transition"
             >
               Back to Sign Up
             </Link>
@@ -360,7 +360,7 @@ const AddProperty = () => {
                     name="name"
                     value={formData.name}
                     onChange={handleInputChange}
-                    className="mt-1 block w-full rounded-md border-stone-300 text-gray-900 shadow-sm focus:border-yellow-600 focus:ring-yellow-600"
+                    className="mt-1 block w-full rounded-md border-stone-300 text-gray-900 shadow-sm focus:border-stone-600 focus:ring-stone-600"
                     placeholder="Enter property name"
                   />
                   {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
@@ -375,7 +375,7 @@ const AddProperty = () => {
                     name="property_type"
                     value={formData.property_type}
                     onChange={handleInputChange}
-                    className="mt-1 block w-full rounded-md border-stone-300 shadow-sm focus:border-yellow-600 focus:ring-yellow-600"
+                    className="mt-1 block w-full rounded-md border-stone-300 shadow-sm focus:border-stone-600 focus:ring-stone-600"
                   >
                     <option value="">Select property type</option>
                     <option value="Residential">Residential</option>
@@ -393,7 +393,7 @@ const AddProperty = () => {
                     name="builder_id"
                     value={formData.builder_id}
                     onChange={handleInputChange}
-                    className="mt-1 block w-full rounded-md border-stone-300 shadow-sm focus:border-yellow-600 focus:ring-yellow-600"
+                    className="mt-1 block w-full rounded-md border-stone-300 shadow-sm focus:border-stone-600 focus:ring-stone-600"
                   >
                     <option value="">Select builder</option>
                     {builders.length > 0 ? (
@@ -420,7 +420,7 @@ const AddProperty = () => {
                     id="images"
                     value={formData.images[0]}
                     onChange={(e) => handleArrayChange(e, 0, 'images')}
-                    className="mt-1 block w-full rounded-md border-stone-300 text-gray-900 shadow-sm focus:border-yellow-600 focus:ring-yellow-600"
+                    className="mt-1 block w-full rounded-md border-stone-300 text-gray-900 shadow-sm focus:border-stone-600 focus:ring-stone-600"
                     placeholder="Enter image URL (png, jpg, jpeg, gif)"
                   />
                   {errors.images && <p className="mt-1 text-sm text-red-600">{errors.images}</p>}
@@ -438,7 +438,7 @@ const AddProperty = () => {
                     onChange={handleInputChange}
                     min="0"
                     step="0.01"
-                    className="mt-1 block w-full rounded-md border-stone-300 text-gray-900 shadow-sm focus:border-yellow-600 focus:ring-yellow-600"
+                    className="mt-1 block w-full rounded-md border-stone-300 text-gray-900 shadow-sm focus:border-stone-600 focus:ring-stone-600"
                     placeholder="Enter price in INR"
                   />
                   {errors.price && <p className="mt-1 text-sm text-red-600">{errors.price}</p>}
@@ -454,7 +454,7 @@ const AddProperty = () => {
                     name="location"
                     value={formData.location}
                     onChange={handleInputChange}
-                    className="mt-1 block w-full rounded-md border-stone-300 text-gray-900 shadow-sm focus:border-yellow-600 focus:ring-yellow-600"
+                    className="mt-1 block w-full rounded-md border-stone-300 text-gray-900 shadow-sm focus:border-stone-600 focus:ring-stone-600"
                     placeholder="Enter location"
                   />
                   {errors.location && <p className="mt-1 text-sm text-red-600">{errors.location}</p>}
@@ -471,7 +471,7 @@ const AddProperty = () => {
                     value={formData.carpet_area}
                     onChange={handleInputChange}
                     min="0"
-                    className="mt-1 block w-full rounded-md border-stone-300 text-gray-900 shadow-sm focus:border-yellow-600 focus:ring-yellow-600"
+                    className="mt-1 block w-full rounded-md border-stone-300 text-gray-900 shadow-sm focus:border-stone-600 focus:ring-stone-600"
                     placeholder="Enter carpet area"
                   />
                   {errors.carpet_area && <p className="mt-1 text-sm text-red-600">{errors.carpet_area}</p>}
@@ -487,7 +487,7 @@ const AddProperty = () => {
                     name="configuration"
                     value={formData.configuration}
                     onChange={handleInputChange}
-                    className="mt-1 block w-full rounded-md border-stone-300 text-gray-900 shadow-sm focus:border-yellow-600 focus:ring-yellow-600"
+                    className="mt-1 block w-full rounded-md border-stone-300 text-gray-900 shadow-sm focus:border-stone-600 focus:ring-stone-600"
                     placeholder="Enter BHK (e.g., 2 BHK)"
                   />
                   {errors.configuration && <p className="mt-1 text-sm text-red-600">{errors.configuration}</p>}
@@ -504,7 +504,7 @@ const AddProperty = () => {
                     value={formData.total_floors}
                     onChange={handleInputChange}
                     min="0"
-                    className="mt-1 block w-full rounded-md border-stone-300 text-gray-900 shadow-sm focus:border-yellow-600 focus:ring-yellow-600"
+                    className="mt-1 block w-full rounded-md border-stone-300 text-gray-900 shadow-sm focus:border-stone-600 focus:ring-stone-600"
                     placeholder="Enter total floors"
                   />
                   {errors.total_floors && <p className="mt-1 text-sm text-red-600">{errors.total_floors}</p>}
@@ -521,7 +521,7 @@ const AddProperty = () => {
                     value={formData.total_units}
                     onChange={handleInputChange}
                     min="0"
-                    className="mt-1 block w-full rounded-md border-stone-300 text-gray-900 shadow-sm focus:border-yellow-600 focus:ring-yellow-600"
+                    className="mt-1 block w-full rounded-md border-stone-300 text-gray-900 shadow-sm focus:border-stone-600 focus:ring-stone-600"
                     placeholder="Enter total units"
                   />
                   {errors.total_units && <p className="mt-1 text-sm text-red-600">{errors.total_units}</p>}
@@ -536,7 +536,7 @@ const AddProperty = () => {
                     name="status"
                     value={formData.status}
                     onChange={handleInputChange}
-                    className="mt-1 block w-full rounded-md border-stone-300 shadow-sm focus:border-yellow-600 focus:ring-yellow-600"
+                    className="mt-1 block w-full rounded-md border-stone-300 shadow-sm focus:border-stone-600 focus:ring-stone-600"
                   >
                     <option value="">Select status</option>
                     <option value="Ready">Ready to Move</option>
@@ -556,7 +556,7 @@ const AddProperty = () => {
                     name="rera_number"
                     value={formData.rera_number}
                     onChange={handleInputChange}
-                    className="mt-1 block w-full rounded-md border-stone-300 text-gray-900 shadow-sm focus:border-yellow-600 focus:ring-yellow-600"
+                    className="mt-1 block w-full rounded-md border-stone-300 text-gray-900 shadow-sm focus:border-stone-600 focus:ring-stone-600"
                     placeholder="Enter RERA number"
                   />
                   {errors.rera_number && <p className="mt-1 text-sm text-red-600">{errors.rera_number}</p>}
@@ -572,7 +572,7 @@ const AddProperty = () => {
                         type="text"
                         value={amenity}
                         onChange={(e) => handleArrayChange(e, index, 'amenities')}
-                        className="block w-full rounded-md border-stone-300 text-gray-900 shadow-sm focus:border-yellow-600 focus:ring-yellow-600"
+                        className="block w-full rounded-md border-stone-300 text-gray-900 shadow-sm focus:border-stone-600 focus:ring-stone-600"
                         placeholder={`Enter amenity ${index + 1}`}
                       />
                       {index > 0 && (
@@ -606,7 +606,7 @@ const AddProperty = () => {
                     name="developer_name"
                     value={formData.developer_name}
                     onChange={handleInputChange}
-                    className="mt-1 block w-full rounded-md border-stone-300 text-gray-900 shadow-sm focus:border-yellow-600 focus:ring-yellow-600"
+                    className="mt-1 block w-full rounded-md border-stone-300 text-gray-900 shadow-sm focus:border-stone-600 focus:ring-stone-600"
                     placeholder="Enter developer name"
                   />
                   {errors.developer_name && <p className="mt-1 text-sm text-red-600">{errors.developer_name}</p>}
@@ -622,7 +622,7 @@ const AddProperty = () => {
                     name="developer_tagline"
                     value={formData.developer_tagline}
                     onChange={handleInputChange}
-                    className="mt-1 block w-full rounded-md border-stone-300 text-gray-900 shadow-sm focus:border-yellow-600 focus:ring-yellow-600"
+                    className="mt-1 block w-full rounded-md border-stone-300 text-gray-900 shadow-sm focus:border-stone-600 focus:ring-stone-600"
                     placeholder="Enter developer tagline"
                   />
                   {errors.developer_tagline && <p className="mt-1 text-sm text-red-600">{errors.developer_tagline}</p>}
@@ -639,7 +639,7 @@ const AddProperty = () => {
                     value={formData.developer_experience}
                     onChange={handleInputChange}
                     min="0"
-                    className="mt-1 block w-full rounded-md border-stone-300 text-gray-900 shadow-sm focus:border-yellow-600 focus:ring-yellow-600"
+                    className="mt-1 block w-full rounded-md border-stone-300 text-gray-900 shadow-sm focus:border-stone-600 focus:ring-stone-600"
                     placeholder="Enter years of experience"
                   />
                   {errors.developer_experience && (
@@ -658,7 +658,7 @@ const AddProperty = () => {
                     value={formData.developer_projects_completed}
                     onChange={handleInputChange}
                     min="0"
-                    className="mt-1 block w-full rounded-md border-stone-300 text-gray-900 shadow-sm focus:border-yellow-600 focus:ring-yellow-600"
+                    className="mt-1 block w-full rounded-md border-stone-300 text-gray-900 shadow-sm focus:border-stone-600 focus:ring-stone-600"
                     placeholder="Enter number of projects completed"
                   />
                   {errors.developer_projects_completed && (
@@ -677,7 +677,7 @@ const AddProperty = () => {
                     value={formData.developer_happy_families}
                     onChange={handleInputChange}
                     min="0"
-                    className="mt-1 block w-full rounded-md border-stone-300 text-gray-900 shadow-sm focus:border-yellow-600 focus:ring-yellow-600"
+                    className="mt-1 block w-full rounded-md border-stone-300 text-gray-900 shadow-sm focus:border-stone-600 focus:ring-stone-600"
                     placeholder="Enter number of happy families"
                   />
                   {errors.developer_happy_families && (
@@ -695,14 +695,14 @@ const AddProperty = () => {
                         type="text"
                         value={landmark.name}
                         onChange={(e) => handleLandmarkChange(e, index, 'name')}
-                        className="block w-2/3 rounded-md border-stone-300 text-gray-900 shadow-sm focus:border-yellow-600 focus:ring-yellow-600"
+                        className="block w-2/3 rounded-md border-stone-300 text-gray-900 shadow-sm focus:border-stone-600 focus:ring-stone-600"
                         placeholder="Landmark name"
                       />
                       <input
                         type="text"
                         value={landmark.distance}
                         onChange={(e) => handleLandmarkChange(e, index, 'distance')}
-                        className="block w-1/3 rounded-md border-stone-300 text-gray-900 shadow-sm focus:border-yellow-600 focus:ring-yellow-600"
+                        className="block w-1/3 rounded-md border-stone-300 text-gray-900 shadow-sm focus:border-stone-600 focus:ring-stone-600"
                         placeholder="Distance (km)"
                       />
                       {index > 0 && (
@@ -736,7 +736,7 @@ const AddProperty = () => {
                     name="agent_name"
                     value={formData.agent_name}
                     onChange={handleInputChange}
-                    className="mt-1 block w-full rounded-md border-stone-300 text-gray-900 shadow-sm focus:border-yellow-600 focus:ring-yellow-600"
+                    className="mt-1 block w-full rounded-md border-stone-300 text-gray-900 shadow-sm focus:border-stone-600 focus:ring-stone-600"
                     placeholder="Enter agent name"
                   />
                   {errors.agent_name && <p className="mt-1 text-sm text-red-600">{errors.agent_name}</p>}
@@ -752,7 +752,7 @@ const AddProperty = () => {
                     name="agent_role"
                     value={formData.agent_role}
                     onChange={handleInputChange}
-                    className="mt-1 block w-full rounded-md border-stone-300 text-gray-900 shadow-sm focus:border-yellow-600 focus:ring-yellow-600"
+                    className="mt-1 block w-full rounded-md border-stone-300 text-gray-900 shadow-sm focus:border-stone-600 focus:ring-stone-600"
                     placeholder="Enter agent role"
                   />
                   {errors.agent_role && <p className="mt-1 text-sm text-red-600">{errors.agent_role}</p>}
@@ -768,7 +768,7 @@ const AddProperty = () => {
                     name="agent_phone"
                     value={formData.agent_phone}
                     onChange={handleInputChange}
-                    className="mt-1 block w-full rounded-md border-stone-300 text-gray-900 shadow-sm focus:border-yellow-600 focus:ring-yellow-600"
+                    className="mt-1 block w-full rounded-md border-stone-300 text-gray-900 shadow-sm focus:border-stone-600 focus:ring-stone-600"
                     placeholder="Enter agent phone"
                   />
                   {errors.agent_phone && <p className="mt-1 text-sm text-red-600">{errors.agent_phone}</p>}
@@ -784,7 +784,7 @@ const AddProperty = () => {
                     name="agent_email"
                     value={formData.agent_email}
                     onChange={handleInputChange}
-                    className="mt-1 block w-full rounded-md border-stone-300 text-gray-900 shadow-sm focus:border-yellow-600 focus:ring-yellow-600"
+                    className="mt-1 block w-full rounded-md border-stone-300 text-gray-900 shadow-sm focus:border-stone-600 focus:ring-stone-600"
                     placeholder="Enter agent email"
                   />
                   {errors.agent_email && <p className="mt-1 text-sm text-red-600">{errors.agent_email}</p>}
@@ -800,7 +800,7 @@ const AddProperty = () => {
                     name="agent_availability"
                     value={formData.agent_availability}
                     onChange={handleInputChange}
-                    className="mt-1 block w-full rounded-md border-stone-300 text-gray-900 shadow-sm focus:border-yellow-600 focus:ring-yellow-600"
+                    className="mt-1 block w-full rounded-md border-stone-300 text-gray-900 shadow-sm focus:border-stone-600 focus:ring-stone-600"
                     placeholder="Enter agent availability (e.g., Mon-Fri 9AM-5PM)"
                   />
                   {errors.agent_availability && (
@@ -821,7 +821,7 @@ const AddProperty = () => {
                     min="0"
                     max="5"
                     step="0.1"
-                    className="mt-1 block w-full rounded-md border-stone-300 text-gray-900 shadow-sm focus:border-yellow-600 focus:ring-yellow-600"
+                    className="mt-1 block w-full rounded-md border-stone-300 text-gray-900 shadow-sm focus:border-stone-600 focus:ring-stone-600"
                     placeholder="Enter rating (0-5)"
                   />
                   {errors.agent_rating && <p className="mt-1 text-sm text-red-600">{errors.agent_rating}</p>}
@@ -838,7 +838,7 @@ const AddProperty = () => {
                     value={formData.agent_reviews}
                     onChange={handleInputChange}
                     min="0"
-                    className="mt-1 block w-full rounded-md border-stone-300 text-gray-900 shadow-sm focus:border-yellow-600 focus:ring-yellow-600"
+                    className="mt-1 block w-full rounded-md border-stone-300 text-gray-900 shadow-sm focus:border-stone-600 focus:ring-stone-600"
                     placeholder="Enter number of reviews"
                   />
                   {errors.agent_reviews && <p className="mt-1 text-sm text-red-600">{errors.agent_reviews}</p>}
@@ -853,7 +853,7 @@ const AddProperty = () => {
                     id="agents_image"
                     value={formData.agents_image[0]}
                     onChange={(e) => handleArrayChange(e, 0, 'agents_image')}
-                    className="mt-1 block w-full rounded-md border-stone-300 text-gray-900 shadow-sm focus:border-yellow-600 focus:ring-yellow-600"
+                    className="mt-1 block w-full rounded-md border-stone-300 text-gray-900 shadow-sm focus:border-stone-600 focus:ring-stone-600"
                     placeholder="Enter agent image URL (png, jpg, jpeg, gif)"
                   />
                   {errors.agents_image && <p className="mt-1 text-sm text-red-600">{errors.agents_image}</p>}
@@ -903,7 +903,7 @@ class AddPropertyErrorBoundary extends React.Component {
             <div className="mt-4 space-x-4">
               <Link
                 to="/signup"
-                className="inline-block bg-yellow-600 text-white px-6 py-2 rounded shadow hover:bg-yellow-500 transition"
+                className="inline-block bg-stone-600 text-white px-6 py-2 rounded shadow hover:bg-stone-500 transition"
               >
                 Back to Sign Up
               </Link>

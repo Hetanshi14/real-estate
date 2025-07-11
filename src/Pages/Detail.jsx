@@ -596,7 +596,7 @@ const Details = () => {
                 <h3 className="text-lg font-bold text-stone-700">{property.agent_name || 'N/A'}</h3>
                 <p className="text-stone-600 text-sm">{property.agent_role || 'Agent'}</p>
                 <div className="flex items-center justify-center mt-2">
-                  <div className="flex text-yellow-500">
+                  <div className="flex text-stone-500">
                     {property.agent_rating ? (
                       <>
                         {Array(Math.round(property.agent_rating)).fill().map((_, i) => (

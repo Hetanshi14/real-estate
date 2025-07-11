@@ -176,7 +176,7 @@ const SignUp = () => {
                   name="name"
                   value={formData.name}
                   onChange={handleInputChange}
-                  className="mt-1 block w-full rounded-md border-stone-300 shadow-sm focus:border-yellow-600 focus:ring-yellow-600"
+                  className="mt-1 block w-full rounded-md border-stone-300 shadow-sm focus:border-stone-600 focus:ring-stone-600"
                   placeholder="Enter builder name"
                 />
                 {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
@@ -192,7 +192,7 @@ const SignUp = () => {
                   name="contact"
                   value={formData.contact}
                   onChange={handleInputChange}
-                  className="mt-1 block w-full rounded-md border-stone-300 shadow-sm focus:border-yellow-600 focus:ring-yellow-600"
+                  className="mt-1 block w-full rounded-md border-stone-300 shadow-sm focus:border-stone-600 focus:ring-stone-600"
                   placeholder="Enter email address"
                 />
                 {errors.contact && <p className="mt-1 text-sm text-red-600">{errors.contact}</p>}
@@ -208,7 +208,7 @@ const SignUp = () => {
                   name="logo_url"
                   value={formData.logo_url}
                   onChange={handleInputChange}
-                  className="mt-1 block w-full rounded-md border-stone-300 shadow-sm focus:border-yellow-600 focus:ring-yellow-600"
+                  className="mt-1 block w-full rounded-md border-stone-300 shadow-sm focus:border-stone-600 focus:ring-stone-600"
                   placeholder="Enter logo image URL (png, jpg, jpeg, gif)"
                 />
                 {errors.logo_url && <p className="mt-1 text-sm text-red-600">{errors.logo_url}</p>}
@@ -227,7 +227,7 @@ const SignUp = () => {
                   name="tagline"
                   value={formData.tagline}
                   onChange={handleInputChange}
-                  className="mt-1 block w-full rounded-md border-stone-300 shadow-sm focus:border-yellow-600 focus:ring-yellow-600"
+                  className="mt-1 block w-full rounded-md border-stone-300 shadow-sm focus:border-stone-600 focus:ring-stone-600"
                   placeholder="Enter tagline"
                 />
               </div>
@@ -243,7 +243,7 @@ const SignUp = () => {
                   value={formData.experience}
                   onChange={handleInputChange}
                   min="0"
-                  className="mt-1 block w-full rounded-md border-stone-300 shadow-sm focus:border-yellow-600 focus:ring-yellow-600"
+                  className="mt-1 block w-full rounded-md border-stone-300 shadow-sm focus:border-stone-600 focus:ring-stone-600"
                   placeholder="Enter years of experience"
                 />
                 {errors.experience && <p className="mt-1 text-sm text-red-600">{errors.experience}</p>}
@@ -260,7 +260,7 @@ const SignUp = () => {
                   value={formData.projects_completed}
                   onChange={handleInputChange}
                   min="0"
-                  className="mt-1 block w-full rounded-md border-stone-300 shadow-sm focus:border-yellow-600 focus:ring-yellow-600"
+                  className="mt-1 block w-full rounded-md border-stone-300 shadow-sm focus:border-stone-600 focus:ring-stone-600"
                   placeholder="Enter number of projects completed"
                 />
                 {errors.projects_completed && (
@@ -279,7 +279,7 @@ const SignUp = () => {
                   value={formData.happy_families}
                   onChange={handleInputChange}
                   min="0"
-                  className="mt-1 block w-full rounded-md border-stone-300 shadow-sm focus:border-yellow-600 focus:ring-yellow-600"
+                  className="mt-1 block w-full rounded-md border-stone-300 shadow-sm focus:border-stone-600 focus:ring-stone-600"
                   placeholder="Enter number of happy families"
                 />
                 {errors.happy_families && <p className="mt-1 text-sm text-red-600">{errors.happy_families}</p>}

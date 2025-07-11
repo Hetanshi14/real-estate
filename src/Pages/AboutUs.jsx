@@ -347,7 +347,7 @@ const AboutUs = () => {
                           <li key={property.id}>
                             <Link
                               to={`/listings/${property.id}`}
-                              className="text-stone-600 hover:text-yellow-600 hover:underline"
+                              className="text-stone-700 hover:text-stone-600 hover:underline"
                             >
                               {property.name} ({property.property_type})
                             </Link>
