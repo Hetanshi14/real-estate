@@ -568,20 +568,6 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Book a Visit Section */}
-      <section className="text-stone-700 py-12 text-center px-4">
-        <h2 className="text-2xl font-bold mb-4">Ready to Book a Site Visit?</h2>
-        <p className="mb-6">Get expert advice and see properties firsthand.</p>
-        <Link
-          to="/booking"
-          className="relative inline-block px-6 py-2 rounded font-medium text-white bg-stone-700 z-10 overflow-hidden
-            before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-500 
-            before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
-        >
-          Book Now
-        </Link>
-      </section>
-
       {/* Contact Section */}
       <section className="text-stone-700 py-10 text-center">
         <h2 className="text-xl font-bold mb-2">Have Questions?</h2>

@@ -67,7 +67,7 @@ const FilterBar = ({ filters, setFilters, clearFilters }) => {
         </select>
         <button
           onClick={clearFilters}
-          className="bg-yellow-600 text-white px-4 py-2 rounded shadow hover:bg-yellow-500 transition"
+          className="bg-stone-700 text-white px-4 py-2 rounded shadow hover:bg-stone-600 transition"
         >
           Clear Filters
         </button>
@@ -328,7 +328,10 @@ const Listings = () => {
             <button
               onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
               disabled={page === 1}
-              className="bg-yellow-600 text-white px-4 py-2 rounded shadow hover:bg-yellow-500 transition disabled:opacity-50"
+              className="relative inline-block px-6 py-2 rounded font-medium text-white bg-stone-700 z-10 overflow-hidden
+    before:absolute before:right-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
+    before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white
+    disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Previous
             </button>
@@ -338,7 +341,10 @@ const Listings = () => {
             <button
               onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
               disabled={page === totalPages}
-              className="bg-yellow-600 text-white px-4 py-2 rounded shadow hover:bg-yellow-500 transition disabled:opacity-50"
+              className="relative inline-block px-6 py-2 rounded font-medium text-white bg-stone-700 z-10 overflow-hidden
+    before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
+    before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white
+    disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Next
             </button>

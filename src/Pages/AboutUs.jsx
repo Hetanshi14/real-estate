@@ -126,13 +126,17 @@ const AboutUs = () => {
           <div className="flex justify-start gap-4 mt-6 flex-wrap">
             <Link
               to="/signup"
-              className="bg-yellow-600 text-white px-6 py-2 rounded shadow hover:bg-yellow-500 transition"
+              className="relative inline-block px-6 py-2 rounded font-medium text-white bg-stone-800 z-10 overflow-hidden
+    before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
+    before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
             >
               Join as a Builder
             </Link>
             <Link
               to="/listings"
-              className="border border-white px-6 py-2 rounded text-white hover:bg-white hover:text-stone-700 transition"
+              className="relative inline-block px-6 py-2 rounded font-medium text-white border border-white z-10 overflow-hidden
+    before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-white
+    before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-stone-700 transition"
             >
               Explore Properties
             </Link>
@@ -149,7 +153,7 @@ const AboutUs = () => {
       >
         <div>
           <h2 className="text-4xl font-bold mb-4">
-            Empowering Builders to <span className="text-yellow-600">Shape Futures</span>
+            Empowering Builders to <span className="text-stone-500">Shape Futures</span>
           </h2>
           <p className="text-lg mb-4 text-stone-600">
             Since 2011, Zivaas Properties has been the go-to platform for builders to showcase their projects, from luxurious residences to modern commercial spaces, reaching customers eager to find their dream properties.
@@ -166,7 +170,7 @@ const AboutUs = () => {
               { stat: '10K+', label: 'Happy Customers' },
             ].map(({ stat, label }, i) => (
               <div key={i} className="text-center">
-                <h3 className="text-3xl font-bold text-yellow-600">{stat}</h3>
+                <h3 className="text-3xl font-bold text-stone-600">{stat}</h3>
                 <p className="text-sm text-stone-600 mt-1">{label}</p>
               </div>
             ))}
@@ -203,7 +207,7 @@ const AboutUs = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-6xl mx-auto">
           <div className="bg-white p-6 rounded-lg shadow">
-            <h3 className="text-2xl font-semibold text-yellow-700 mb-4">Our Purpose</h3>
+            <h3 className="text-2xl font-semibold text-stone-700 mb-4">Our Purpose</h3>
             <p className="text-stone-600 mb-4">
               To provide builders with a powerful platform to showcase their projects and connect directly with customers, delivering seamless, transparent real estate solutions.
             </p>
@@ -216,7 +220,7 @@ const AboutUs = () => {
           </div>
 
           <div className="bg-white p-6 rounded-lg shadow">
-            <h3 className="text-2xl font-semibold text-yellow-700 mb-4">Our Promise</h3>
+            <h3 className="text-2xl font-semibold text-stone-700 mb-4">Our Promise</h3>
             <p className="text-stone-600">
               To be the leading real estate platform where builders thrive and customers find their dream homes, creating lasting value for communities.
             </p>
@@ -367,13 +371,17 @@ const AboutUs = () => {
         <div className="mt-12 text-center">
           <Link
             to="/signup"
-            className="inline-block bg-yellow-600 text-white px-6 py-2 rounded shadow hover:bg-yellow-500 transition mr-4"
+            className="relative inline-block px-6 py-2 rounded font-medium text-white bg-stone-700 z-10 overflow-hidden mr-4
+    before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
+    before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white shadow transition"
           >
             Join as a Builder
           </Link>
           <Link
             to="/listings"
-            className="inline-block border border-stone-600 text-stone-600 px-6 py-2 rounded hover:bg-stone-600 hover:text-white transition"
+            className="relative inline-block px-6 py-2 rounded font-medium text-stone-600 border border-stone-600 z-10 overflow-hidden
+    before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-700
+    before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white transition"
           >
             Browse All Properties
           </Link>

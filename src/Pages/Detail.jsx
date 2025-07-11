@@ -107,7 +107,9 @@ const EMICalculator = () => {
               </div>
               <button
                 onClick={calculateEMI}
-                className="w-full bg-blue-500 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-600 transition-colors"
+                className="relative inline-block w-full py-3 px-6 rounded-lg font-semibold text-white bg-stone-700 z-10 overflow-hidden
+    before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
+    before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white transition-colors"
               >
                 Calculate EMI
               </button>
@@ -343,35 +345,35 @@ const Details = () => {
         <div className="max-w-6xl mx-auto px-4 py-4">
           <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-4 text-center">
             <div className="p-3">
-              <div className="text-lg font-bold text-blue-500">₹{property.price.toLocaleString('en-IN')}</div>
+              <div className="text-lg font-bold text-stone-700">₹{property.price.toLocaleString('en-IN')}</div>
               <div className="text-sm text-stone-600">Price</div>
             </div>
             <div className="p-3">
-              <div className="text-lg font-bold text-blue-500">{property.carpet_area} sq.ft</div>
+              <div className="text-lg font-bold text-stone-700">{property.carpet_area} sq.ft</div>
               <div className="text-sm text-stone-600">Carpet Area</div>
             </div>
             <div className="p-3">
-              <div className="text-lg font-bold text-blue-500">{property.configuration}</div>
+              <div className="text-lg font-bold text-stone-700">{property.configuration}</div>
               <div className="text-sm text-stone-600">Configuration</div>
             </div>
             <div className="p-3">
-              <div className="text-lg font-bold text-blue-500">{property.property_type}</div>
+              <div className="text-lg font-bold text-stone-700">{property.property_type}</div>
               <div className="text-sm text-stone-600">Type</div>
             </div>
             <div className="p-3">
-              <div className="text-lg font-bold text-blue-500">{property.total_floors} Floors</div>
+              <div className="text-lg font-bold text-stone-700">{property.total_floors} Floors</div>
               <div className="text-sm text-stone-600">Total Floors</div>
             </div>
             <div className="p-3">
-              <div className="text-lg font-bold text-blue-500">{property.total_units} Units</div>
+              <div className="text-lg font-bold text-stone-700">{property.total_units} Units</div>
               <div className="text-sm text-stone-600">Total Units</div>
             </div>
             <div className="p-3">
-              <div className="text-lg font-bold text-yellow-500">{property.status}</div>
+              <div className="text-lg font-bold text-stone-900">{property.status}</div>
               <div className="text-sm text-stone-600">Status</div>
             </div>
             <div className="p-3">
-              <div className="text-lg font-bold text-blue-500">{property.rera_number}</div>
+              <div className="text-lg font-bold text-stone-700">{property.rera_number}</div>
               <div className="text-sm text-stone-600">RERA Number</div>
             </div>
           </div>
@@ -398,23 +400,23 @@ const Details = () => {
               <h3 className="text-xl font-bold text-stone-700 mb-4">Key Highlights</h3>
               <ul className="space-y-2">
                 <li className="flex items-center">
-                  <i className="ri-checkbox-line text-blue-500 mr-2 text-xl"></i>
+                  <i className="ri-checkbox-line text-stone-700 mr-2 text-xl"></i>
                   <span className="text-stone-700">Prime location in {property.location} with excellent connectivity</span>
                 </li>
                 <li className="flex items-center">
-                  <i className="ri-checkbox-line text-blue-500 mr-2 text-xl"></i>
+                  <i className="ri-checkbox-line text-stone-700 mr-2 text-xl"></i>
                   <span className="text-stone-700">{property.total_floors}-floor tower with panoramic city views</span>
                 </li>
                 <li className="flex items-center">
-                  <i className="ri-checkbox-line text-blue-500 mr-2 text-xl"></i>
+                  <i className="ri-checkbox-line text-stone-700 mr-2 text-xl"></i>
                   <span className="text-stone-700">Premium amenities including clubhouse and swimming pool</span>
                 </li>
                 <li className="flex items-center">
-                  <i className="ri-checkbox-line text-blue-500 mr-2 text-xl"></i>
+                  <i className="ri-checkbox-line text-stone-700 mr-2 text-xl"></i>
                   <span className="text-stone-700">RERA approved project with transparent pricing</span>
                 </li>
                 <li className="flex items-center">
-                  <i className="ri-checkbox-line text-blue-500 mr-2 text-xl"></i>
+                  <i className="ri-checkbox-line text-stone-700 mr-2 text-xl"></i>
                   <span className="text-stone-700">{property.status} with immediate possession available</span>
                 </li>
               </ul>
@@ -496,15 +498,15 @@ const Details = () => {
                 </div>
                 <div className="grid grid-cols-3 gap-4 mb-6">
                   <div className="text-center">
-                    <div className="text-xl font-bold text-blue-500">{property.developer_experience || 0}+</div>
+                    <div className="text-xl font-bold text-stone-700">{property.developer_experience || 0}+</div>
                     <div className="text-sm text-stone-600">Years Experience</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-xl font-bold text-blue-500">{property.developer_projects_completed || 0}+</div>
+                    <div className="text-xl font-bold text-stone-700">{property.developer_projects_completed || 0}+</div>
                     <div className="text-sm text-stone-600">Projects</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-xl font-bold text-blue-500">{(property.developer_happy_families || 0).toLocaleString('en-IN')}+</div>
+                    <div className="text-xl font-bold text-stone-700">{(property.developer_happy_families || 0).toLocaleString('en-IN')}+</div>
                     <div className="text-sm text-stone-600">Happy Families</div>
                   </div>
                 </div>
@@ -545,7 +547,7 @@ const Details = () => {
                 <div className="space-y-3">
                   {property.nearby_landmarks?.landmarks?.map((landmark, index) => (
                     <div key={index} className="flex items-center">
-                      <i className="ri-map-pin-line text-blue-500 mr-2"></i>
+                      <i className="ri-map-pin-line text-stone-700 mr-2"></i>
                       <span className="text-stone-700">{landmark.name} ({landmark.distance})</span>
                     </div>
                   ))}
@@ -615,26 +617,30 @@ const Details = () => {
               </div>
               <div className="space-y-3">
                 <div className="flex items-center">
-                  <i className="ri-phone-line text-blue-500 mr-2"></i>
+                  <i className="ri-phone-line text-stone-700 mr-2"></i>
                   <span className="text-stone-700">{property.agent_phone || 'N/A'}</span>
                 </div>
                 <div className="flex items-center">
-                  <i className="ri-mail-line text-blue-500 mr-2"></i>
+                  <i className="ri-mail-line text-stone-700 mr-2"></i>
                   <span className="text-stone-700">{property.agent_email || 'N/A'}</span>
                 </div>
                 {property.agent_availability && (
                   <div className="flex items-center">
-                    <i className="ri-time-line text-blue-500 mr-2"></i>
+                    <i className="ri-time-line text-stone-700 mr-2"></i>
                     <span className="text-stone-700">Available: {property.agent_availability}</span>
                   </div>
                 )}
               </div>
               <div className="grid grid-cols-2 gap-4 mt-6">
-                <button className="bg-blue-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
+                <button className="relative inline-block py-2 px-4 rounded-lg font-semibold text-white bg-stone-700 z-10 overflow-hidden
+    before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
+    before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white transition-colors">
                   <i className="ri-phone-line mr-2"></i>
                   Call Now
                 </button>
-                <button className="border border-blue-600 text-blue-600 py-2 px-4 rounded-lg font-semibold hover:bg-blue-600 hover:text-white transition-colors">
+                <button className="relative inline-block py-2 px-4 rounded-lg font-semibold text-stone-600 border border-stone-600 z-10 overflow-hidden
+    before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
+    before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white transition-colors">
                   <i className="ri-message-line mr-2"></i>
                   Message
                 </button>
@@ -648,35 +654,37 @@ const Details = () => {
                   <input
                     type="text"
                     placeholder="First Name"
-                    className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                    className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500 focus:border-transparent text-sm"
                   />
                   <input
                     type="text"
                     placeholder="Last Name"
-                    className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                    className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500 focus:border-transparent text-sm"
                   />
                 </div>
                 <input
                   type="email"
                   placeholder="Email Address"
-                  className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500 focus:border-transparent text-sm"
                 />
                 <input
                   type="tel"
                   placeholder="Phone Number"
-                  className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500 focus:border-transparent text-sm"
                 />
                 <input
                   type="date"
-                  className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500 focus:border-transparent text-sm"
                 />
                 <textarea
                   placeholder="Special Requirements (Optional)"
                   rows="3"
-                  className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500 focus:border-transparent text-sm"
                 ></textarea>
                 <button
-                  className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                  className="relative inline-block w-full py-3 px-6 rounded-lg font-semibold text-white bg-stone-700 z-10 overflow-hidden
+    before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
+    before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white transition-colors"
                 >
                   Book Site Visit
                 </button>

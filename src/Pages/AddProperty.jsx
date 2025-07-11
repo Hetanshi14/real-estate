@@ -589,7 +589,7 @@ const AddProperty = () => {
                   <button
                     type="button"
                     onClick={addAmenity}
-                    className="mt-2 text-yellow-600 hover:text-yellow-800"
+                    className="mt-2 text-stone-600 hover:text-stone-900"
                   >
                     Add Amenity
                   </button>
@@ -719,7 +719,7 @@ const AddProperty = () => {
                   <button
                     type="button"
                     onClick={addLandmark}
-                    className="mt-2 text-yellow-600 hover:text-yellow-800"
+                    className="mt-2 text-stone-600 hover:text-stone-900"
                   >
                     Add Landmark
                   </button>
@@ -862,7 +862,10 @@ const AddProperty = () => {
                 <div className="text-center">
                   <button
                     onClick={handleSubmit}
-                    className="bg-yellow-600 text-white px-6 py-2 rounded shadow hover:bg-yellow-500 transition disabled:opacity-50"
+                    className="relative inline-block px-6 py-2 rounded font-medium text-white bg-stone-700 z-10 overflow-hidden
+    before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
+    before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white
+    shadow transition disabled:opacity-50 disabled:cursor-not-allowed"
                     disabled={loading}
                   >
                     Add Property
