@@ -11,20 +11,20 @@ const FilterBar = ({ filters, setFilters, clearFilters }) => {
   };
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-5 gap-3 justify-center items-center p-4 max-w-6xl mx-auto">
+    <div className="grid grid-cols-2 md:grid-cols-6 gap-3 justify-center items-center p-4 max-w-8xl mx-auto">
       <input
         type="text"
         name="location"
         value={filters.location}
         onChange={handleChange}
         placeholder="Location"
-        className="border bg-stone-200 text-stone-700 border-stone-300 p-2 rounded w-[150px] md:w-[170px]"
+        className="border bg-stone-200 text-stone-700 border-stone-300 p-2 rounded w-[130px] md:w-[150px]"
       />
       <select
         name="price"
         value={filters.price}
         onChange={handleChange}
-        className="border bg-stone-200 text-stone-700 border-stone-300 p-2 rounded w-[150px] md:w-[170px]"
+        className="border bg-stone-200 text-stone-700 border-stone-300 p-2 rounded w-[130px] md:w-[150px]"
       >
         <option value="">Price</option>
         <option value="0-5000000">0-₹50L</option>
@@ -37,7 +37,7 @@ const FilterBar = ({ filters, setFilters, clearFilters }) => {
         name="type"
         value={filters.type}
         onChange={handleChange}
-        className="border bg-stone-200 text-stone-700 border-stone-300 p-2 rounded w-[150px] md:w-[170px]"
+        className="border bg-stone-200 text-stone-700 border-stone-300 p-2 rounded w-[130px] md:w-[150px]"
       >
         <option value="">Type</option>
         <option value="Residential">Residential</option>
@@ -47,7 +47,7 @@ const FilterBar = ({ filters, setFilters, clearFilters }) => {
         name="status"
         value={filters.status}
         onChange={handleChange}
-        className="border bg-stone-200 text-stone-700 border-stone-300 p-2 rounded w-[150px] md:w-[170px]"
+        className="border bg-stone-200 text-stone-700 border-stone-300 p-2 rounded w-[130px] md:w-[150px]"
       >
         <option value="">Status</option>
         <option value="Ready">Ready to Move</option>
@@ -59,19 +59,19 @@ const FilterBar = ({ filters, setFilters, clearFilters }) => {
           name="sort"
           value={filters.sort}
           onChange={handleChange}
-          className="border bg-stone-200 text-stone-700 border-stone-300 p-2 rounded w-[150px] md:w-[170px]"
+          className="border bg-stone-200 text-stone-700 border-stone-300 p-2 rounded w-[130px] md:w-[150px]"
         >
           <option value="">Sort</option>
           <option value="priceLowHigh">Price: Low to High</option>
           <option value="priceHighLow">Price: High to Low</option>
         </select>
-        <button
-          onClick={clearFilters}
-          className="bg-stone-700 text-white px-4 py-2 rounded shadow hover:bg-stone-600 transition"
-        >
-          Clear Filters
-        </button>
       </div>
+      <button
+        onClick={clearFilters}
+        className="bg-stone-700 text-white px-4 py-2 rounded shadow w-auto hover:bg-stone-600 transition"
+      >
+        Clear Filters
+      </button>
     </div>
   );
 };
@@ -92,12 +92,12 @@ const Listings = () => {
     return stored
       ? JSON.parse(stored)
       : {
-          location: '',
-          price: '',
-          type: '',
-          status: '',
-          sort: '',
-        };
+        location: '',
+        price: '',
+        type: '',
+        status: '',
+        sort: '',
+      };
   });
 
   const sectionRefs = useRef([]);
@@ -241,9 +241,8 @@ const Listings = () => {
       <section
         id="section1"
         ref={(el) => (sectionRefs.current[0] = el)}
-        className={`relative bg-cover bg-center text-white h-[80vh] flex items-center p-20 transition-all duration-1000 transform ${
-          isVisible('section1') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-        }`}
+        className={`relative bg-cover bg-center text-white h-[80vh] flex items-center p-20 transition-all duration-1000 transform ${isVisible('section1') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+          }`}
         style={{ backgroundImage: `url(${bglisting})` }}
       >
         <div className="absolute inset-0 bg-black/60 z-0" />
@@ -258,9 +257,8 @@ const Listings = () => {
       <section
         id="section2"
         ref={(el) => (sectionRefs.current[1] = el)}
-        className={`max-w-6xl mx-auto py-12 px-4 transition-all duration-1000 transform ${
-          isVisible('section2') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-        }`}
+        className={`max-w-6xl mx-auto py-12 px-4 transition-all duration-1000 transform ${isVisible('section2') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+          }`}
       >
         <h2 className="text-4xl font-bold text-stone-700 mb-6 text-center">Available Properties</h2>
         {error && (
