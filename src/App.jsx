@@ -7,8 +7,10 @@ import Listings from './Pages/Listings';
 import Detail from './Pages/Detail';
 import AboutUs from './Pages/AboutUs';
 import Contact from './Pages/Contact';
-import AddProperty from './Pages/AddProperty';
 import Signup from './Pages/Signup';
+import Login from './Pages/Login';  
+import Profile from './Pages/Profile';
+
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
@@ -30,7 +32,8 @@ const App = () => {
         <Route path="/about" element={<AboutUs />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/signup" element={<Signup />} />
-        <Route path="/add-property" element={<AddProperty />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/profile" element={<Profile />} />
       </Routes>
       <Footer />
     </>

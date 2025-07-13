@@ -3,8 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { motion } from 'framer-motion';
 
-const EMICalculator = () => {
-  const [loanAmount, setLoanAmount] = useState("");
+const EMICalculator = ({ property }) => {
+  const [loanAmount, setLoanAmount] = useState(property?.price ? property.price.toString() : "");
   const [interestRate, setInterestRate] = useState("");
   const [loanTenure, setLoanTenure] = useState("");
   const [emiData, setEmiData] = useState({
@@ -158,19 +158,17 @@ const Details = () => {
         console.log('Fetching property with ID:', id);
         const { data: propertyData, error: propertyError } = await supabase
           .from('properties')
-          .select(
-            `
+          .select(`
             id,
             name,
-            property_type,
-            images,
-            price,
             location,
-            status,
-            configuration,
+            price,
             carpet_area,
+            configuration,
+            property_type,
             total_floors,
             total_units,
+            status,
             rera_number,
             amenities,
             developer_name,
@@ -186,15 +184,20 @@ const Details = () => {
             agent_availability,
             agent_rating,
             agent_reviews,
+            images,
+            created_at,
+            updated_at,
             agents_image,
             builder_id,
-            builders (
+            users (
               id,
-              name,
-              logo_url
+              username,
+              email,
+              role,
+              created_at,
+              updated_at
             )
-          `
-          )
+          `)
           .eq('id', id)
           .single();
 
@@ -222,19 +225,31 @@ const Details = () => {
         console.log('Raw amenities:', propertyData.amenities);
         console.log('Normalized amenities:', normalizedAmenities);
 
+        // Ensure users is always an array
+        const users = Array.isArray(propertyData.users) ? propertyData.users : [];
+        const builder = users.find((user) => user.role === 'builder' && user.id === propertyData.builder_id) || null;
+
         const mappedProperty = {
           ...propertyData,
-          builder_name: propertyData.builders?.name || propertyData.developer_name || 'Unknown Developer',
-          builder_logo: propertyData.builders?.logo_url || '',
+          builder_name: builder?.username || propertyData.developer_name || 'Unknown Developer',
+          builder_logo: builder?.avatar_url || (propertyData.agents_image?.[0] || ''),
+          agent_name: propertyData.agent_name,
+          agent_role: propertyData.agent_role,
+          agent_phone: propertyData.agent_phone,
+          agent_email: propertyData.agent_email,
+          agent_availability: propertyData.agent_availability || 'N/A',
+          agent_rating: propertyData.agent_rating || 0,
+          agent_reviews: propertyData.agent_reviews || 0,
+          agent_image: propertyData.agents_image?.[0] || 'https://images.unsplash.com/photo-1507003211168-6f7c6f1b6f1?auto=format&fit=crop&w=150&h=150&q=80',
           amenities: normalizedAmenities,
         };
         setProperty(mappedProperty);
 
         const imageUrls = Array.isArray(propertyData.images) && propertyData.images.length > 0
           ? propertyData.images.map((url, index) => ({
-            src: url,
-            alt: `${propertyData.name || 'Property'} - Image ${index + 1}`,
-          }))
+              src: url,
+              alt: `${propertyData.name || 'Property'} - Image ${index + 1}`,
+            }))
           : [];
         console.log('Image URLs:', imageUrls);
         setImages(imageUrls);
@@ -263,77 +278,75 @@ const Details = () => {
   );
 
   const amenityImages = {
-    '24/7 Security': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images//24-7%20security.png',
-    'Lift': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images//lift.png',
-    'Parking': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images//parking.png',
-    'Garden': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images//garden.jpeg',
-    'Swimming Pool': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images//swimming%20pool.jpeg',
-    'Gym': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images//gym.png',
-    'Clubhouse': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images//clubhouse.png',
-    'Cctv Surveillance': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images//cctv%20survelliance.png',
-    'Childrens Play Area': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images//children%20play%20area.png',
-    'Mini Theater Room': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images//mini%20theator.png',
-    'Power Backup': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images//power%20backup.png',
-    'Motion Sensor Lighting': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images//motion%20sensor.png',
-    'Indoor Games Room': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images//indoor%20games%20room.png',
-    'Fire Safety Systems': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images//fire%20safety%20systems.png',
-    'Smart Lock Access': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images//smart%20lock%20access.png',
-    'Home Theater Room': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images//Home%20Theater%20Room.png',
-    'Private Garden Seating Area': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images//Private%20Garden%20Seating%20Area.jpeg',
-    'Rooftop Garden': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images//Rooftop%20Garden.png',
-    'Air Conditioning In All Rooms': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images//Air%20Conditioning%20In%20All%20Rooms.jpeg',
-    'Cctv': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images//cctv.png',
-    'Gated Entry': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images//Gated%20Entry.png',
-    'Park Area': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images//Park%20Area.png',
-    'Security Guard': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images//Security%20Guard.png',
-    'Rainwater Harvesting': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images//Rainwater%20Harvesting.jpeg',
-    'Terrace/Balcony Sit-Out': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images//Terrace-Balcony%20Sit-Out.png',
-    'Video Door Phone': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images//Video%20Door%20Phone.png',
-    'Wi-Fi': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images//Wi-Fi.png',
-    'Backup Generator': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images//Backup%20Generator.png',
-    'Basement Parking': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images//Basement%20Parking.png',
-    'Main Road Facing': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images//Main%20Road%20Facing.png',
-    'Outdoor Seating Space': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images//Outdoor%20Seating%20Space.png',
-    'Double Height Ceiling': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images//Double%20Height%20Ceiling.png',
-    'Visitor Parking': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images//Visitor%20Parking.png',
-    'Multiple Showroom Floors': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images//Multiple%20Showroom%20Floors.png',
+    '24/7 Security': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/24-7%20security.png',
+    'Lift': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/lift.png',
+    'Parking': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/parking.png',
+    'Garden': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/garden.jpeg',
+    'Swimming Pool': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/swimming%20pool.jpeg',
+    'Gym': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/gym.png',
+    'Clubhouse': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/clubhouse.png',
+    'Cctv Surveillance': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/cctv%20survelliance.png',
+    'Childrens Play Area': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/children%20play%20area.png',
+    'Mini Theater Room': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/mini%20theator.png',
+    'Power Backup': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/power%20backup.png',
+    'Motion Sensor Lighting': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/motion%20sensor.png',
+    'Indoor Games Room': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/indoor%20games%20room.png',
+    'Fire Safety Systems': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/fire%20safety%20systems.png',
+    'Smart Lock Access': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/smart%20lock%20access.png',
+    'Home Theater Room': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Home%20Theater%20Room.png',
+    'Private Garden Seating Area': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Private%20Garden%20Seating%20Area.jpeg',
+    'Rooftop Garden': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Rooftop%20Garden.png',
+    'Air Conditioning In All Rooms': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Air%20Conditioning%20In%20All%20Rooms.jpeg',
+    'Cctv': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/cctv.png',
+    'Gated Entry': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Gated%20Entry.png',
+    'Park Area': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Park%20Area.png',
+    'Security': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Security%20Guard.png',
+    'Rainwater Harvesting': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Rainwater%20Harvesting.jpeg',
+    'Terrace/balcony Sit-out': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Terrace-Balcony%20Sit-Out.png',
+    'Video Door Phone': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Video%20Door%20Phone.png',
+    'Wi-fi': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Wi-Fi.png',
+    'Backup Generator': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Backup%20Generator.png',
+    'Basement Parking': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Basement%20Parking.png',
+    'Main Road Facing': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Main%20Road%20Facing.png',
+    'Outdoor Seating Space': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Outdoor%20Seating%20Space.png',
+    'Double Height Ceiling': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Double%20Height%20Ceiling.png',
+    'Visitor Parking': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Visitor%20Parking.png',
+    'Multiple Showroom Floors': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Multiple%20Showroom%20Floors.png',
   };
 
   return (
     <div className="min-h-screen">
       <section className="relative">
-  <motion.div
-    className="relative h-[100vh] overflow-hidden"
-    initial={{ opacity: 0 }}
-    animate={{ opacity: 1 }}
-    transition={{ duration: 0.6 }}
-  >
-    <img
-      src={property.images}
-      alt={property.name || 'Property Exterior'}
-      className="w-full h-full object-cover object-center"
-      onError={(e) => {
-        console.error('Failed to load hero image:', e.target.src);
-        e.target.src =
-          'https://images.unsplash.com/photo-1568605114967-8130f3a36994?auto=format&fit=crop&w=1200&h=500&q=80';
-      }}
-    />
-    <div className="absolute inset-0 bg-black/60 z-0"></div>
-    <motion.div
-      className="absolute inset-0 flex flex-col items-center justify-center text-center text-white z-10"
-      initial={{ opacity: 0, y: 30 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6 }}
-    >
-      <div className="px-4 max-w-4xl">
-        <h1 className="text-3xl md:text-5xl font-bold mb-3">{property.name}</h1>
-        <p className="text-xl md:text-2xl max-w-xl mx-auto">{property.developer_tagline || 'Premium Living'}</p>
-        <p className="text-lg opacity-90">{property.location}</p>
-      </div>
-    </motion.div>
-  </motion.div>
-</section>
-
+        <motion.div
+          className="relative h-[80vh] overflow-hidden"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6 }}
+        >
+          <img
+            src={images.length > 0 ? images[0].src : 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?auto=format&fit=crop&w=1200&h=500&q=80'}
+            alt={property.name || 'Property Exterior'}
+            className="w-full h-[80vh] object-center"
+            onError={(e) => {
+              console.error('Failed to load hero image:', e.target.src);
+              e.target.src = 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?auto=format&fit=crop&w=1200&h=500&q=80';
+            }}
+          />
+          <div className="absolute inset-0 bg-black/60 z-0"></div>
+          <motion.div
+            className="absolute inset-0 flex flex-col items-center justify-center text-center text-white z-10"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <div className="px-4 max-w-4xl">
+              <h1 className="text-3xl md:text-5xl font-bold mb-3">{property.name}</h1>
+              <p className="text-xl md:text-2xl max-w-xl mx-auto">{property.developer_tagline || 'Premium Living'}</p>
+              <p className="text-lg opacity-90">{property.location}</p>
+            </div>
+          </motion.div>
+        </motion.div>
+      </section>
 
       <motion.section
         className="sticky top-16 bg-white shadow-md z-20"
@@ -342,7 +355,7 @@ const Details = () => {
         viewport={{ once: true, amount: 0.3 }}
         transition={{ duration: 0.6 }}
       >
-        <div className="max-w-6xl mx-auto px-4 py-4">
+        <div className="max-w-6xl mx-auto px-4 py-2">
           <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-4 text-center">
             <div className="p-3">
               <div className="text-lg font-bold text-stone-700">₹{property.price.toLocaleString('en-IN')}</div>
@@ -421,11 +434,11 @@ const Details = () => {
                 </li>
               </ul>
             </div>
-            <div>
+            <div className="h-96 w-full">
               <img
-                src={images.length > 0 ? images[0].src : 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80'}
+                src={images.length > 1 ? images[1].src : (images.length > 0 ? images[0].src : 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80')}
                 alt={property.name}
-                className="max-w-full rounded-lg shadow-md object-cover object-center"
+                className="w-full h-full rounded-lg shadow-md object-center"
                 onError={(e) => {
                   console.error('Failed to load overview image:', e.target.src);
                   e.target.src = 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=600&h=400&q=80';
@@ -453,15 +466,10 @@ const Details = () => {
                   key={index}
                   className="bg-stone-50 p-4 rounded-lg text-center hover:shadow-md transition-shadow"
                 >
-                  <div className="w-12 h-12 bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <div className="w-8 h-4 bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-3">
                     <img
                       src={amenityImages[amenity] || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=32&h=32'}
                       alt={`${amenity} icon`}
-                      className="w-16 h-16 mr-3 object-cover object-center rounded-full"
-                      onError={(e) => {
-                        console.error('Failed to load amenity image:', e.target.src);
-                        e.target.src = 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=32&h=32';
-                      }}
                     />
                   </div>
                   <h3 className="font-semibold text-stone-700 text-sm">{amenity}</h3>
@@ -473,7 +481,6 @@ const Details = () => {
           )}
         </div>
       </motion.section>
-
 
       <motion.section
         className="py-12 bg-stone-50"
@@ -516,9 +523,9 @@ const Details = () => {
               </div>
               <div>
                 <img
-                  src={images.length > 0 ? images[0].src : 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80'}
+                  src={images.length > 2 ? images[2].src : (images.length > 0 ? images[0].src : 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80')}
                   alt={property.name || 'Property'}
-                  className="w-full h-64 object-cover rounded"
+                  className="w-full h-80 rounded"
                   onError={(e) => {
                     console.error('Failed to load developer image:', e.target.src);
                     e.target.src = 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?auto=format&fit=crop&w=400&h=300&q=80';
@@ -550,7 +557,7 @@ const Details = () => {
                       <i className="ri-map-pin-line text-stone-700 mr-2"></i>
                       <span className="text-stone-700">{landmark.name} ({landmark.distance})</span>
                     </div>
-                  ))}
+                  )) || <p className="text-stone-600">No nearby landmarks available.</p>}
                 </div>
               </div>
             </div>
@@ -563,14 +570,14 @@ const Details = () => {
                 style={{ border: 0 }}
                 loading="lazy"
                 allowFullScreen
-                src={`https://www.google.com/maps?q=${property.location}&output=embed`} />
+                src={`https://www.google.com/maps?q=${encodeURIComponent(property.location)}&output=embed`}
+              />
             </div>
-
           </div>
         </div>
       </motion.section>
 
-      <EMICalculator />
+      <EMICalculator property={property} />
 
       <motion.section
         className="py-12 bg-stone-50"
@@ -585,7 +592,7 @@ const Details = () => {
             <div className="bg-white rounded-lg shadow-md p-6">
               <div className="text-center mb-6">
                 <img
-                  src={property.agents_image?.[0] || 'https://images.unsplash.com/photo-1507003211168-6f7c6f1b6f1?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&h=150&q=80'}
+                  src={property.agent_image}
                   alt={property.agent_name || 'Agent'}
                   className="w-20 h-20 rounded-full mx-auto mb-3 object-cover object-center"
                   onError={(e) => {
@@ -593,8 +600,8 @@ const Details = () => {
                     e.target.src = 'https://images.unsplash.com/photo-1507003211168-6f7c6f1b6f1?auto=format&fit=crop&w=150&h=150&q=80';
                   }}
                 />
-                <h3 className="text-lg font-bold text-stone-700">{property.agent_name || 'N/A'}</h3>
-                <p className="text-stone-600 text-sm">{property.agent_role || 'Agent'}</p>
+                <h3 className="text-lg font-bold text-stone-700">{property.agent_name}</h3>
+                <p className="text-stone-600 text-sm">{property.agent_role}</p>
                 <div className="flex items-center justify-center mt-2">
                   <div className="flex text-stone-500">
                     {property.agent_rating ? (
@@ -618,11 +625,11 @@ const Details = () => {
               <div className="space-y-3">
                 <div className="flex items-center">
                   <i className="ri-phone-line text-stone-700 mr-2"></i>
-                  <span className="text-stone-700">{property.agent_phone || 'N/A'}</span>
+                  <span className="text-stone-700">{property.agent_phone}</span>
                 </div>
                 <div className="flex items-center">
                   <i className="ri-mail-line text-stone-700 mr-2"></i>
-                  <span className="text-stone-700">{property.agent_email || 'N/A'}</span>
+                  <span className="text-stone-700">{property.agent_email}</span>
                 </div>
                 {property.agent_availability && (
                   <div className="flex items-center">

@@ -1,20 +1,13 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
-import bgabout from '../assets/bgabout.jpg';
-import img1 from '../assets/img1.jpg';
-import img2 from '../assets/img2.jpg';
-import img3 from '../assets/img3.jpg';
-import img4 from '../assets/img4.jpg';
-import comm1 from '../assets/comm1.jpg';
-import resident1 from '../assets/resident1.jpg';
 
 const AboutUs = () => {
   const sectionRefs = useRef([]);
   const [visibleSections, setVisibleSections] = useState([]);
   const bannerRef = useRef(null);
   const [bannerInView, setBannerInView] = useState(false);
-  const [builders, setBuilders] = useState([]);
+  const [builders, setBuilders] = useState([]); // Now represents users with role 'builder'
   const [properties, setProperties] = useState([]);
   const [error, setError] = useState(null);
 
@@ -23,11 +16,12 @@ const AboutUs = () => {
 
     const fetchData = async () => {
       try {
-        // Fetch builders
+        // Fetch users with role 'builder' to replace the old builders table
         const { data: buildersData, error: buildersError } = await supabase
-          .from('builders')
-          .select('id, name, contact, logo_url, tagline, experience')
-          .order('name', { ascending: true });
+          .from('users')
+          .select('id, username, email, created_at, updated_at')
+          .eq('role', 'builder')
+          .order('username', { ascending: true });
         console.log('Builders Data:', buildersData);
         console.log('Builders Error:', buildersError);
 
@@ -36,19 +30,41 @@ const AboutUs = () => {
           throw new Error('Failed to fetch builders.');
         }
 
-        setBuilders(
-          buildersData.map((b) => ({
-            ...b,
-            logo_url:
-              b.logo_url ||
-              'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images//logo.png',
-          }))
-        );
-
-        // Fetch properties
+        // Fetch properties with updated schema
         const { data: propertiesData, error: propertiesError } = await supabase
           .from('properties')
-          .select('id, name, property_type, builder_id, images')
+          .select(`
+            id,
+            name,
+            location,
+            price,
+            carpet_area,
+            configuration,
+            property_type,
+            total_floors,
+            total_units,
+            status,
+            rera_number,
+            amenities,
+            developer_name,
+            developer_tagline,
+            developer_experience,
+            developer_projects_completed,
+            developer_happy_families,
+            nearby_landmarks,
+            agent_name,
+            agent_role,
+            agent_phone,
+            agent_email,
+            agent_availability,
+            agent_rating,
+            agent_reviews,
+            images,
+            created_at,
+            updated_at,
+            agents_image,
+            builder_id
+          `)
           .order('name', { ascending: true });
         console.log('Properties Data:', propertiesData);
         console.log('Properties Error:', propertiesError);
@@ -58,15 +74,14 @@ const AboutUs = () => {
           throw new Error('Failed to fetch properties.');
         }
 
+        // Map properties data, handling images array
         setProperties(
           propertiesData.map((p) => ({
             ...p,
-            image_url:
-              p.images && p.images.length > 0
-                ? p.images[0]
-                : '',
+            image_url: p.images && p.images.length > 0 ? p.images[0] : '',
           }))
         );
+        setBuilders(buildersData); // Set builders from users with role 'builder'
         setError(null);
       } catch (err) {
         console.error('Error fetching data:', err.message);
@@ -112,10 +127,8 @@ const AboutUs = () => {
     <div className="min-h-screen">
       <section
         ref={bannerRef}
-        className={`relative bg-cover bg-center text-white h-[80vh] flex items-center pt-20 px-6 pb-20 transition-all duration-1000 transform ${
-          bannerInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-        }`}
-        style={{ backgroundImage: `url(${bgabout})` }}
+        className={`relative bg-cover bg-center text-white h-[80vh] flex items-center pt-20 px-6 pb-20 transition-all duration-1000 transform ${bannerInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+        style={{ backgroundImage: `url(https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Bg%20img/bgabout.jpg)` }}
       >
         <div className="absolute inset-0 bg-black/60 z-0" />
         <div className="relative z-10 max-w-3xl mx-auto">
@@ -147,9 +160,7 @@ const AboutUs = () => {
       <section
         id="section1"
         ref={(el) => (sectionRefs.current[0] = el)}
-        className={`py-16 px-6 max-w-6xl mx-auto grid md:grid-cols-2 gap-10 items-center transition-all duration-1000 transform ${
-          isVisible('section1') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-        }`}
+        className={`py-16 px-6 max-w-6xl mx-auto grid md:grid-cols-2 gap-10 items-center transition-all duration-1000 transform ${isVisible('section1') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
       >
         <div>
           <h2 className="text-4xl font-bold mb-4">
@@ -178,12 +189,17 @@ const AboutUs = () => {
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          {[img1, img2, img3, img4].map((img, i) => (
+          {[
+            'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/about%20img/img1.jpg',
+            'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/about%20img/img2.jpg',
+            'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/about%20img/img3.jpg',
+            'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/about%20img/img4.jpg',
+          ].map((url, i) => (
             <img
               key={i}
-              src={img}
+              src={url}
               alt={`Project ${i + 1}`}
-              className="rounded-lg shadow-lg object-cover h-60 w-full"
+              className="rounded-lg shadow-lg h-60 w-full"
               onError={(e) => {
                 console.error(`Failed to load image: ${e.target.src}`);
                 e.target.src = 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80';
@@ -196,9 +212,7 @@ const AboutUs = () => {
       <section
         id="section2"
         ref={(el) => (sectionRefs.current[1] = el)}
-        className={`bg-stone-100 py-16 px-6 transition-all duration-1000 transform ${
-          isVisible('section2') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-        }`}
+        className={`bg-stone-100 py-16 px-6 transition-all duration-1000 transform ${isVisible('section2') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
       >
         <h2 className="text-4xl font-bold text-center text-stone-700 mb-4">Our Purpose & Promise</h2>
         <p className="text-center text-stone-500 mb-12 max-w-3xl mx-auto">
@@ -234,9 +248,7 @@ const AboutUs = () => {
       <section
         id="section3"
         ref={(el) => (sectionRefs.current[2] = el)}
-        className={`py-16 px-6 bg-white transition-all duration-1000 transform ${
-          isVisible('section3') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-        }`}
+        className={`py-16 px-6 bg-white transition-all duration-1000 transform ${isVisible('section3') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
       >
         <h2 className="text-4xl font-bold text-center text-stone-800 mb-4">Our Expertise</h2>
         <p className="text-center text-stone-500 mb-12 max-w-3xl mx-auto">
@@ -246,9 +258,9 @@ const AboutUs = () => {
         <div className="grid md:grid-cols-2 gap-10 max-w-6xl mx-auto">
           <div className="bg-white rounded-lg shadow-md overflow-hidden">
             <img
-              src={comm1}
+              src="https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/about%20img/commercial.jpeg"
               alt="Commercial Construction"
-              className="h-64 w-full object-cover"
+              className="h-64 w-full"
               onError={(e) => {
                 console.error(`Failed to load image: ${e.target.src}`);
                 e.target.src = 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80';
@@ -270,9 +282,9 @@ const AboutUs = () => {
 
           <div className="bg-white rounded-lg shadow-md overflow-hidden">
             <img
-              src={resident1}
+              src="https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/about%20img/residental.jpeg"
               alt="Residential Construction"
-              className="h-64 w-full object-cover"
+              className="h-64 w-full"
               onError={(e) => {
                 console.error(`Failed to load image: ${e.target.src}`);
                 e.target.src = 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80';
@@ -297,9 +309,7 @@ const AboutUs = () => {
       <section
         id="section4"
         ref={(el) => (sectionRefs.current[3] = el)}
-        className={`py-16 px-6 bg-stone-100 transition-all duration-1000 transform ${
-          isVisible('section4') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-        }`}
+        className={`py-16 px-6 bg-stone-100 transition-all duration-1000 transform ${isVisible('section4') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
       >
         <h2 className="text-4xl font-bold text-center text-stone-800 mb-4">Featured Builders</h2>
         <p className="text-center text-stone-500 mb-12 max-w-3xl mx-auto">
@@ -316,27 +326,24 @@ const AboutUs = () => {
           {builders.length > 0 ? (
             builders.map((builder) => {
               const builderProperties = properties.filter((p) => p.builder_id === builder.id);
-              console.log(`Builder ${builder.name} Properties:`, builderProperties);
+              console.log(`Builder ${builder.username} Properties:`, builderProperties); // Use username instead of name
               return (
                 <div key={builder.id} className="bg-white rounded-lg shadow-md p-6">
                   <div className="flex items-center gap-4 mb-4">
                     <img
-                      src={builder.logo_url}
-                      alt={`${builder.name} logo`}
+                      src={builder.logo_url || 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images//default%20logo.jpg'} // Fallback if logo_url is null
+                      alt={`${builder.username} logo`}
                       className="w-16 h-16 object-cover rounded-full border"
                       onError={(e) => {
                         console.error(`Failed to load builder logo: ${e.target.src}`);
-                        e.target.src =
-                          'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images//default%20logo.jpg';
+                        e.target.src = 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images//default%20logo.jpg';
                       }}
                     />
                     <div>
-                      <h3 className="text-xl font-semibold text-stone-700">{builder.name}</h3>
-                      <p className="text-stone-600 text-sm">{builder.contact}</p>
-                      <p className="text-stone-600 text-sm">{builder.tagline || 'No tagline'}</p>
-                      <p className="text-stone-600 text-sm">
-                        Experience: {builder.experience || 0} years
-                      </p>
+                      <h3 className="text-xl font-semibold text-stone-700">{builder.username}</h3> {/* Use username */}
+                      <p className="text-stone-600 text-sm">{builder.email}</p> {/* Use email as contact */}
+                      <p className="text-stone-600 text-sm">No tagline available</p> {/* No tagline in users table */}
+                      <p className="text-stone-600 text-sm">Experience: N/A</p> {/* No experience in users table */}
                     </div>
                   </div>
                   <div>

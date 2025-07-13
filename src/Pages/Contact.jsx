@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { FaPhoneAlt, FaEnvelope, FaMapMarkerAlt, FaPaperPlane } from 'react-icons/fa';
-import bgcontact from '../assets/bgcontact.jpg';
 
 const ContactUs = () => {
     const [formData, setFormData] = useState({
@@ -65,7 +64,7 @@ const ContactUs = () => {
                 className={`relative h-[80vh] bg-cover bg-center flex p-20 items-center transition-all duration-1000 transform ${
                     isVisible('contactBanner') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
                 }`}
-                style={{ backgroundImage: `url(${bgcontact})` }}
+                style={{ backgroundImage: `url(https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Bg%20img/bgcontact.jpg)` }}
             >
                 <div className="absolute inset-0 bg-black/60" />
                 <div className="relative z-10 text-white px-4">

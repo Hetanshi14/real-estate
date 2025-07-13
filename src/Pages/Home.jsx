@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from '../supabaseClient';
-import heroImg from "../assets/heroImg.jpg";
 import { motion } from "framer-motion";
 import { Home as HomeIcon, CalendarDays, ClipboardList, MessageCircle, FileCheck2 } from 'lucide-react';
 
@@ -262,8 +261,8 @@ const Home = () => {
     <div className="min-h-screen">
       {/* Hero Section */}
       <section
-        className="relative bg-cover bg-center text-white h-[100vh] flex items-center justify-center"
-        style={{ backgroundImage: `url(${heroImg})` }}
+        className="relative bg-cover bg-center text-white h-[80vh] flex items-center justify-center"
+        style={{ backgroundImage: `url(https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/about%20img/img2.jpg)` }}
       >
         <div className="absolute inset-0 bg-black opacity-60 z-0"></div>
         <div className="relative z-10 max-w-6xl mx-auto">
@@ -362,7 +361,7 @@ const Home = () => {
                     <img
                       src={property.image}
                       alt={property.name || 'Property'}
-                      className="w-full h-64 object-cover transition-transform duration-300 group-hover:scale-105 rounded"
+                      className="w-full h-64 transition-transform duration-300 group-hover:scale-105 rounded"
                       onError={(e) => {
                         console.error('Failed to load property image:', e.target.src);
                         e.target.src =
@@ -413,7 +412,7 @@ const Home = () => {
       <section
         ref={zivaasRef}
         className="relative h-100 bg-cover bg-center text-white flex flex-col justify-center items-center text-center px-4"
-        style={{ backgroundImage: `url(${heroImg})` }}
+        style={{ backgroundImage: `url(https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/about%20img/img2.jpg)` }}
       >
         <div className="absolute inset-0 bg-black/60 z-0" />
         <div className="relative z-10 max-w-4xl mx-auto">
