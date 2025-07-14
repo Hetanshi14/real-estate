@@ -827,7 +827,7 @@ const Profile = () => {
                 </div>
                 <button
                   type="submit"
-                  className="relative md:col-span-2 py-3 px-6 rounded-lg font-semibold text-white bg-stone-700 z-10 overflow-hidden
+                  className="relative md:col-span-2 h-9 w-40 rounded-lg font-semibold text-white bg-stone-700 z-10 overflow-hidden
                     before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
                     before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
                 >
@@ -1203,7 +1203,7 @@ const Profile = () => {
                   </div>
                   <button
                     type="submit"
-                    className="relative md:col-span-2 py-3 px-6 rounded-lg font-semibold text-white bg-stone-700 z-10 overflow-hidden
+                    className="relative md:col-span-2 h-9 w-50 rounded-lg font-semibold text-white bg-stone-700 z-10 overflow-hidden
                       before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
                       before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
                   >
@@ -1212,8 +1212,8 @@ const Profile = () => {
                   <button
                     type="button"
                     onClick={() => setEditProperty(null)}
-                    className="relative md:col-span-2 mt-2 py-3 px-6 rounded-lg font-semibold text-white bg-red-600 z-10 overflow-hidden
-                      before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-red-700
+                    className="relative md:col-span-2 mt-2 h-9 w-50 rounded-lg font-semibold text-white bg-red-500 z-10 overflow-hidden
+                      before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-red-600
                       before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
                   >
                     Cancel
@@ -1263,8 +1263,8 @@ const Profile = () => {
                             <div className="mt-1">
                               <button
                                 onClick={() => handleDeleteProperty(property.id)}
-                                className="relative inline-block px-2 py-1 rounded-full font-medium text-white bg-red-600 z-10 overflow-hidden
-                                  before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-red-700
+                                className="relative inline-block px-2 py-1 rounded-full font-medium text-white bg-red-500 z-10 overflow-hidden
+                                  before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-red-600
                                   before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
                               >
                                 <FaTrash className="inline mr-2" /> Delete
