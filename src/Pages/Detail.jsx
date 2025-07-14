@@ -4,30 +4,30 @@ import { supabase } from '../supabaseClient';
 import { motion } from 'framer-motion';
 
 const EMICalculator = ({ property }) => {
-  const [loanAmount, setLoanAmount] = useState(property?.price ? property.price.toString() : "");
-  const [interestRate, setInterestRate] = useState("");
-  const [loanTenure, setLoanTenure] = useState("");
+  const [loanAmount, setLoanAmount] = useState(property?.price ? property.price.toString() : '');
+  const [interestRate, setInterestRate] = useState('');
+  const [loanTenure, setLoanTenure] = useState('');
   const [emiData, setEmiData] = useState({
     monthlyEMI: 0,
     totalInterest: 0,
     totalAmount: 0,
   });
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
 
   const calculateEMI = () => {
-    setError("");
+    setError('');
     const principal = parseFloat(loanAmount);
     const annualRate = parseFloat(interestRate);
     const years = parseFloat(loanTenure);
 
     if (!loanAmount || !interestRate || !loanTenure) {
-      setError("Please fill in all fields.");
+      setError('Please fill in all fields.');
       setEmiData({ monthlyEMI: 0, totalInterest: 0, totalAmount: 0 });
       return;
     }
 
     if (isNaN(principal) || isNaN(annualRate) || isNaN(years) || principal <= 0 || annualRate <= 0 || years <= 0) {
-      setError("Please enter valid positive numbers for all fields.");
+      setError('Please enter valid positive numbers for all fields.');
       setEmiData({ monthlyEMI: 0, totalInterest: 0, totalAmount: 0 });
       return;
     }
@@ -222,12 +222,36 @@ const Details = () => {
             })
             .filter((amenity) => amenity !== null)
           : [];
-        console.log('Raw amenities:', propertyData.amenities);
-        console.log('Normalized amenities:', normalizedAmenities);
 
         // Ensure users is always an array
         const users = Array.isArray(propertyData.users) ? propertyData.users : [];
         const builder = users.find((user) => user.role === 'builder' && user.id === propertyData.builder_id) || null;
+
+        // Handle images as comma-separated string or array
+        const imageUrls = typeof propertyData.images === 'string'
+          ? propertyData.images.split(',').map((url, index) => ({
+              src: url.trim(),
+              alt: `${propertyData.name || 'Property'} - Image ${index + 1}`,
+            }))
+          : (Array.isArray(propertyData.images) && propertyData.images.length > 0
+            ? propertyData.images.map((url, index) => ({
+                src: url,
+                alt: `${propertyData.name || 'Property'} - Image ${index + 1}`,
+              }))
+            : []);
+
+        // Handle nearby_landmarks as a string (e.g., "Park (1km), School (2km)") or array
+        const landmarks = typeof propertyData.nearby_landmarks === 'string'
+          ? propertyData.nearby_landmarks.split(',').map((landmark) => {
+              const [name, distance] = landmark.split('(').map(s => s.replace(')', '').trim());
+              return { name, distance: distance || 'N/A' };
+            })
+          : (Array.isArray(propertyData.nearby_landmarks)
+            ? propertyData.nearby_landmarks.map((l) => ({
+                name: l.name || l,
+                distance: l.distance || 'N/A',
+              }))
+            : []);
 
         const mappedProperty = {
           ...propertyData,
@@ -242,16 +266,9 @@ const Details = () => {
           agent_reviews: propertyData.agent_reviews || 0,
           agent_image: propertyData.agents_image?.[0] || 'https://images.unsplash.com/photo-1507003211168-6f7c6f1b6f1?auto=format&fit=crop&w=150&h=150&q=80',
           amenities: normalizedAmenities,
+          nearby_landmarks: landmarks,
         };
         setProperty(mappedProperty);
-
-        const imageUrls = Array.isArray(propertyData.images) && propertyData.images.length > 0
-          ? propertyData.images.map((url, index) => ({
-              src: url,
-              alt: `${propertyData.name || 'Property'} - Image ${index + 1}`,
-            }))
-          : [];
-        console.log('Image URLs:', imageUrls);
         setImages(imageUrls);
 
         setLoading(false);
@@ -552,12 +569,16 @@ const Details = () => {
               <div className="bg-stone-50 rounded-lg p-6">
                 <h3 className="text-xl font-bold text-stone-700 mb-4">Nearby Landmarks</h3>
                 <div className="space-y-3">
-                  {property.nearby_landmarks?.landmarks?.map((landmark, index) => (
-                    <div key={index} className="flex items-center">
-                      <i className="ri-map-pin-line text-stone-700 mr-2"></i>
-                      <span className="text-stone-700">{landmark.name} ({landmark.distance})</span>
-                    </div>
-                  )) || <p className="text-stone-600">No nearby landmarks available.</p>}
+                  {property.nearby_landmarks.length > 0 ? (
+                    property.nearby_landmarks.map((landmark, index) => (
+                      <div key={index} className="flex items-center">
+                        <i className="ri-map-pin-line text-stone-700 mr-2"></i>
+                        <span className="text-stone-700">{landmark.name} ({landmark.distance})</span>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-stone-600">No nearby landmarks available.</p>
+                  )}
                 </div>
               </div>
             </div>

@@ -4,6 +4,9 @@ import { supabase } from '../supabaseClient';
 import { motion } from 'framer-motion';
 import { FaUser, FaBuilding, FaHome, FaTrash, FaEdit, FaMapMarkerAlt, FaMoneyBill } from 'react-icons/fa';
 
+// Placeholder Base64 image (1x1 transparent pixel)
+const PLACEHOLDER_IMAGE = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/wcAAwAB/8Vq6QAAAAABJRU5ErkJggg==';
+
 const Profile = () => {
   const [user, setUser] = useState(null);
   const [properties, setProperties] = useState([]);
@@ -21,7 +24,7 @@ const Profile = () => {
     developer_name: '', developer_tagline: '', developer_experience: '', developer_projects_completed: '',
     developer_happy_families: '', nearby_landmarks: '', agent_name: '',
     agent_role: '', agent_phone: '', agent_email: '', agent_availability: '', agent_rating: '',
-    agent_reviews: '', images: [], agents_image: [],
+    agent_reviews: '', images: '', agents_image: '',
   });
   const [editProperty, setEditProperty] = useState(null);
   const [error, setError] = useState(null);
@@ -137,7 +140,6 @@ const Profile = () => {
     const files = Array.from(e.target.files);
     if (!files.length) return;
 
-    const uploadedUrls = [];
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       setError('Please log in to upload images.');
@@ -145,51 +147,33 @@ const Profile = () => {
     }
 
     try {
+      let base64Strings = '';
       for (const file of files) {
-        const fileName = `${Date.now()}_${file.name}`;
-        const { error: uploadError, data: uploadData } = await supabase.storage
-          .from('property-images')
-          .upload(`${user.id}/${fileName}`, file, {
-            cacheControl: '3600',
-            upsert: false,
-          });
-
-        if (uploadError) {
-          console.error('Upload error:', uploadError);
-          setError(`Image upload failed: ${uploadError.message}`);
-          return;
-        }
-
-        const { data: publicUrlData } = supabase.storage
-          .from('property-images')
-          .getPublicUrl(`${user.id}/${fileName}`);
-
-        if (publicUrlData && publicUrlData.publicUrl) {
-          uploadedUrls.push(publicUrlData.publicUrl);
-          console.log(`Successfully uploaded ${fileName} to ${publicUrlData.publicUrl}`);
-        } else {
-          console.error('Failed to retrieve public URL for file:', fileName);
-          setError('Failed to generate image URL.');
-          return;
-        }
+        const reader = new FileReader();
+        const base64Promise = new Promise((resolve) => {
+          reader.onloadend = () => resolve(reader.result);
+          reader.readAsDataURL(file);
+        });
+        const base64 = await base64Promise;
+        base64Strings += (base64Strings ? ',' : '') + base64;
       }
 
       if (editProperty) {
         setEditProperty((prev) => ({
           ...prev,
-          [field]: [...(prev[field] || []), ...uploadedUrls],
+          [field]: prev[field] ? `${prev[field]},${base64Strings}` : base64Strings,
         }));
       } else {
         setNewProperty((prev) => ({
           ...prev,
-          [field]: [...(prev[field] || []), ...uploadedUrls],
+          [field]: prev[field] ? `${prev[field]},${base64Strings}` : base64Strings,
         }));
       }
-      setSuccessMessage('Images uploaded successfully!');
+      setSuccessMessage(`Successfully uploaded ${files.length} image(s) to ${field}!`);
       setError(null);
     } catch (err) {
       console.error('Error in handleImageUpload:', err);
-      setError(`Failed to upload images: ${err.message}`);
+      setError(`Failed to process images: ${err.message}`);
     }
   };
 
@@ -213,20 +197,10 @@ const Profile = () => {
         developer_happy_families: parseInt(newProperty.developer_happy_families) || null,
         agent_rating: parseFloat(newProperty.agent_rating) || null,
         agent_reviews: parseInt(newProperty.agent_reviews) || null,
-        nearby_landmarks: newProperty.nearby_landmarks
-          ? (function() {
-              try {
-                const parsed = JSON.parse(newProperty.nearby_landmarks);
-                return parsed && typeof parsed === 'object' ? parsed : {};
-              } catch (e) {
-                console.error('Invalid JSON for nearby_landmarks:', newProperty.nearby_landmarks, e);
-                return {};
-              }
-            })()
-          : {},
+        nearby_landmarks: newProperty.nearby_landmarks || '',
         builder_id: user.id,
-        images: newProperty.images || [],
-        agents_image: newProperty.agents_image || [],
+        images: newProperty.images || '',
+        agents_image: newProperty.agents_image || '',
       };
 
       const missingFields = requiredFields.filter((field) => !propertyData[field] && propertyData[field] !== 0);
@@ -242,7 +216,7 @@ const Profile = () => {
         developer_name: '', developer_tagline: '', developer_experience: '', developer_projects_completed: '',
         developer_happy_families: '', nearby_landmarks: '', agent_name: '',
         agent_role: '', agent_phone: '', agent_email: '', agent_availability: '', agent_rating: '',
-        agent_reviews: '', images: [], agents_image: [],
+        agent_reviews: '', images: '', agents_image: '',
       });
       setSuccessMessage('Property added successfully!');
       setError(null);
@@ -267,20 +241,10 @@ const Profile = () => {
         developer_happy_families: parseInt(editProperty.developer_happy_families) || null,
         agent_rating: parseFloat(editProperty.agent_rating) || null,
         agent_reviews: parseInt(editProperty.agent_reviews) || null,
-        nearby_landmarks: editProperty.nearby_landmarks
-          ? (function() {
-              try {
-                const parsed = JSON.parse(editProperty.nearby_landmarks);
-                return parsed && typeof parsed === 'object' ? parsed : {};
-              } catch (e) {
-                console.error('Invalid JSON for nearby_landmarks:', editProperty.nearby_landmarks, e);
-                return {};
-              }
-            })()
-          : {},
+        nearby_landmarks: editProperty.nearby_landmarks || '',
         builder_id: user.id,
-        images: editProperty.images || [],
-        agents_image: editProperty.agents_image || [],
+        images: editProperty.images || '',
+        agents_image: editProperty.agents_image || '',
       };
 
       const missingFields = requiredFields.filter((field) => !propertyData[field] && propertyData[field] !== 0);
@@ -393,6 +357,43 @@ const Profile = () => {
     }
   };
 
+  // Render images safely, with fallback to placeholder
+  const renderImages = (imageString, altPrefix) => {
+    if (!imageString) {
+      return (
+        <div className="flex items-center justify-center w-20 h-20 bg-gray-200 text-stone-700 rounded">
+          No Image
+        </div>
+      );
+    }
+
+    const images = imageString.split(',').filter((img) => img && img.startsWith('data:image/'));
+    if (!images.length) {
+      return (
+        <div className="flex items-center justify-center w-20 h-20 bg-gray-200 text-stone-700 rounded">
+          No Image
+        </div>
+      );
+    }
+
+    return images.map((img, index) => (
+      <div key={index} className="relative">
+        <img
+          src={img}
+          alt={`${altPrefix} ${index + 1}`}
+          className="w-20 h-20 object-cover rounded"
+          onError={(e) => {
+            e.target.src = PLACEHOLDER_IMAGE;
+            console.error('Image load failed:', img);
+          }}
+        />
+        <span className="text-xs text-stone-600 absolute top-0 right-0 bg-white rounded-full p-1">
+          {index + 1}
+        </span>
+      </div>
+    ));
+  };
+
   if (loading) return <div className="min-h-screen flex items-center justify-center text-stone-700">Loading...</div>;
   if (!user) return null;
 
@@ -400,7 +401,7 @@ const Profile = () => {
     <div className="min-h-screen bg-stone-50">
       <motion.section
         className="relative bg-cover bg-center text-white h-[80vh] flex items-center p-6 transition-all duration-1000 transform"
-        style={{ backgroundImage: `url(https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Bg%20img/bgprofile.jpg)` }}
+        style={{ backgroundImage: `url(${PLACEHOLDER_IMAGE})` }} // Use placeholder or a real Base64 image
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.6 }}
@@ -686,7 +687,7 @@ const Profile = () => {
                     onKeyPress={(e) => handleEnterKey(e, 'nearby_landmarks')}
                     required
                     className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500"
-                    placeholder='Enter as JSON e.g., {"landmark1": "Park", "landmark2": "School"}'
+                    placeholder="Enter landmarks as text (e.g., Park, School)"
                   />
                 </div>
                 <div>
@@ -783,20 +784,9 @@ const Profile = () => {
                     onChange={(e) => handleImageUpload(e, 'images')}
                     className="w-full px-4 py-3 border border-stone-300 rounded-lg"
                   />
-                  {newProperty.images.length > 0 && (
-                    <div className="mt-2">
-                      {newProperty.images.map((img, index) => (
-                        <img
-                          key={index}
-                          src={img}
-                          alt={`Property Image ${index + 1}`}
-                          className="w-20 h-20 object-cover mt-2 mr-2 rounded"
-                          onError={(e) => {
-                            e.target.style.display = 'none';
-                            console.error('Image load failed:', img);
-                          }}
-                        />
-                      ))}
+                  {newProperty.images && (
+                    <div className="mt-2 grid grid-cols-4 gap-2">
+                      {renderImages(newProperty.images, 'Property Image')}
                     </div>
                   )}
                 </div>
@@ -808,20 +798,9 @@ const Profile = () => {
                     onChange={(e) => handleImageUpload(e, 'agents_image')}
                     className="w-full px-4 py-3 border border-stone-300 rounded-lg"
                   />
-                  {newProperty.agents_image.length > 0 && (
-                    <div className="mt-2">
-                      {newProperty.agents_image.map((img, index) => (
-                        <img
-                          key={index}
-                          src={img}
-                          alt={`Agent Image ${index + 1}`}
-                          className="w-20 h-20 object-cover mt-2 mr-2 rounded"
-                          onError={(e) => {
-                            e.target.style.display = 'none';
-                            console.error('Image load failed:', img);
-                          }}
-                        />
-                      ))}
+                  {newProperty.agents_image && (
+                    <div className="mt-2 grid grid-cols-4 gap-2">
+                      {renderImages(newProperty.agents_image, 'Agent Image')}
                     </div>
                   )}
                 </div>
@@ -1062,7 +1041,7 @@ const Profile = () => {
                       onKeyPress={(e) => handleEnterKey(e, 'nearby_landmarks')}
                       required
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500"
-                      placeholder='Enter as JSON e.g., {"landmark1": "Park", "landmark2": "School"}'
+                      placeholder="Enter landmarks as text (e.g., Park, School)"
                     />
                   </div>
                   <div>
@@ -1159,20 +1138,9 @@ const Profile = () => {
                       onChange={(e) => handleImageUpload(e, 'images')}
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg"
                     />
-                    {editProperty.images && editProperty.images.length > 0 && (
-                      <div className="mt-2">
-                        {editProperty.images.map((img, index) => (
-                          <img
-                            key={index}
-                            src={img}
-                            alt={`Property Image ${index + 1}`}
-                            className="w-20 h-20 object-cover mt-2 mr-2 rounded"
-                            onError={(e) => {
-                              e.target.style.display = 'none';
-                              console.error('Image load failed:', img);
-                            }}
-                          />
-                        ))}
+                    {editProperty.images && (
+                      <div className="mt-2 grid grid-cols-4 gap-2">
+                        {renderImages(editProperty.images, 'Property Image')}
                       </div>
                     )}
                   </div>
@@ -1184,20 +1152,9 @@ const Profile = () => {
                       onChange={(e) => handleImageUpload(e, 'agents_image')}
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg"
                     />
-                    {editProperty.agents_image && editProperty.agents_image.length > 0 && (
-                      <div className="mt-2">
-                        {editProperty.agents_image.map((img, index) => (
-                          <img
-                            key={index}
-                            src={img}
-                            alt={`Agent Image ${index + 1}`}
-                            className="w-20 h-20 object-cover mt-2 mr-2 rounded"
-                            onError={(e) => {
-                              e.target.style.display = 'none';
-                              console.error('Image load failed:', img);
-                            }}
-                          />
-                        ))}
+                    {editProperty.agents_image && (
+                      <div className="mt-2 grid grid-cols-4 gap-2">
+                        {renderImages(editProperty.agents_image, 'Agent Image')}
                       </div>
                     )}
                   </div>
@@ -1227,15 +1184,15 @@ const Profile = () => {
                   properties.map((property) => (
                     <div key={property.id} className="rounded shadow hover:shadow-lg transition text-white relative group h-[300px] w-full overflow-hidden">
                       <div className="relative h-full w-full overflow-hidden rounded">
-                        {property.images && property.images.length > 0 ? (
+                        {property.images && property.images.split(',').length > 0 && property.images.split(',')[0].startsWith('data:image/') ? (
                           <img
-                            src={property.images[0]}
+                            src={property.images.split(',')[0]}
                             alt={property.name}
                             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105 rounded"
                             onError={(e) => {
-                              e.target.style.display = 'none';
+                              e.target.src = PLACEHOLDER_IMAGE;
                               e.target.parentElement.classList.add('flex', 'items-center', 'justify-center', 'bg-gray-200');
-                              console.error('Image load failed:', property.images[0]);
+                              console.error('Image load failed:', property.images.split(',')[0]);
                             }}
                           />
                         ) : (
@@ -1381,15 +1338,15 @@ const Profile = () => {
                   filteredWishlist.map((item) => (
                     <div key={item.property_id} className="rounded shadow hover:shadow-lg transition text-white relative group h-[300px] w-full overflow-hidden">
                       <div className="relative h-full w-full overflow-hidden rounded">
-                        {item.properties.images && item.properties.images.length > 0 ? (
+                        {item.properties.images && item.properties.images.split(',').length > 0 && item.properties.images.split(',')[0].startsWith('data:image/') ? (
                           <img
-                            src={item.properties.images[0]}
+                            src={item.properties.images.split(',')[0]}
                             alt={item.properties.name}
                             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105 rounded"
                             onError={(e) => {
-                              e.target.style.display = 'none';
+                              e.target.src = PLACEHOLDER_IMAGE;
                               e.target.parentElement.classList.add('flex', 'items-center', 'justify-center', 'bg-gray-200');
-                              console.error('Image load failed:', item.properties.images[0]);
+                              console.error('Image load failed:', item.properties.images.split(',')[0]);
                             }}
                           />
                         ) : (

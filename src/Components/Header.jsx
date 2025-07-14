@@ -15,7 +15,7 @@ const Header = () => {
     { name: 'Listings', path: '/listings' },
     { name: 'About Us', path: '/about' },
     { name: 'Contact', path: '/contact' },
-    { name: 'Profile', path: '/profile' },
+    { name: 'Profile', path: '/profile' }, // Kept for reference, but handled as button
   ];
 
   useEffect(() => {
@@ -46,20 +46,11 @@ const Header = () => {
     };
   }, []);
 
-  const showAuthButton = !isAuthenticated && location.pathname !== '/login' && location.pathname !== '/signup' && location.pathname !== '/profile';
-
-  const handleLogout = async () => {
-    try {
-      await supabase.auth.signOut();
-      window.location.href = '/login'; // Redirect to login after logout
-    } catch (err) {
-      console.error('Logout error:', err.message);
-    }
-  };
-
-  const handleNavClick = (path) => {
-    if (path === '/profile' && !isAuthenticated) {
-      navigate('/login', { state: { from: '/profile' } }); // Redirect to login with intended destination
+  const handleProfileClick = () => {
+    if (isAuthenticated) {
+      navigate('/profile');
+    } else {
+      navigate('/login', { state: { from: '/profile' } });
     }
   };
 
@@ -67,60 +58,39 @@ const Header = () => {
     <header
       className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${scrolled ? 'bg-stone-700 shadow-md' : 'bg-transparent'}`}
     >
-      <div className="max-w-screen-xl mx-auto px-6 py-4 flex items-center justify-between text-white">
+      <div className="max-w-screen mx-auto px-6 py-4 flex items-center justify-between text-white">
         <Link to="/" className="flex items-center gap-2">
           <span className="text-2xl font-semibold hidden sm:inline">Zivaas Properties</span>
         </Link>
         <nav className="hidden md:flex items-center gap-6 text-md">
           <div className="flex justify-center gap-8 flex-grow">
-            {navLinks.map((link) => (
-              <NavLink
-                key={link.name}
-                to={link.path}
-                onClick={() => handleNavClick(link.path)}
-                className={({ isActive }) =>
-                  isActive
-                    ? 'text-rose-100 font-semibold'
-                    : 'text-white relative inline-block after:absolute after:left-0 after:bottom-0 after:h-[1px] after:w-0 after:bg-rose-200 after:transition-all after:duration-300 hover:after:w-full'
-                }
-                style={link.name === 'Profile' && !isAuthenticated ? { pointerEvents: 'none', opacity: 0.5 } : {}}
-              >
-                {link.name}
-              </NavLink>
-            ))}
+            {navLinks.map((link) =>
+              link.name === 'Profile' ? (
+                <button
+                  key={link.name}
+                  onClick={handleProfileClick}
+                  className={`bg-blue-600 text-white text-sm px-4 py-1 rounded-lg font-semibold hover:bg-blue-700 transition-colors ${!isAuthenticated ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  disabled={!isAuthenticated}
+                >
+                  {link.name}
+                </button>
+              ) : (
+                <NavLink
+                  key={link.name}
+                  to={link.path}
+                  className={({ isActive }) =>
+                    isActive
+                      ? 'text-rose-100 font-semibold'
+                      : 'text-white relative inline-block after:absolute after:left-0 after:bottom-0 after:h-[1px] after:w-0 after:bg-rose-200 after:transition-all after:duration-300 hover:after:w-full'
+                  }
+                >
+                  {link.name}
+                </NavLink>
+              )
+            )}
           </div>
-          {showAuthButton ? (
-            <Link
-              to="/signup"
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
-            >
-              Sign Up
-            </Link>
-          ) : isAuthenticated ? (
-            <button
-              onClick={handleLogout}
-              className="bg-red-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-700 transition-colors"
-            >
-              Log Out
-            </button>
-          ) : null}
         </nav>
         <div className="md:hidden flex items-center gap-4">
-          {showAuthButton ? (
-            <Link
-              to="/signup"
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
-            >
-              Sign Up
-            </Link>
-          ) : isAuthenticated ? (
-            <button
-              onClick={handleLogout}
-              className="bg-red-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-700 transition-colors"
-            >
-              Log Out
-            </button>
-          ) : null}
           <button
             className="text-white"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -132,43 +102,34 @@ const Header = () => {
       {mobileMenuOpen && (
         <div className="md:hidden px-6 pb-4 bg-stone-700">
           <nav className="space-y-2">
-            {navLinks.map((link) => (
-              <NavLink
-                key={link.name}
-                to={link.path}
-                onClick={() => {
-                  handleNavClick(link.path);
-                  setMobileMenuOpen(false);
-                }}
-                className={({ isActive }) =>
-                  isActive
-                    ? 'block text-orange-400 font-semibold'
-                    : 'block text-white hover:text-orange-400'
-                }
-                style={link.name === 'Profile' && !isAuthenticated ? { pointerEvents: 'none', opacity: 0.5 } : {}}
-              >
-                {link.name}
-              </NavLink>
-            ))}
-            {showAuthButton ? (
-              <Link
-                to="/signup"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
-              >
-                Sign Up
-              </Link>
-            ) : isAuthenticated ? (
-              <button
-                onClick={() => {
-                  handleLogout();
-                  setMobileMenuOpen(false);
-                }}
-                className="block bg-red-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-700 transition-colors w-full text-left"
-              >
-                Log Out
-              </button>
-            ) : null}
+            {navLinks.map((link) =>
+              link.name === 'Profile' ? (
+                <button
+                  key={link.name}
+                  onClick={() => {
+                    handleProfileClick();
+                    setMobileMenuOpen(false);
+                  }}
+                  className={`bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors w-full text-left ${!isAuthenticated ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  disabled={!isAuthenticated}
+                >
+                  {link.name}
+                </button>
+              ) : (
+                <NavLink
+                  key={link.name}
+                  to={link.path}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={({ isActive }) =>
+                    isActive
+                      ? 'block text-orange-400 font-semibold'
+                      : 'block text-white hover:text-orange-400'
+                  }
+                >
+                  {link.name}
+                </NavLink>
+              )
+            )}
           </nav>
         </div>
       )}
