@@ -13,6 +13,7 @@ const Header = () => {
   const navLinks = [
     { name: 'Home', path: '/' },
     { name: 'Listings', path: '/listings' },
+    { name: 'Builder', path: '/builder' },
     { name: 'About Us', path: '/about' },
     { name: 'Contact', path: '/contact' },
     { name: 'Profile', path: '/profile' }, // Kept for reference, but handled as button

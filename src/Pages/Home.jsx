@@ -39,47 +39,34 @@ const Home = () => {
           throw new Error('No properties available.');
         }
 
-        const mappedProperties = await Promise.all(
-          propertiesData.map(async (p) => {
-            const bhkMatch = (p.configuration || '').match(/\d+/);
-            let imageUrl = 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80';
+        const mappedProperties = propertiesData.map((p) => {
+          const bhkMatch = (p.configuration || '').match(/\d+/);
+          let imageUrl = 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80';
 
-            // Try to use images array if available
-            if (p.images && p.images.length > 0 && p.images[0]) {
-              imageUrl = p.images[0];
-            } else {
-              // Fallback to Supabase Storage
-              const { data: files } = await supabase.storage
-                .from('property-images')
-                .list(`${p.id}/`, { limit: 1 });
-              if (files && files.length > 0) {
-                const { data: publicUrlData } = supabase.storage
-                  .from('property-images')
-                  .getPublicUrl(`${p.id}/${files[0].name}`);
-                imageUrl = publicUrlData.publicUrl;
-                console.log(`Storage image URL for ${p.name}: ${imageUrl}`);
-              } else {
-                console.warn(`No storage image found for property ${p.id}`);
-              }
+          // Use first URL from comma-separated string in images field
+          if (p.images) {
+            const firstUrl = p.images.split(',')[0].trim();
+            if (firstUrl) {
+              imageUrl = firstUrl;
             }
+          }
 
-            // Validate image URL
-            try {
-              await fetch(imageUrl, { method: 'HEAD' });
-            } catch (err) {
-              console.warn(`Invalid image URL for ${p.name}: ${imageUrl}, using fallback`);
-              imageUrl = 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80';
-            }
+          // Validate image URL
+          try {
+            fetch(imageUrl, { method: 'HEAD' });
+          } catch (err) {
+            console.warn(`Invalid image URL for ${p.name}: ${imageUrl}, using fallback`);
+            imageUrl = 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80';
+          }
 
-            return {
-              ...p,
-              bhk: bhkMatch ? parseInt(bhkMatch[0]) : 0,
-              type: (p.property_type || '').trim().toLowerCase(),
-              progress: p.progress !== undefined ? p.progress : (p.status === 'Upcoming' ? 0 : 1),
-              image: imageUrl,
-            };
-          })
-        );
+          return {
+            ...p,
+            bhk: bhkMatch ? parseInt(bhkMatch[0]) : 0,
+            type: (p.property_type || '').trim().toLowerCase(),
+            progress: p.progress !== undefined ? p.progress : (p.status === 'Upcoming' ? 0 : 1),
+            image: imageUrl,
+          };
+        });
 
         console.log('Mapped properties:', mappedProperties);
         setProperties(mappedProperties);
@@ -261,8 +248,8 @@ const Home = () => {
     <div className="min-h-screen">
       {/* Hero Section */}
       <section
-        className="relative bg-cover bg-center text-white h-[80vh] flex items-center justify-center"
-        style={{ backgroundImage: `url(https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/about%20img/img2.jpg)` }}
+        className="relative bg-cover bg-center text-white h-[100vh] flex items-center justify-center"
+        style={{ backgroundImage: `url(https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Bg%20img/bghome.jpg)` }}
       >
         <div className="absolute inset-0 bg-black opacity-60 z-0"></div>
         <div className="relative z-10 max-w-6xl mx-auto">
@@ -349,19 +336,17 @@ const Home = () => {
                 ref={(el) => (featuredRefs.current[i] = el)}
                 className="opacity-100 translate-y-0 transition-all duration-700"
               >
-
                 {loading && (
                   <p className="text-center text-stone-600 text-lg col-span-full">
                     Loading properties...
                   </p>
                 )}
-
                 <div className="rounded shadow hover:shadow-lg transition text-white">
-                  <div className="relative group h-64 w-full overflow-hidden rounded">
+                  <div className="relative group h-80 w-full overflow-hidden rounded">
                     <img
                       src={property.image}
                       alt={property.name || 'Property'}
-                      className="w-full h-64 transition-transform duration-300 group-hover:scale-105 rounded"
+                      className="w-full h-80 transition-transform duration-300 group-hover:scale-105 rounded"
                       onError={(e) => {
                         console.error('Failed to load property image:', e.target.src);
                         e.target.src =
@@ -411,8 +396,8 @@ const Home = () => {
       {/* Building Dreams Section */}
       <section
         ref={zivaasRef}
-        className="relative h-100 bg-cover bg-center text-white flex flex-col justify-center items-center text-center px-4"
-        style={{ backgroundImage: `url(https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/about%20img/img2.jpg)` }}
+        className="relative md:h-100 h-[60vh] bg-cover bg-center text-white flex flex-col justify-center items-center text-center px-4"
+        style={{ backgroundImage: `url(https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Bg%20img/bghome.jpg)` }}
       >
         <div className="absolute inset-0 bg-black/60 z-0" />
         <div className="relative z-10 max-w-4xl mx-auto">
@@ -543,82 +528,60 @@ const Home = () => {
       </section>
 
       {/* Our Process Section */}
-<section className="bg-stone-100 py-16 px-4">
-  <div className="max-w-7xl mx-auto text-center mb-12">
-    <h2 className="text-4xl font-bold text-stone-800 mb-4">Our Process: Simple & Transparent</h2>
-    <p className="text-lg text-stone-600">
-      We guide you step-by-step to ensure a smooth and confident real estate journey.
-    </p>
-  </div>
-
-  <div className="relative max-w-7xl mx-auto">
-    {/* Connecting line on medium screens and above */}
-    <div className="hidden md:block absolute top-1/2 left-0 w-full h-1 bg-stone-300 z-0 transform -translate-y-1/2" />
-
-    <div className="grid grid-cols-1 md:grid-cols-5 gap-6 relative z-10">
-      {/* Step 1 */}
-      <div className="bg-white p-6 rounded shadow text-center flex flex-col items-center">
-        <div className="bg-stone-200 text-stone-700 w-14 h-14 flex items-center justify-center rounded-full mb-4 text-2xl font-bold">
-          1
+      <section className="bg-stone-100 py-16 px-4">
+        <div className="max-w-7xl mx-auto text-center mb-12">
+          <h2 className="text-4xl font-bold text-stone-800 mb-4">Our Process: Simple & Transparent</h2>
+          <p className="text-lg text-stone-600">
+            We guide you step-by-step to ensure a smooth and confident real estate journey.
+          </p>
         </div>
-        <ClipboardList className="w-10 h-10 text-stone-700 mb-3" />
-        <h3 className="text-lg font-semibold text-stone-800 mb-2">Browse Listings</h3>
-        <p className="text-sm text-stone-600">Explore verified listings tailored to your preferences and budget.</p>
-      </div>
 
-      {/* Step 2 */}
-      <div className="bg-white p-6 rounded shadow text-center flex flex-col items-center">
-        <div className="bg-stone-200 text-stone-700 w-14 h-14 flex items-center justify-center rounded-full mb-4 text-2xl font-bold">
-          2
+        <div className="relative max-w-7xl mx-auto">
+          <div className="hidden md:block absolute top-1/2 left-0 w-full h-1 bg-stone-300 z-0 transform -translate-y-1/2" />
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-6 relative z-10">
+            <div className="bg-white p-6 rounded shadow text-center flex flex-col items-center">
+              <div className="bg-stone-200 text-stone-700 w-14 h-14 flex items-center justify-center rounded-full mb-4 text-2xl font-bold">1</div>
+              <ClipboardList className="w-10 h-10 text-stone-700 mb-3" />
+              <h3 className="text-lg font-semibold text-stone-800 mb-2">Browse Listings</h3>
+              <p className="text-sm text-stone-600">Explore verified listings tailored to your preferences and budget.</p>
+            </div>
+            <div className="bg-white p-6 rounded shadow text-center flex flex-col items-center">
+              <div className="bg-stone-200 text-stone-700 w-14 h-14 flex items-center justify-center rounded-full mb-4 text-2xl font-bold">2</div>
+              <CalendarDays className="w-10 h-10 text-stone-700 mb-3" />
+              <h3 className="text-lg font-semibold text-stone-800 mb-2">Schedule Visit</h3>
+              <p className="text-sm text-stone-600">Book a site visit to experience the property in person.</p>
+            </div>
+            <div className="bg-white p-6 rounded shadow text-center flex flex-col items-center">
+              <div className="bg-stone-200 text-stone-700 w-14 h-14 flex items-center justify-center rounded-full mb-4 text-2xl font-bold">3</div>
+              <MessageCircle className="w-10 h-10 text-stone-700 mb-3" />
+              <h3 className="text-lg font-semibold text-stone-800 mb-2">Discuss Requirements</h3>
+              <p className="text-sm text-stone-600">Our experts will understand your needs and suggest ideal options.</p>
+            </div>
+            <div className="bg-white p-6 rounded shadow text-center flex flex-col items-center">
+              <div className="bg-stone-200 text-stone-700 w-14 h-14 flex items-center justify-center rounded-full mb-4 text-2xl font-bold">4</div>
+              <FileCheck2 className="w-10 h-10 text-stone-700 mb-3" />
+              <h3 className="text-lg font-semibold text-stone-800 mb-2">Finalize Deal</h3>
+              <p className="text-sm text-stone-600">We assist with price negotiation, paperwork, and legalities.</p>
+            </div>
+            <div className="bg-white p-6 rounded shadow text-center flex flex-col items-center">
+              <div className="bg-stone-200 text-stone-700 w-14 h-14 flex items-center justify-center rounded-full mb-4 text-2xl font-bold">5</div>
+              <HomeIcon className="w-10 h-10 text-stone-700 mb-3" />
+              <h3 className="text-lg font-semibold text-stone-800 mb-2">Move In</h3>
+              <p className="text-sm text-stone-600">Take possession with peace of mind and full documentation.</p>
+            </div>
+          </div>
         </div>
-        <CalendarDays className="w-10 h-10 text-stone-700 mb-3" />
-        <h3 className="text-lg font-semibold text-stone-800 mb-2">Schedule Visit</h3>
-        <p className="text-sm text-stone-600">Book a site visit to experience the property in person.</p>
-      </div>
-
-      {/* Step 3 */}
-      <div className="bg-white p-6 rounded shadow text-center flex flex-col items-center">
-        <div className="bg-stone-200 text-stone-700 w-14 h-14 flex items-center justify-center rounded-full mb-4 text-2xl font-bold">
-          3
+        <div className="mt-10 text-center">
+          <Link
+            to="/listings"
+            className="relative inline-block px-6 py-2 rounded font-medium text-white bg-stone-700 z-10 overflow-hidden
+              before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600 
+              before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
+          >
+            Start Exploring
+          </Link>
         </div>
-        <MessageCircle className="w-10 h-10 text-stone-700 mb-3" />
-        <h3 className="text-lg font-semibold text-stone-800 mb-2">Discuss Requirements</h3>
-        <p className="text-sm text-stone-600">Our experts will understand your needs and suggest ideal options.</p>
-      </div>
-
-      {/* Step 4 */}
-      <div className="bg-white p-6 rounded shadow text-center flex flex-col items-center">
-        <div className="bg-stone-200 text-stone-700 w-14 h-14 flex items-center justify-center rounded-full mb-4 text-2xl font-bold">
-          4
-        </div>
-        <FileCheck2 className="w-10 h-10 text-stone-700 mb-3" />
-        <h3 className="text-lg font-semibold text-stone-800 mb-2">Finalize Deal</h3>
-        <p className="text-sm text-stone-600">We assist with price negotiation, paperwork, and legalities.</p>
-      </div>
-
-      {/* Step 5 */}
-      <div className="bg-white p-6 rounded shadow text-center flex flex-col items-center">
-        <div className="bg-stone-200 text-stone-700 w-14 h-14 flex items-center justify-center rounded-full mb-4 text-2xl font-bold">
-          5
-        </div>
-        <HomeIcon className="w-10 h-10 text-stone-700 mb-3" />
-        <h3 className="text-lg font-semibold text-stone-800 mb-2">Move In</h3>
-        <p className="text-sm text-stone-600">Take possession with peace of mind and full documentation.</p>
-      </div>
-    </div>
-  </div>
-
-  <div className="mt-10 text-center">
-    <Link
-      to="/listings"
-      className="relative inline-block px-6 py-2 rounded font-medium text-white bg-stone-700 z-10 overflow-hidden
-        before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600 
-        before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
-    >
-      Start Exploring
-    </Link>
-  </div>
-</section>
+      </section>
 
       {/* Testimonials Section */}
       <section className="py-12 px-4 text-center">
@@ -628,13 +591,11 @@ const Home = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
           {[
             {
-              quote:
-                "Zivaas helped me find the perfect flat in my budget. Great service!",
+              quote: "Zivaas helped me find the perfect flat in my budget. Great service!",
               author: "— Ramesh Patel",
             },
             {
-              quote:
-                "Very professional team and quick response. Highly recommended!",
+              quote: "Very professional team and quick response. Highly recommended!",
               author: "— Riya Shah",
             },
           ].map(({ quote, author }, i) => (

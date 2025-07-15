@@ -8,9 +8,10 @@ import Detail from './Pages/Detail';
 import AboutUs from './Pages/AboutUs';
 import Contact from './Pages/Contact';
 import Signup from './Pages/Signup';
-import Login from './Pages/Login';  
+import Login from './Pages/Login';
 import Profile from './Pages/Profile';
-
+import Builder from './Pages/Builder';
+import PropertyDetails from './Pages/PropertyDetails';
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
@@ -28,6 +29,8 @@ const App = () => {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/listings" element={<Listings />} />
+        <Route path="/builder" element={<Builder />} />
+        <Route path="/properties/builder/:developerName" element={<PropertyDetails />} />
         <Route path="/listings/:id" element={<Detail />} />
         <Route path="/about" element={<AboutUs />} />
         <Route path="/contact" element={<Contact />} />
