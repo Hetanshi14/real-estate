@@ -70,10 +70,17 @@ const Header = () => {
                 <button
                   key={link.name}
                   onClick={handleProfileClick}
-                  className={`bg-blue-600 text-white text-sm px-4 py-1 rounded-lg font-semibold hover:bg-blue-700 transition-colors ${!isAuthenticated ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  disabled={!isAuthenticated}
+                  className={`bg-blue-600 text-white text-sm px-4 py-1 rounded-lg font-semibold hover:bg-blue-700 transition-colors ${
+                    !isAuthenticated ? 'bg-blue-400 hover:bg-blue-500 cursor-pointer relative group' : ''
+                  }`}
+                  title={!isAuthenticated ? 'Please log in to view your profile' : ''}
                 >
                   {link.name}
+                  {!isAuthenticated && (
+                    <span className="absolute top-full left-1/2 transform -translate-x-1/2 mt-1 hidden group-hover:block bg-gray-800 text-white text-xs rounded py-1 px-2">
+                      Log in required
+                    </span>
+                  )}
                 </button>
               ) : (
                 <NavLink
@@ -111,10 +118,17 @@ const Header = () => {
                     handleProfileClick();
                     setMobileMenuOpen(false);
                   }}
-                  className={`bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors w-full text-left ${!isAuthenticated ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  disabled={!isAuthenticated}
+                  className={`bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors w-full text-left ${
+                    !isAuthenticated ? 'bg-blue-400 hover:bg-blue-500 cursor-pointer relative group' : ''
+                  }`}
+                  title={!isAuthenticated ? 'Please log in to view your profile' : ''}
                 >
                   {link.name}
+                  {!isAuthenticated && (
+                    <span className="absolute top-full left-1/2 transform -translate-x-1/2 mt-1 hidden group-hover:block bg-gray-800 text-white text-xs rounded py-1 px-2">
+                      Log in required
+                    </span>
+                  )}
                 </button>
               ) : (
                 <NavLink

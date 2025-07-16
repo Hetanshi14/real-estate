@@ -95,7 +95,7 @@ const PropertyDetails = () => {
             {properties.length > 0 && (
                 <div>
                     {/* Hero Section - Builder Info */}
-                    <div className="p-6 flex flex-col md:flex-row items-center  text-stone-700">
+                    <div className="p-6 flex flex-col md:flex-row items-center text-stone-700">
                         {/* Builder Image - Left Top */}
                         <div className="w-full md:w-1/3 mb-4 md:mb-0">
                             <div className="relative w-full h-48 bg-gray-200 rounded-lg overflow-hidden">
@@ -134,24 +134,13 @@ const PropertyDetails = () => {
 
                     {/* Properties Section */}
                     <div className="p-6">
-                        <h2 className="text-2xl font-semibold text-stone-800 mb-6">Builder Property Name</h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <h2 className="text-3xl text-center font-semibold text-stone-800 mb-8">Builder Property Name</h2>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mt-10">
                             {properties.map((prop) => (
                                 <div
                                     key={prop.id}
                                     className="relative bg-white rounded-lg shadow-md overflow-hidden group hover:shadow-lg transition-shadow duration-300"
                                 >
-                                    {prop.image && (
-                                        <img
-                                            src={prop.image}
-                                            alt={prop.name}
-                                            className="w-full h-48 object-cover"
-                                            onError={(e) => {
-                                                console.error('Image load error for URL:', prop.image, e);
-                                                e.target.style.display = 'none';
-                                            }}
-                                        />
-                                    )}
                                     <div className="p-4">
                                         <h3 className="text-xl font-semibold text-stone-800 mb-2">{prop.name}</h3>
                                         <p className="text-sm text-stone-600 mb-1">Location: {prop.location}</p>

@@ -24,7 +24,7 @@ const Profile = () => {
     developer_name: '', developer_tagline: '', developer_experience: '', developer_projects_completed: '',
     developer_happy_families: '', nearby_landmarks: '', agent_name: '',
     agent_role: '', agent_phone: '', agent_email: '', agent_availability: '', agent_rating: '',
-    agent_reviews: '', images: '', agents_image: '',
+    agent_reviews: '', images: '', agents_image: '', builder_image: '', developer_awards: '', developer_certifications: '',
   });
   const [editProperty, setEditProperty] = useState(null);
   const [error, setError] = useState(null);
@@ -201,6 +201,9 @@ const Profile = () => {
         builder_id: user.id,
         images: newProperty.images || '',
         agents_image: newProperty.agents_image || '',
+        builder_image: newProperty.builder_image || '',
+        developer_awards: newProperty.developer_awards || '',
+        developer_certifications: newProperty.developer_certifications || '',
       };
 
       const missingFields = requiredFields.filter((field) => !propertyData[field] && propertyData[field] !== 0);
@@ -216,7 +219,7 @@ const Profile = () => {
         developer_name: '', developer_tagline: '', developer_experience: '', developer_projects_completed: '',
         developer_happy_families: '', nearby_landmarks: '', agent_name: '',
         agent_role: '', agent_phone: '', agent_email: '', agent_availability: '', agent_rating: '',
-        agent_reviews: '', images: '', agents_image: '',
+        agent_reviews: '', images: '', agents_image: '', builder_image: '', developer_awards: '', developer_certifications: '',
       });
       setSuccessMessage('Property added successfully!');
       setError(null);
@@ -245,6 +248,9 @@ const Profile = () => {
         builder_id: user.id,
         images: editProperty.images || '',
         agents_image: editProperty.agents_image || '',
+        builder_image: editProperty.builder_image || '',
+        developer_awards: editProperty.developer_awards || '',
+        developer_certifications: editProperty.developer_certifications || '',
       };
 
       const missingFields = requiredFields.filter((field) => !propertyData[field] && propertyData[field] !== 0);
@@ -345,7 +351,7 @@ const Profile = () => {
           if (nextInput) nextInput.focus();
         }
       } else {
-        const allFields = Object.keys(newProperty).filter((f) => f !== 'amenities' && f !== 'images' && f !== 'agents_image');
+        const allFields = Object.keys(newProperty).filter((f) => f !== 'amenities' && f !== 'images' && f !== 'agents_image' && f !== 'builder_image' && f !== 'developer_awards' && f !== 'developer_certifications');
         const currentIndexOptional = allFields.indexOf(name);
         if (currentIndexOptional !== -1) {
           const nextIndex = (currentIndexOptional + 1) % allFields.length;
@@ -401,7 +407,7 @@ const Profile = () => {
     <div className="min-h-screen bg-stone-50">
       <motion.section
         className="relative bg-cover bg-center text-white h-[80vh] flex items-center p-6 transition-all duration-1000 transform"
-        style={{ backgroundImage: `url(${PLACEHOLDER_IMAGE})` }} // Use placeholder or a real Base64 image
+        style={{ backgroundImage: `url(${PLACEHOLDER_IMAGE})` }}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.6 }}
@@ -804,6 +810,50 @@ const Profile = () => {
                     </div>
                   )}
                 </div>
+                <div>
+                  <label className="block text-sm font-semibold text-stone-700 mb-2">Builder Image</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleImageUpload(e, 'builder_image')}
+                    className="w-full px-4 py-3 border border-stone-300 rounded-lg"
+                  />
+                  {newProperty.builder_image && (
+                    <div className="mt-2 grid grid-cols-4 gap-2">
+                      {renderImages(newProperty.builder_image, 'Builder Image')}
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-stone-700 mb-2">Developer Awards</label>
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={(e) => handleImageUpload(e, 'developer_awards')}
+                    className="w-full px-4 py-3 border border-stone-300 rounded-lg"
+                  />
+                  {newProperty.developer_awards && (
+                    <div className="mt-2 grid grid-cols-4 gap-2">
+                      {renderImages(newProperty.developer_awards, 'Developer Award')}
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-stone-700 mb-2">Developer Certifications</label>
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={(e) => handleImageUpload(e, 'developer_certifications')}
+                    className="w-full px-4 py-3 border border-stone-300 rounded-lg"
+                  />
+                  {newProperty.developer_certifications && (
+                    <div className="mt-2 grid grid-cols-4 gap-2">
+                      {renderImages(newProperty.developer_certifications, 'Developer Certification')}
+                    </div>
+                  )}
+                </div>
                 <button
                   type="submit"
                   className="relative md:col-span-2 h-9 w-40 rounded-lg font-semibold text-white bg-stone-700 z-10 overflow-hidden
@@ -1158,6 +1208,50 @@ const Profile = () => {
                       </div>
                     )}
                   </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-stone-700 mb-2">Builder Image</label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleImageUpload(e, 'builder_image')}
+                      className="w-full px-4 py-3 border border-stone-300 rounded-lg"
+                    />
+                    {editProperty.builder_image && (
+                      <div className="mt-2 grid grid-cols-4 gap-2">
+                        {renderImages(editProperty.builder_image, 'Builder Image')}
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-stone-700 mb-2">Developer Awards</label>
+                    <input
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      onChange={(e) => handleImageUpload(e, 'developer_awards')}
+                      className="w-full px-4 py-3 border border-stone-300 rounded-lg"
+                    />
+                    {editProperty.developer_awards && (
+                      <div className="mt-2 grid grid-cols-4 gap-2">
+                        {renderImages(editProperty.developer_awards, 'Developer Award')}
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-stone-700 mb-2">Developer Certifications</label>
+                    <input
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      onChange={(e) => handleImageUpload(e, 'developer_certifications')}
+                      className="w-full px-4 py-3 border border-stone-300 rounded-lg"
+                    />
+                    {editProperty.developer_certifications && (
+                      <div className="mt-2 grid grid-cols-4 gap-2">
+                        {renderImages(editProperty.developer_certifications, 'Developer Certification')}
+                      </div>
+                    )}
+                  </div>
                   <button
                     type="submit"
                     className="relative md:col-span-2 h-9 w-50 rounded-lg font-semibold text-white bg-stone-700 z-10 overflow-hidden
@@ -1207,6 +1301,45 @@ const Profile = () => {
                             <p className="text-sm">{property.location}</p>
                             <p className="text-sm">₹{property.price.toLocaleString()}</p>
                             <p className="text-sm">{property.property_type} • {property.status}</p>
+                            {property.builder_image && (
+                              <div className="mt-2 w-12 h-12">
+                                <img
+                                  src={property.builder_image.split(',')[0]}
+                                  alt={`${property.developer_name} logo`}
+                                  className="w-full h-full object-cover rounded-full"
+                                  onError={(e) => {
+                                    e.target.src = PLACEHOLDER_IMAGE;
+                                    console.error('Builder image load failed:', property.builder_image);
+                                  }}
+                                />
+                              </div>
+                            )}
+                            {property.developer_awards && (
+                              <div className="mt-2 w-12 h-12">
+                                <img
+                                  src={property.developer_awards.split(',')[0]}
+                                  alt={`${property.developer_name} award`}
+                                  className="w-full h-full object-cover rounded"
+                                  onError={(e) => {
+                                    e.target.src = PLACEHOLDER_IMAGE;
+                                    console.error('Award image load failed:', property.developer_awards);
+                                  }}
+                                />
+                              </div>
+                            )}
+                            {property.developer_certifications && (
+                              <div className="mt-2 w-12 h-12">
+                                <img
+                                  src={property.developer_certifications.split(',')[0]}
+                                  alt={`${property.developer_name} certification`}
+                                  className="w-full h-full object-cover rounded"
+                                  onError={(e) => {
+                                    e.target.src = PLACEHOLDER_IMAGE;
+                                    console.error('Certification image load failed:', property.developer_certifications);
+                                  }}
+                                />
+                              </div>
+                            )}
                             <div className="mt-1">
                               <button
                                 onClick={() => setEditProperty({ ...property })}
