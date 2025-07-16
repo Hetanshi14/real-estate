@@ -24,7 +24,8 @@ const Profile = () => {
     developer_name: '', developer_tagline: '', developer_experience: '', developer_projects_completed: '',
     developer_happy_families: '', nearby_landmarks: '', agent_name: '',
     agent_role: '', agent_phone: '', agent_email: '', agent_availability: '', agent_rating: '',
-    agent_reviews: '', images: '', agents_image: '', builder_image: '', developer_awards: '', developer_certifications: '',
+    agent_reviews: '', images: '', agents_image: '', developer_image: '', developer_awards: '',
+    developer_certifications: '',
   });
   const [editProperty, setEditProperty] = useState(null);
   const [error, setError] = useState(null);
@@ -66,11 +67,11 @@ const Profile = () => {
           status: '',
         });
 
-        if (userData.role === 'builder') {
+        if (userData.role === 'developer') {
           const { data: propertiesData, error: propertiesError } = await supabase
             .from('properties')
             .select('*')
-            .eq('builder_id', userData.id);
+            .eq('developer_id', userData.id);
 
           if (propertiesError) throw new Error(`Failed to fetch properties: ${propertiesError.message}`);
           setProperties(propertiesData || []);
@@ -147,29 +148,29 @@ const Profile = () => {
     }
 
     try {
-      let base64Strings = '';
-      for (const file of files) {
-        const reader = new FileReader();
-        const base64Promise = new Promise((resolve) => {
-          reader.onloadend = () => resolve(reader.result);
-          reader.readAsDataURL(file);
+      const base64Promises = files.map((file) => {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result); // Returns Base64 string
+          reader.onerror = reject;
+          reader.readAsDataURL(file); // Converts to Base64
         });
-        const base64 = await base64Promise;
-        base64Strings += (base64Strings ? ',' : '') + base64;
-      }
+      });
+
+      const base64Strings = await Promise.all(base64Promises);
 
       if (editProperty) {
         setEditProperty((prev) => ({
           ...prev,
-          [field]: prev[field] ? `${prev[field]},${base64Strings}` : base64Strings,
+          [field]: base64Strings[0], // Use the first Base64 string
         }));
       } else {
         setNewProperty((prev) => ({
           ...prev,
-          [field]: prev[field] ? `${prev[field]},${base64Strings}` : base64Strings,
+          [field]: base64Strings[0], // Use the first Base64 string
         }));
       }
-      setSuccessMessage(`Successfully uploaded ${files.length} image(s) to ${field}!`);
+      setSuccessMessage(`Successfully processed ${files.length} image(s) for ${field}!`);
       setError(null);
     } catch (err) {
       console.error('Error in handleImageUpload:', err);
@@ -198,12 +199,10 @@ const Profile = () => {
         agent_rating: parseFloat(newProperty.agent_rating) || null,
         agent_reviews: parseInt(newProperty.agent_reviews) || null,
         nearby_landmarks: newProperty.nearby_landmarks || '',
-        builder_id: user.id,
+        developer_id: user.id,
         images: newProperty.images || '',
         agents_image: newProperty.agents_image || '',
-        builder_image: newProperty.builder_image || '',
-        developer_awards: newProperty.developer_awards || '',
-        developer_certifications: newProperty.developer_certifications || '',
+        developer_image: newProperty.developer_image || '',
       };
 
       const missingFields = requiredFields.filter((field) => !propertyData[field] && propertyData[field] !== 0);
@@ -219,7 +218,8 @@ const Profile = () => {
         developer_name: '', developer_tagline: '', developer_experience: '', developer_projects_completed: '',
         developer_happy_families: '', nearby_landmarks: '', agent_name: '',
         agent_role: '', agent_phone: '', agent_email: '', agent_availability: '', agent_rating: '',
-        agent_reviews: '', images: '', agents_image: '', builder_image: '', developer_awards: '', developer_certifications: '',
+        agent_reviews: '', images: '', agents_image: '', developer_image: '', developer_awards: '',
+        developer_certifications: '',
       });
       setSuccessMessage('Property added successfully!');
       setError(null);
@@ -245,12 +245,10 @@ const Profile = () => {
         agent_rating: parseFloat(editProperty.agent_rating) || null,
         agent_reviews: parseInt(editProperty.agent_reviews) || null,
         nearby_landmarks: editProperty.nearby_landmarks || '',
-        builder_id: user.id,
+        developer_id: user.id,
         images: editProperty.images || '',
         agents_image: editProperty.agents_image || '',
-        builder_image: editProperty.builder_image || '',
-        developer_awards: editProperty.developer_awards || '',
-        developer_certifications: editProperty.developer_certifications || '',
+        developer_image: editProperty.developer_image || '',
       };
 
       const missingFields = requiredFields.filter((field) => !propertyData[field] && propertyData[field] !== 0);
@@ -296,8 +294,8 @@ const Profile = () => {
         .eq('id', user.id);
 
       if (error) throw new Error(`Failed to save wishlist criteria: ${error.message}`);
+      setSuccessMessage('Wishlist criteria saved successfully!');
       setError(null);
-      alert('Wishlist criteria saved!');
     } catch (err) {
       setError(err.message);
     }
@@ -351,7 +349,7 @@ const Profile = () => {
           if (nextInput) nextInput.focus();
         }
       } else {
-        const allFields = Object.keys(newProperty).filter((f) => f !== 'amenities' && f !== 'images' && f !== 'agents_image' && f !== 'builder_image' && f !== 'developer_awards' && f !== 'developer_certifications');
+        const allFields = Object.keys(newProperty).filter((f) => f !== 'amenities' && f !== 'images' && f !== 'agents_image' && f !== 'developer_image');
         const currentIndexOptional = allFields.indexOf(name);
         if (currentIndexOptional !== -1) {
           const nextIndex = (currentIndexOptional + 1) % allFields.length;
@@ -365,7 +363,7 @@ const Profile = () => {
 
   // Render images safely, with fallback to placeholder
   const renderImages = (imageString, altPrefix) => {
-    if (!imageString) {
+    if (!imageString || imageString === '') {
       return (
         <div className="flex items-center justify-center w-20 h-20 bg-gray-200 text-stone-700 rounded">
           No Image
@@ -373,31 +371,22 @@ const Profile = () => {
       );
     }
 
-    const images = imageString.split(',').filter((img) => img && img.startsWith('data:image/'));
-    if (!images.length) {
-      return (
-        <div className="flex items-center justify-center w-20 h-20 bg-gray-200 text-stone-700 rounded">
-          No Image
-        </div>
-      );
-    }
-
-    return images.map((img, index) => (
-      <div key={index} className="relative">
+    return (
+      <div className="relative">
         <img
-          src={img}
-          alt={`${altPrefix} ${index + 1}`}
+          src={imageString}
+          alt={`${altPrefix} 1`}
           className="w-20 h-20 object-cover rounded"
           onError={(e) => {
             e.target.src = PLACEHOLDER_IMAGE;
-            console.error('Image load failed:', img);
+            console.error('Image load failed:', imageString);
           }}
         />
         <span className="text-xs text-stone-600 absolute top-0 right-0 bg-white rounded-full p-1">
-          {index + 1}
+          1
         </span>
       </div>
-    ));
+    );
   };
 
   if (loading) return <div className="min-h-screen flex items-center justify-center text-stone-700">Loading...</div>;
@@ -415,10 +404,10 @@ const Profile = () => {
         <div className="absolute inset-0 bg-black/60 z-0" />
         <div className="relative z-10 text-center w-full">
           <h1 className="text-3xl md:text-4xl font-bold mb-2">
-            Welcome, {user.role === 'builder' ? 'Builder' : 'User'} {user.username}!
+            Welcome, {user.role === 'developer' ? 'Developer' : 'User'} {user.username}!
           </h1>
           <p className="text-lg md:text-xl">
-            {user.role === 'builder' ? 'Manage your properties here.' : 'Explore your wishlist and criteria.'}
+            {user.role === 'developer' ? 'Manage your properties here.' : 'Explore your wishlist and criteria.'}
           </p>
         </div>
       </motion.section>
@@ -431,17 +420,6 @@ const Profile = () => {
       >
         <div className="max-w-6xl mx-auto">
           <h2 className="text-4xl font-bold text-stone-700 mb-6 text-center">Profile</h2>
-          {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6 text-center">
-              {error}
-            </div>
-          )}
-          {successMessage && (
-            <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg mb-6 text-center">
-              {successMessage}
-              <button onClick={() => setSuccessMessage(null)} className="ml-2 text-green-700 hover:text-green-900">×</button>
-            </div>
-          )}
           <div className="bg-white rounded-lg shadow-md p-6 mb-8">
             <div className="flex items-center mb-4">
               <FaUser className="text-stone-700 text-2xl mr-3" />
@@ -464,7 +442,7 @@ const Profile = () => {
             </button>
           </div>
 
-          {user.role === 'builder' ? (
+          {user.role === 'developer' ? (
             <>
               <h3 className="text-2xl font-bold text-stone-700 mb-4">Add New Property</h3>
               <form onSubmit={handleAddProperty} className="bg-white rounded-lg shadow-md p-6 mb-8 grid md:grid-cols-2 gap-6">
@@ -785,13 +763,12 @@ const Profile = () => {
                   <label className="block text-sm font-semibold text-stone-700 mb-2">Property Images</label>
                   <input
                     type="file"
-                    multiple
                     accept="image/*"
                     onChange={(e) => handleImageUpload(e, 'images')}
                     className="w-full px-4 py-3 border border-stone-300 rounded-lg"
                   />
                   {newProperty.images && (
-                    <div className="mt-2 grid grid-cols-4 gap-2">
+                    <div className="mt-2">
                       {renderImages(newProperty.images, 'Property Image')}
                     </div>
                   )}
@@ -805,54 +782,48 @@ const Profile = () => {
                     className="w-full px-4 py-3 border border-stone-300 rounded-lg"
                   />
                   {newProperty.agents_image && (
-                    <div className="mt-2 grid grid-cols-4 gap-2">
+                    <div className="mt-2">
                       {renderImages(newProperty.agents_image, 'Agent Image')}
                     </div>
                   )}
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-stone-700 mb-2">Builder Image</label>
+                  <label className="block text-sm font-semibold text-stone-700 mb-2">Developer Image</label>
                   <input
                     type="file"
                     accept="image/*"
-                    onChange={(e) => handleImageUpload(e, 'builder_image')}
+                    onChange={(e) => handleImageUpload(e, 'developer_image')}
                     className="w-full px-4 py-3 border border-stone-300 rounded-lg"
                   />
-                  {newProperty.builder_image && (
-                    <div className="mt-2 grid grid-cols-4 gap-2">
-                      {renderImages(newProperty.builder_image, 'Builder Image')}
+                  {newProperty.developer_image && (
+                    <div className="mt-2">
+                      {renderImages(newProperty.developer_image, 'Developer Image')}
                     </div>
                   )}
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-stone-700 mb-2">Developer Awards</label>
                   <input
-                    type="file"
-                    multiple
-                    accept="image/*"
-                    onChange={(e) => handleImageUpload(e, 'developer_awards')}
-                    className="w-full px-4 py-3 border border-stone-300 rounded-lg"
+                    type="text"
+                    name="developer_awards"
+                    value={newProperty.developer_awards}
+                    onChange={handlePropertyChange}
+                    onKeyPress={(e) => handleEnterKey(e, 'developer_awards')}
+                    className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500"
+                    placeholder="Enter developer awards (optional)"
                   />
-                  {newProperty.developer_awards && (
-                    <div className="mt-2 grid grid-cols-4 gap-2">
-                      {renderImages(newProperty.developer_awards, 'Developer Award')}
-                    </div>
-                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-stone-700 mb-2">Developer Certifications</label>
                   <input
-                    type="file"
-                    multiple
-                    accept="image/*"
-                    onChange={(e) => handleImageUpload(e, 'developer_certifications')}
-                    className="w-full px-4 py-3 border border-stone-300 rounded-lg"
+                    type="text"
+                    name="developer_certifications"
+                    value={newProperty.developer_certifications}
+                    onChange={handlePropertyChange}
+                    onKeyPress={(e) => handleEnterKey(e, 'developer_certifications')}
+                    className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500"
+                    placeholder="Enter developer certifications (optional)"
                   />
-                  {newProperty.developer_certifications && (
-                    <div className="mt-2 grid grid-cols-4 gap-2">
-                      {renderImages(newProperty.developer_certifications, 'Developer Certification')}
-                    </div>
-                  )}
                 </div>
                 <button
                   type="submit"
@@ -862,6 +833,17 @@ const Profile = () => {
                 >
                   Add Property
                 </button>
+                {error && (
+                  <div className="mt-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg text-center md:col-span-2">
+                    {error}
+                  </div>
+                )}
+                {successMessage && (
+                  <div className="mt-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg text-center md:col-span-2">
+                    {successMessage}
+                    <button onClick={() => setSuccessMessage(null)} className="ml-2 text-green-700 hover:text-green-900">×</button>
+                  </div>
+                )}
               </form>
 
               {editProperty && (
@@ -1183,13 +1165,12 @@ const Profile = () => {
                     <label className="block text-sm font-semibold text-stone-700 mb-2">Property Images</label>
                     <input
                       type="file"
-                      multiple
                       accept="image/*"
                       onChange={(e) => handleImageUpload(e, 'images')}
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg"
                     />
                     {editProperty.images && (
-                      <div className="mt-2 grid grid-cols-4 gap-2">
+                      <div className="mt-2">
                         {renderImages(editProperty.images, 'Property Image')}
                       </div>
                     )}
@@ -1203,54 +1184,48 @@ const Profile = () => {
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg"
                     />
                     {editProperty.agents_image && (
-                      <div className="mt-2 grid grid-cols-4 gap-2">
+                      <div className="mt-2">
                         {renderImages(editProperty.agents_image, 'Agent Image')}
                       </div>
                     )}
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-stone-700 mb-2">Builder Image</label>
+                    <label className="block text-sm font-semibold text-stone-700 mb-2">Developer Image</label>
                     <input
                       type="file"
                       accept="image/*"
-                      onChange={(e) => handleImageUpload(e, 'builder_image')}
+                      onChange={(e) => handleImageUpload(e, 'developer_image')}
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg"
                     />
-                    {editProperty.builder_image && (
-                      <div className="mt-2 grid grid-cols-4 gap-2">
-                        {renderImages(editProperty.builder_image, 'Builder Image')}
+                    {editProperty.developer_image && (
+                      <div className="mt-2">
+                        {renderImages(editProperty.developer_image, 'Developer Image')}
                       </div>
                     )}
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-stone-700 mb-2">Developer Awards</label>
                     <input
-                      type="file"
-                      multiple
-                      accept="image/*"
-                      onChange={(e) => handleImageUpload(e, 'developer_awards')}
-                      className="w-full px-4 py-3 border border-stone-300 rounded-lg"
+                      type="text"
+                      name="developer_awards"
+                      value={editProperty.developer_awards}
+                      onChange={handlePropertyChange}
+                      onKeyPress={(e) => handleEnterKey(e, 'developer_awards')}
+                      className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500"
+                      placeholder="Enter developer awards (optional)"
                     />
-                    {editProperty.developer_awards && (
-                      <div className="mt-2 grid grid-cols-4 gap-2">
-                        {renderImages(editProperty.developer_awards, 'Developer Award')}
-                      </div>
-                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-stone-700 mb-2">Developer Certifications</label>
                     <input
-                      type="file"
-                      multiple
-                      accept="image/*"
-                      onChange={(e) => handleImageUpload(e, 'developer_certifications')}
-                      className="w-full px-4 py-3 border border-stone-300 rounded-lg"
+                      type="text"
+                      name="developer_certifications"
+                      value={editProperty.developer_certifications}
+                      onChange={handlePropertyChange}
+                      onKeyPress={(e) => handleEnterKey(e, 'developer_certifications')}
+                      className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500"
+                      placeholder="Enter developer certifications (optional)"
                     />
-                    {editProperty.developer_certifications && (
-                      <div className="mt-2 grid grid-cols-4 gap-2">
-                        {renderImages(editProperty.developer_certifications, 'Developer Certification')}
-                      </div>
-                    )}
                   </div>
                   <button
                     type="submit"
@@ -1269,6 +1244,17 @@ const Profile = () => {
                   >
                     Cancel
                   </button>
+                  {error && (
+                    <div className="mt-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg text-center md:col-span-2">
+                      {error}
+                    </div>
+                  )}
+                  {successMessage && (
+                    <div className="mt-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg text-center md:col-span-2">
+                      {successMessage}
+                      <button onClick={() => setSuccessMessage(null)} className="ml-2 text-green-700 hover:text-green-900">×</button>
+                    </div>
+                  )}
                 </form>
               )}
 
@@ -1278,15 +1264,15 @@ const Profile = () => {
                   properties.map((property) => (
                     <div key={property.id} className="rounded shadow hover:shadow-lg transition text-white relative group h-[300px] w-full overflow-hidden">
                       <div className="relative h-full w-full overflow-hidden rounded">
-                        {property.images && property.images.split(',').length > 0 && property.images.split(',')[0].startsWith('data:image/') ? (
+                        {property.images ? (
                           <img
-                            src={property.images.split(',')[0]}
+                            src={property.images}
                             alt={property.name}
                             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105 rounded"
                             onError={(e) => {
                               e.target.src = PLACEHOLDER_IMAGE;
                               e.target.parentElement.classList.add('flex', 'items-center', 'justify-center', 'bg-gray-200');
-                              console.error('Image load failed:', property.images.split(',')[0]);
+                              console.error('Image load failed:', property.images);
                             }}
                           />
                         ) : (
@@ -1301,45 +1287,21 @@ const Profile = () => {
                             <p className="text-sm">{property.location}</p>
                             <p className="text-sm">₹{property.price.toLocaleString()}</p>
                             <p className="text-sm">{property.property_type} • {property.status}</p>
-                            {property.builder_image && (
+                            {property.developer_image && (
                               <div className="mt-2 w-12 h-12">
                                 <img
-                                  src={property.builder_image.split(',')[0]}
+                                  src={property.developer_image}
                                   alt={`${property.developer_name} logo`}
                                   className="w-full h-full object-cover rounded-full"
                                   onError={(e) => {
                                     e.target.src = PLACEHOLDER_IMAGE;
-                                    console.error('Builder image load failed:', property.builder_image);
+                                    console.error('Developer image load failed:', property.developer_image);
                                   }}
                                 />
                               </div>
                             )}
-                            {property.developer_awards && (
-                              <div className="mt-2 w-12 h-12">
-                                <img
-                                  src={property.developer_awards.split(',')[0]}
-                                  alt={`${property.developer_name} award`}
-                                  className="w-full h-full object-cover rounded"
-                                  onError={(e) => {
-                                    e.target.src = PLACEHOLDER_IMAGE;
-                                    console.error('Award image load failed:', property.developer_awards);
-                                  }}
-                                />
-                              </div>
-                            )}
-                            {property.developer_certifications && (
-                              <div className="mt-2 w-12 h-12">
-                                <img
-                                  src={property.developer_certifications.split(',')[0]}
-                                  alt={`${property.developer_name} certification`}
-                                  className="w-full h-full object-cover rounded"
-                                  onError={(e) => {
-                                    e.target.src = PLACEHOLDER_IMAGE;
-                                    console.error('Certification image load failed:', property.developer_certifications);
-                                  }}
-                                />
-                              </div>
-                            )}
+                            <p className="text-sm mt-2">{property.developer_awards}</p>
+                            <p className="text-sm">{property.developer_certifications}</p>
                             <div className="mt-1">
                               <button
                                 onClick={() => setEditProperty({ ...property })}
@@ -1359,6 +1321,11 @@ const Profile = () => {
                               >
                                 <FaTrash className="inline mr-2" /> Delete
                               </button>
+                              {error && (
+                                <div className="mt-2 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg text-center">
+                                  {error}
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -1463,6 +1430,17 @@ const Profile = () => {
                 >
                   Save Criteria
                 </button>
+                {error && (
+                  <div className="mt-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg text-center">
+                    {error}
+                  </div>
+                )}
+                {successMessage && (
+                  <div className="mt-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg text-center">
+                    {successMessage}
+                    <button onClick={() => setSuccessMessage(null)} className="ml-2 text-green-700 hover:text-green-900">×</button>
+                  </div>
+                )}
               </div>
 
               <h3 className="text-2xl font-bold text-stone-700 mb-4">Your Wishlist</h3>
@@ -1471,15 +1449,15 @@ const Profile = () => {
                   filteredWishlist.map((item) => (
                     <div key={item.property_id} className="rounded shadow hover:shadow-lg transition text-white relative group h-[300px] w-full overflow-hidden">
                       <div className="relative h-full w-full overflow-hidden rounded">
-                        {item.properties.images && item.properties.images.split(',').length > 0 && item.properties.images.split(',')[0].startsWith('data:image/') ? (
+                        {item.properties.images ? (
                           <img
-                            src={item.properties.images.split(',')[0]}
+                            src={item.properties.images}
                             alt={item.properties.name}
                             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105 rounded"
                             onError={(e) => {
                               e.target.src = PLACEHOLDER_IMAGE;
                               e.target.parentElement.classList.add('flex', 'items-center', 'justify-center', 'bg-gray-200');
-                              console.error('Image load failed:', item.properties.images.split(',')[0]);
+                              console.error('Image load failed:', item.properties.images);
                             }}
                           />
                         ) : (
@@ -1511,6 +1489,11 @@ const Profile = () => {
                               >
                                 <FaTrash className="inline mr-2" /> Remove
                               </button>
+                              {error && (
+                                <div className="mt-2 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg text-center">
+                                  {error}
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>
