@@ -105,7 +105,7 @@ const ContactUs = () => {
                             <FaMapMarkerAlt className="text-stone-700 text-xl" />
                             <div>
                                 <p className="font-semibold text-stone-700">Office</p>
-                                <p className="text-stone-600">123 Builder Avenue</p>
+                                <p className="text-stone-600">123 Developer Avenue</p>
                                 <p className="text-stone-600">New York, NY 10001</p>
                             </div>
                         </div>

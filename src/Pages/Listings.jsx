@@ -136,7 +136,7 @@ const Listings = () => {
         const { data: propertiesData, error: propertiesError } = await supabase
           .from('properties')
           .select(`
-            id, name, property_type, images, builder_id, price, location, status, configuration,
+            id, name, property_type, images, developer_id, price, location, status, configuration,
             users (
               id,
               username,
@@ -169,8 +169,8 @@ const Listings = () => {
           status: p.status || 'Unknown',
           progress: p.status === 'Upcoming' ? 0 : 1,
           image: p.images ? p.images.split(',')[0] || null : null, // Split the string and take the first URL
-          builder: p.users?.username || 'Unknown Builder' || (p.builder_id ? 'Builder Not Found' : 'No Builder Assigned'),
-          builder_logo: p.users?.email
+          developer: p.users?.username || 'Unknown Developer' || (p.developer_id ? 'Developer Not Found' : 'No Developer Assigned'),
+          developer_logo: p.users?.email
             ? `https://via.placeholder.com/50?text=${encodeURIComponent(p.users.email)}`
             : 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images//default%20logo.jpg',
         }));
@@ -191,7 +191,7 @@ const Listings = () => {
   useEffect(() => {
     const fetchWishlistStatus = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user || user.role === 'builder' || userRole === 'builder') return; // Skip for builders
+      if (!user || user.role === 'developer' || userRole === 'developer') return; // Skip for developers
 
       const { data: wishlistData, error: wishlistError } = await supabase
         .from('wishlist')
@@ -225,7 +225,7 @@ const Listings = () => {
       result = result.filter(
         (p) =>
           p.name.toLowerCase().includes(searchQuery) ||
-          p.builder.toLowerCase().includes(searchQuery) ||
+          p.developer.toLowerCase().includes(searchQuery) ||
           p.location.toLowerCase().includes(searchQuery)
       );
     }
@@ -306,8 +306,8 @@ const Listings = () => {
 
   const toggleWishlist = async (propertyId) => {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user || user.role === 'builder' || userRole === 'builder') {
-      setError('Builders cannot manage wishlist.');
+    if (!user || user.role === 'developer' || userRole === 'developer') {
+      setError('Developers cannot manage wishlist.');
       return;
     }
 
@@ -414,7 +414,7 @@ const Listings = () => {
                       </p>
                       <p className="text-sm">{property.type} • {property.status}</p>
                       <p className="text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        Built by: {property.builder}
+                        Built by: {property.developer}
                       </p>
                       <div className="mt-1">
                         <Link

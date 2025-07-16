@@ -188,7 +188,7 @@ const Details = () => {
             created_at,
             updated_at,
             agents_image,
-            builder_id,
+            developer_id,
             users (
               id,
               username,
@@ -225,7 +225,7 @@ const Details = () => {
 
         // Ensure users is always an array
         const users = Array.isArray(propertyData.users) ? propertyData.users : [];
-        const builder = users.find((user) => user.role === 'builder' && user.id === propertyData.builder_id) || null;
+        const developer = users.find((user) => user.role === 'developer' && user.id === propertyData.developer_id) || null;
 
         // Handle images as comma-separated string or array
         const imageUrls = typeof propertyData.images === 'string'
@@ -255,8 +255,8 @@ const Details = () => {
 
         const mappedProperty = {
           ...propertyData,
-          builder_name: builder?.username || propertyData.developer_name || 'Unknown Developer',
-          builder_logo: builder?.avatar_url || (propertyData.agents_image?.[0] || ''),
+          developer_name: developer?.username || propertyData.developer_name || 'Unknown Developer',
+          developer_logo: developer?.avatar_url || (propertyData.agents_image?.[0] || ''),
           agent_name: propertyData.agent_name,
           agent_role: propertyData.agent_role,
           agent_phone: propertyData.agent_phone,
@@ -516,7 +516,7 @@ const Details = () => {
                     <i className="ri-building-line text-black text-xl"></i>
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-stone-700">{property.builder_name}</h3>
+                    <h3 className="text-xl font-bold text-stone-700">{property.developer_name}</h3>
                     <p className="text-stone-600">{property.developer_tagline || 'Building Quality Homes'}</p>
                   </div>
                 </div>
@@ -535,7 +535,7 @@ const Details = () => {
                   </div>
                 </div>
                 <p className="text-stone-700 leading-relaxed">
-                  {property.builder_name} has been a trusted name in real estate for over {property.developer_experience || 0} years. With a commitment to quality construction, timely delivery, and customer satisfaction, we have successfully delivered premium residential and commercial projects.
+                  {property.developer_name} has been a trusted name in real estate for over {property.developer_experience || 0} years. With a commitment to quality construction, timely delivery, and customer satisfaction, we have successfully delivered premium residential and commercial projects.
                 </p>
               </div>
               <div>

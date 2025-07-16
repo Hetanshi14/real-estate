@@ -2,17 +2,17 @@ import React, { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 
-const Builder = () => {
-  const [builders, setBuilders] = useState([]);
+const Developer = () => {
+  const [developers, setDevelopers] = useState([]);
   const [error, setError] = useState(null);
 
   const sectionRefs = useRef([]);
   const [visibleSections, setVisibleSections] = useState([]);
 
   useEffect(() => {
-    const fetchBuildersAndProperties = async () => {
+    const fetchDevelopersAndProperties = async () => {
       try {
-        console.log('Fetching builders and properties...');
+        console.log('Fetching developers and properties...');
         const { data, error: fetchError } = await supabase
           .from('properties')
           .select(`
@@ -32,18 +32,18 @@ const Builder = () => {
 
         if (!data || data.length === 0) {
           console.warn('No properties found in database');
-          setBuilders([]);
-          setError('No builders found. Please try again later.');
+          setDevelopers([]);
+          setError('No developers found. Please try again later.');
           return;
         }
 
         // Group properties by developer_name
-        const builderMap = new Map();
+        const developerMap = new Map();
         data.forEach((property) => {
-          const builderName = property.developer_name;
-          if (!builderMap.has(builderName)) {
-            builderMap.set(builderName, {
-              name: builderName,
+          const developerName = property.developer_name;
+          if (!developerMap.has(developerName)) {
+            developerMap.set(developerName, {
+              name: developerName,
               tagline: property.developer_tagline || 'No tagline',
               experience: property.developer_experience || 0,
               projectsCompleted: property.developer_projects_completed || 0,
@@ -54,7 +54,7 @@ const Builder = () => {
               properties: [],
             });
           }
-          builderMap.get(builderName).properties.push({
+          developerMap.get(developerName).properties.push({
             id: property.id,
             name: property.name || 'Unnamed Property',
             type: property.property_type || 'Unknown',
@@ -66,18 +66,18 @@ const Builder = () => {
           });
         });
 
-        const buildersArray = Array.from(builderMap.values());
-        console.log('Mapped builders:', buildersArray);
-        setBuilders(buildersArray);
+        const developersArray = Array.from(developerMap.values());
+        console.log('Mapped developers:', developersArray);
+        setDevelopers(developersArray);
         setError(null);
       } catch (error) {
-        console.error('Error in fetchBuildersAndProperties:', error);
-        setError(`Failed to load builders and properties: ${error.message}`);
-        setBuilders([]);
+        console.error('Error in fetchDevelopersAndProperties:', error);
+        setError(`Failed to load developers and properties: ${error.message}`);
+        setDevelopers([]);
       }
     };
 
-    fetchBuildersAndProperties();
+    fetchDevelopersAndProperties();
   }, []);
 
   useEffect(() => {
@@ -116,10 +116,10 @@ const Builder = () => {
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl font-bold mb-3">Discover Premium Properties</h2>
           <p className="text-base mb-5 max-w-xl mx-auto">
-            Explore a world of innovative and sustainable real estate solutions from our top builders.
+            Explore a world of innovative and sustainable real estate solutions from our top developers.
           </p>
           <a
-            href="#builders"
+            href="#developers"
             className="inline-block bg-white text-blue-900 font-medium py-2 px-5 rounded-lg hover:bg-blue-100 transition-colors"
           >
             Explore Now
@@ -127,46 +127,45 @@ const Builder = () => {
         </div>
       </section>
 
-      {/* Builders Section */}
+      {/* Developers Section */}
       <section
-        id="builders"
+        id="developers"
         ref={(el) => (sectionRefs.current[1] = el)}
-        className={`max-w-7xl mx-auto py-12 px-4 transition-all duration-1000 transform ${isVisible('builders') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+        className={`max-w-7xl mx-auto py-12 px-4 transition-all duration-1000 transform ${isVisible('developers') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
       >
         <h2 className="text-3xl font-extrabold text-center text-gray-900 mb-8 tracking-tight">
-          Our Esteemed Builders
+          Our Esteemed Developers
         </h2>
         {error && (
           <div className="bg-red-50 border border-red-300 text-red-700 px-4 py-3 rounded-lg max-w-2xl mx-auto mb-8 text-center shadow-sm">
             {error}
           </div>
         )}
-        {builders.length > 0 && (
+        {developers.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {builders.map((builder) => (
+            {developers.map((developer) => (
               <div
-                key={builder.name}
+                key={developer.name}
                 className="bg-white border border-gray-100 p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300"
               >
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">{builder.name}</h3>
-                <p className="text-base text-gray-500 italic mb-4">{builder.tagline}</p>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">{developer.name}</h3>
+                <p className="text-base text-gray-500 italic mb-4">{developer.tagline}</p>
                 <div className="grid grid-cols-2 gap-3 text-gray-700 mb-4">
                   <div>
-                    <p><strong className="text-gray-900">Experience:</strong> {builder.experience} years</p>
-                    <p><strong className="text-gray-900">Projects:</strong> {builder.projectsCompleted}</p>
-                    <p><strong className="text-gray-900">Families:</strong> {builder.happyFamilies}</p>
+                    <p><strong className="text-gray-900">Experience:</strong> {developer.experience} years</p>
+                    <p><strong className="text-gray-900">Projects:</strong> {developer.projectsCompleted}</p>
+                    <p><strong className="text-gray-900">Families:</strong> {developer.happyFamilies}</p>
                   </div>
                   <div>
-                    <p><strong className="text-gray-900">Awards:</strong> {builder.awards}</p>
-                    <p><strong className="text-gray-900">Certifications:</strong> {builder.certifications}</p>
+                    <p><strong className="text-gray-900">Awards:</strong> {developer.awards}</p>
+                    <p><strong className="text-gray-900">Certifications:</strong> {developer.certifications}</p>
                   </div>
                 </div>
                 <p className="text-sm text-gray-600 mb-4 leading-relaxed">
-                  <strong className="text-gray-900">Description:</strong> {builder.description}
+                  <strong className="text-gray-900">Description:</strong> {developer.description}
                 </p>
-                
                 <Link
-                  to={`/properties/builder/${encodeURIComponent(builder.name)}`}
+                  to={`/properties/developer/${encodeURIComponent(developer.name)}`}
                   className="mt-4 inline-block bg-stone-700 text-white font-medium py-2 px-4 rounded-full hover:bg-stone-600 transition-all duration-200 text-sm"
                 >
                   View All
@@ -180,4 +179,4 @@ const Builder = () => {
   );
 };
 
-export default Builder;
+export default Developer;

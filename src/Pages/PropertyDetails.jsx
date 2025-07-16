@@ -6,14 +6,14 @@ const PropertyDetails = () => {
     const { developerName } = useParams();
     const [properties, setProperties] = useState([]);
     const [error, setError] = useState(null);
-    const [builderImage, setBuilderImage] = useState(null);
+    const [developerImage, setDeveloperImage] = useState(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const fetchBuilderProperties = async () => {
+        const fetchDeveloperProperties = async () => {
             setLoading(true);
             try {
-                console.log('Fetching properties for builder:', developerName);
+                console.log('Fetching properties for developer:', developerName);
                 const { data, error: fetchError } = await supabase
                     .from('properties')
                     .select(`
@@ -33,16 +33,16 @@ const PropertyDetails = () => {
                 console.log('Raw data from Supabase:', data);
 
                 if (!data || data.length === 0) {
-                    console.warn('No properties found for builder:', developerName);
+                    console.warn('No properties found for developer:', developerName);
                     setProperties([]);
-                    setError('No properties found for this builder.');
+                    setError('No properties found for this developer.');
                     return;
                 }
 
-                // Use the first property's images as a placeholder for builder image
+                // Use the first property's images as a placeholder for developer image
                 const firstProperty = data[0];
-                const builderImg = Array.isArray(firstProperty.images) && firstProperty.images.length > 0 ? firstProperty.images[0] : null;
-                setBuilderImage(builderImg);
+                const developerImg = Array.isArray(firstProperty.images) && firstProperty.images.length > 0 ? firstProperty.images[0] : null;
+                developerImage(developerImg);
 
                 const mappedProperties = data.map((p) => ({
                     id: p.id,
@@ -58,7 +58,7 @@ const PropertyDetails = () => {
                     reraNumber: p.rera_number || 'N/A',
                     amenities: Array.isArray(p.amenities) ? p.amenities : [],
                     image: Array.isArray(p.images) && p.images.length > 0 ? p.images[0] : null,
-                    developer: p.developer_name || 'Unknown Builder',
+                    developer: p.developer_name || 'Unknown Developer',
                     tagline: p.developer_tagline || 'No tagline',
                     experience: p.developer_experience || 0,
                     projectsCompleted: p.developer_projects_completed || 0,
@@ -73,14 +73,14 @@ const PropertyDetails = () => {
                 setProperties(mappedProperties);
                 setError(null);
             } catch (error) {
-                console.error('Error in fetchBuilderProperties:', error);
+                console.error('Error in fetchDeveloperProperties:', error);
                 setError(`Failed to load properties: ${error.message}`);
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchBuilderProperties();
+        fetchDeveloperProperties();
     }, [developerName]);
 
     if (loading) return <div className="text-center py-12">Loading...</div>;
@@ -94,30 +94,30 @@ const PropertyDetails = () => {
             )}
             {properties.length > 0 && (
                 <div>
-                    {/* Hero Section - Builder Info */}
+                    {/* Hero Section - Developer Info */}
                     <div className="p-6 flex flex-col md:flex-row items-center text-stone-700">
-                        {/* Builder Image - Left Top */}
+                        {/* Developer Image - Left Top */}
                         <div className="w-full md:w-1/3 mb-4 md:mb-0">
                             <div className="relative w-full h-48 bg-gray-200 rounded-lg overflow-hidden">
-                                {builderImage ? (
+                                {developerImage ? (
                                     <img
-                                        src={builderImage}
+                                        src={developerImage}
                                         alt={`${properties[0].developer} logo`}
                                         className="w-full h-full object-cover"
                                         onError={(e) => {
-                                            console.error('Builder image load error for URL:', builderImage, e);
+                                            console.error('Developer image load error for URL:', developerImage, e);
                                             e.target.style.display = 'none';
                                         }}
                                     />
                                 ) : (
                                     <div className="w-full h-full flex items-center justify-center text-stone-600">
-                                        No builder image
+                                        No developer image
                                     </div>
                                 )}
                             </div>
                         </div>
 
-                        {/* Builder Details - Right Top */}
+                        {/* Developer Details - Right Top */}
                         <div className="w-full md:w-2/3 md:pl-6">
                             <h1 className="text-4xl font-bold">{properties[0].developer}</h1>
                             <p className="text-lg mt-2 italic">{properties[0].tagline || 'No tagline'}</p>
@@ -134,7 +134,7 @@ const PropertyDetails = () => {
 
                     {/* Properties Section */}
                     <div className="p-6">
-                        <h2 className="text-3xl text-center font-semibold text-stone-800 mb-8">Builder Property Name</h2>
+                        <h2 className="text-3xl text-center font-semibold text-stone-800 mb-8">Developer Property Name</h2>
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mt-10">
                             {properties.map((prop) => (
                                 <div
@@ -164,10 +164,10 @@ const PropertyDetails = () => {
                     {/* Navigation */}
                     <div className="p-6 border-t border-gray-200 text-center">
                         <Link
-                            to="/builder"
+                            to="/developer"
                             className="inline-block px-6 py-3 bg-stone-700 text-white font-medium rounded-lg hover:bg-stone-600 transition-colors"
                         >
-                            Back to Builders
+                            Back to Developers
                         </Link>
                     </div>
                 </div>

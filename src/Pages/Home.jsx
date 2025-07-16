@@ -455,7 +455,7 @@ const Home = () => {
               type="text"
               name="search"
               id="search"
-              placeholder="Search by location, builder, or project..."
+              placeholder="Search by location, developer, or project..."
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               autoComplete="search"

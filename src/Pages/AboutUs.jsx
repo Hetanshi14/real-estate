@@ -7,7 +7,7 @@ const AboutUs = () => {
   const [visibleSections, setVisibleSections] = useState([]);
   const bannerRef = useRef(null);
   const [bannerInView, setBannerInView] = useState(false);
-  const [builders, setBuilders] = useState([]); // Now represents users with role 'builder'
+  const [developers, setDevelopers] = useState([]); // Now represents users with role 'developer'
   const [properties, setProperties] = useState([]);
   const [error, setError] = useState(null);
 
@@ -16,18 +16,18 @@ const AboutUs = () => {
 
     const fetchData = async () => {
       try {
-        // Fetch users with role 'builder' to replace the old builders table
-        const { data: buildersData, error: buildersError } = await supabase
+        // Fetch users with role 'developer' to replace the old developers table
+        const { data: developersData, error: developersError } = await supabase
           .from('users')
           .select('id, username, email, created_at, updated_at')
-          .eq('role', 'builder')
+          .eq('role', 'developer')
           .order('username', { ascending: true });
-        console.log('Builders Data:', buildersData);
-        console.log('Builders Error:', buildersError);
+        console.log('Developers Data:', developersData);
+        console.log('Developers Error:', developersError);
 
-        if (buildersError) {
-          console.error('Builders fetch error:', buildersError.message);
-          throw new Error('Failed to fetch builders.');
+        if (developersError) {
+          console.error('Developers fetch error:', developersError.message);
+          throw new Error('Failed to fetch developers.');
         }
 
         // Fetch properties with updated schema
@@ -63,7 +63,7 @@ const AboutUs = () => {
             created_at,
             updated_at,
             agents_image,
-            builder_id
+            developer_id
           `)
           .order('name', { ascending: true });
         console.log('Properties Data:', propertiesData);
@@ -81,12 +81,12 @@ const AboutUs = () => {
             image_url: p.images && p.images.length > 0 ? p.images[0] : '',
           }))
         );
-        setBuilders(buildersData); // Set builders from users with role 'builder'
+        setDevelopers(developersData); // Set developers from users with role 'developer'
         setError(null);
       } catch (err) {
         console.error('Error fetching data:', err.message);
         setError(err.message);
-        setBuilders([]);
+        setDevelopers([]);
         setProperties([]);
       }
     };
@@ -132,9 +132,9 @@ const AboutUs = () => {
       >
         <div className="absolute inset-0 bg-black/60 z-0" />
         <div className="relative z-10 max-w-3xl mx-auto">
-          <h1 className="text-3xl md:text-5xl font-semibold mb-3">Connecting Builders with Dream Homes</h1>
+          <h1 className="text-3xl md:text-5xl font-semibold mb-3">Connecting Developers with Dream Homes</h1>
           <p className="text-2xl md:text-xl text-gray-200">
-            At <strong>Zivaas Properties</strong>, we empower builders to showcase their projects and connect with customers seeking their perfect home. Our platform bridges visionaries with homebuyers, creating communities that thrive.
+            At <strong>Zivaas Properties</strong>, we empower developers to showcase their projects and connect with customers seeking their perfect home. Our platform bridges visionaries with homebuyers, creating communities that thrive.
           </p>
           <div className="flex justify-start gap-4 mt-6 flex-wrap">
             <Link
@@ -143,7 +143,7 @@ const AboutUs = () => {
     before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
     before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
             >
-              Join as a Builder
+              Join as a Developer
             </Link>
             <Link
               to="/listings"
@@ -164,20 +164,20 @@ const AboutUs = () => {
       >
         <div>
           <h2 className="text-4xl font-bold mb-4">
-            Empowering Builders to <span className="text-stone-500">Shape Futures</span>
+            Empowering Developers to <span className="text-stone-500">Shape Futures</span>
           </h2>
           <p className="text-lg mb-4 text-stone-600">
-            Since 2011, Zivaas Properties has been the go-to platform for builders to showcase their projects, from luxurious residences to modern commercial spaces, reaching customers eager to find their dream properties.
+            Since 2011, Zivaas Properties has been the go-to platform for developers to showcase their projects, from luxurious residences to modern commercial spaces, reaching customers eager to find their dream properties.
           </p>
           <p className="text-stone-500">
-            Our mission is to simplify the real estate journey. Builders can easily post their projects and connect with buyers, while customers discover homes that match their aspirations. With innovative tools and a customer-centric approach, we create lasting connections that transform skylines and lives.
+            Our mission is to simplify the real estate journey. Developers can easily post their projects and connect with buyers, while customers discover homes that match their aspirations. With innovative tools and a customer-centric approach, we create lasting connections that transform skylines and lives.
           </p>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 mt-10">
             {[
               { stat: '15+', label: 'Years of Excellence' },
               { stat: '100+', label: 'Projects Showcased' },
-              { stat: '500+', label: 'Builders Partnered' },
+              { stat: '500+', label: 'Developers Partnered' },
               { stat: '10K+', label: 'Happy Customers' },
             ].map(({ stat, label }, i) => (
               <div key={i} className="text-center">
@@ -216,17 +216,17 @@ const AboutUs = () => {
       >
         <h2 className="text-4xl font-bold text-center text-stone-700 mb-4">Our Purpose & Promise</h2>
         <p className="text-center text-stone-500 mb-12 max-w-3xl mx-auto">
-          We are dedicated to creating a platform that empowers builders and delights customers, fostering communities through exceptional real estate experiences.
+          We are dedicated to creating a platform that empowers developers and delights customers, fostering communities through exceptional real estate experiences.
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-6xl mx-auto">
           <div className="bg-white p-6 rounded-lg shadow">
             <h3 className="text-2xl font-semibold text-stone-700 mb-4">Our Purpose</h3>
             <p className="text-stone-600 mb-4">
-              To provide builders with a powerful platform to showcase their projects and connect directly with customers, delivering seamless, transparent real estate solutions.
+              To provide developers with a powerful platform to showcase their projects and connect directly with customers, delivering seamless, transparent real estate solutions.
             </p>
             <ul className="text-stone-600 space-y-2 pl-5 list-disc">
-              <li>Builder-Friendly Tools</li>
+              <li>Developer-Friendly Tools</li>
               <li>Customer-Centric Design</li>
               <li>Innovative Technology</li>
               <li>Trusted Partnerships</li>
@@ -236,10 +236,10 @@ const AboutUs = () => {
           <div className="bg-white p-6 rounded-lg shadow">
             <h3 className="text-2xl font-semibold text-stone-700 mb-4">Our Promise</h3>
             <p className="text-stone-600">
-              To be the leading real estate platform where builders thrive and customers find their dream homes, creating lasting value for communities.
+              To be the leading real estate platform where developers thrive and customers find their dream homes, creating lasting value for communities.
             </p>
             <p className="text-stone-600 mt-3">
-              We envision a future where every project on Zivaas Properties inspires trust, innovation, and connection, transforming the way people buy and build homes.
+              We envision a future where every project on Zivaas Properties inspires trust, innovation, and connection, transforming the way people buy and `build` homes.
             </p>
           </div>
         </div>
@@ -252,7 +252,7 @@ const AboutUs = () => {
       >
         <h2 className="text-4xl font-bold text-center text-stone-800 mb-4">Our Expertise</h2>
         <p className="text-center text-stone-500 mb-12 max-w-3xl mx-auto">
-          With a robust platform and deep industry knowledge, we enable builders to showcase diverse projects and help customers find properties that suit their needs.
+          With a robust platform and deep industry knowledge, we enable developers to showcase diverse projects and help customers find properties that suit their needs.
         </p>
 
         <div className="grid md:grid-cols-2 gap-10 max-w-6xl mx-auto">
@@ -269,7 +269,7 @@ const AboutUs = () => {
             <div className="p-6">
               <h3 className="text-2xl font-semibold text-stone-800 mb-4">Commercial Construction</h3>
               <p className="text-stone-600 mb-4">
-                Our platform supports builders in showcasing sophisticated commercial spaces that blend functionality with innovative design, from corporate offices to retail complexes.
+                Our platform supports developers in showcasing sophisticated commercial spaces that blend functionality with innovative design, from corporate offices to retail complexes.
               </p>
               <ul className="list-disc list-inside text-stone-600 space-y-1">
                 <li>Office Buildings & Corporate Campuses</li>
@@ -293,7 +293,7 @@ const AboutUs = () => {
             <div className="p-6">
               <h3 className="text-2xl font-semibold text-stone-800 mb-4">Residential Construction</h3>
               <p className="text-stone-600 mb-4">
-                We enable builders to present luxurious homes and multi-unit developments, helping customers find spaces where they love to live.
+                We enable developers to present luxurious homes and multi-unit developments, helping customers find spaces where they love to live.
               </p>
               <ul className="list-disc list-inside text-stone-600 space-y-1">
                 <li>Custom Luxury Homes</li>
@@ -311,9 +311,9 @@ const AboutUs = () => {
         ref={(el) => (sectionRefs.current[3] = el)}
         className={`py-16 px-6 bg-stone-100 transition-all duration-1000 transform ${isVisible('section4') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
       >
-        <h2 className="text-4xl font-bold text-center text-stone-800 mb-4">Featured Builders</h2>
+        <h2 className="text-4xl font-bold text-center text-stone-800 mb-4">Featured Developers</h2>
         <p className="text-center text-stone-500 mb-12 max-w-3xl mx-auto">
-          Discover our trusted builders and their exceptional projects. Join as a builder to showcase your properties or explore listings to find your dream home.
+          Discover our trusted developers and their exceptional projects. Join as a developer to showcase your properties or explore listings to find your dream home.
         </p>
 
         {error && (
@@ -323,34 +323,34 @@ const AboutUs = () => {
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-          {builders.length > 0 ? (
-            builders.map((builder) => {
-              const builderProperties = properties.filter((p) => p.builder_id === builder.id);
-              console.log(`Builder ${builder.username} Properties:`, builderProperties); // Use username instead of name
+          {developers.length > 0 ? (
+            developers.map((developer) => {
+              const developerProperties = properties.filter((p) => p.developer_id === developer.id);
+              console.log(`Developer ${developer.username} Properties:`, developerProperties);
               return (
-                <div key={builder.id} className="bg-white rounded-lg shadow-md p-6">
+                <div key={developer.id} className="bg-white rounded-lg shadow-md p-6">
                   <div className="flex items-center gap-4 mb-4">
                     <img
-                      src={builder.logo_url || 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images//default%20logo.jpg'} // Fallback if logo_url is null
-                      alt={`${builder.username} logo`}
+                      src={developer.logo_url || 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images//default%20logo.jpg'}
+                      alt={`${developer.username} logo`}
                       className="w-16 h-16 object-cover rounded-full border"
                       onError={(e) => {
-                        console.error(`Failed to load builder logo: ${e.target.src}`);
+                        console.error(`Failed to load developer logo: ${e.target.src}`);
                         e.target.src = 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images//default%20logo.jpg';
                       }}
                     />
                     <div>
-                      <h3 className="text-xl font-semibold text-stone-700">{builder.username}</h3> {/* Use username */}
-                      <p className="text-stone-600 text-sm">{builder.email}</p> {/* Use email as contact */}
-                      <p className="text-stone-600 text-sm">No tagline available</p> {/* No tagline in users table */}
-                      <p className="text-stone-600 text-sm">Experience: N/A</p> {/* No experience in users table */}
+                      <h3 className="text-xl font-semibold text-stone-700">{developer.username}</h3>
+                      <p className="text-stone-600 text-sm">{developer.email}</p>
+                      <p className="text-stone-600 text-sm">No tagline available</p>
+                      <p className="text-stone-600 text-sm">Experience: N/A</p>
                     </div>
                   </div>
                   <div>
                     <h4 className="text-lg font-semibold text-stone-700 mb-2">Projects</h4>
-                    {builderProperties.length > 0 ? (
+                    {developerProperties.length > 0 ? (
                       <ul className="list-disc list-inside text-stone-600 space-y-1">
-                        {builderProperties.map((property) => (
+                        {developerProperties.map((property) => (
                           <li key={property.id}>
                             <Link
                               to={`/listings/${property.id}`}
@@ -370,7 +370,7 @@ const AboutUs = () => {
             })
           ) : (
             <p className="text-center text-stone-600 text-lg col-span-full">
-              No builders found.
+              No developers found.
             </p>
           )}
         </div>
@@ -382,7 +382,7 @@ const AboutUs = () => {
     before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
     before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white shadow transition"
           >
-            Join as a Builder
+            Join as a Developer
           </Link>
           <Link
             to="/listings"
