@@ -128,7 +128,7 @@ const AboutUs = () => {
       <section
         ref={bannerRef}
         className={`relative bg-cover bg-center text-white h-[80vh] flex items-center pt-20 px-6 pb-20 transition-all duration-1000 transform ${bannerInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
-        style={{ backgroundImage: `ur[](https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Bg%20img/bgabout.jpg)` }}
+        style={{ backgroundImage: `url(https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Bg%20img/bgabout.jpg)` }}
       >
         <div className="absolute inset-0 bg-black/60 z-0" />
         <div className="relative z-10 max-w-3xl mx-auto">
