@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
-import { motion } from 'framer-motion';
 
 // Placeholder Base64 image (1x1 transparent pixel)
 const PLACEHOLDER_IMAGE = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/wcAAwAB/8Vq6QAAAAABJRU5ErkJggg==';
@@ -361,48 +360,32 @@ const Listings = () => {
   return (
     <div className="min-h-screen bg-stone-50">
       {/* Hero Section */}
-      <motion.section
+      <section
         id="section1"
         ref={(el) => (sectionRefs.current[0] = el)}
         className={`relative bg-cover bg-center text-white h-[80vh] flex items-center p-20 transition-all duration-1000 transform ${
           isVisible('section1') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
         }`}
         style={{ backgroundImage: `url(https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Bg%20img/bglisting.jpg)` }}
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.8 }}
       >
         <div className="absolute inset-0 bg-black/60 z-0" />
         <div className="relative z-10 px-4 max-w-6xl mx-auto">
-          <motion.h1
-            className="text-3xl md:text-5xl font-bold mb-3"
-            initial={{ opacity: 0, x: -50 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-          >
+          <h1 className="text-3xl md:text-5xl font-bold mb-3 transition-opacity duration-600" style={{ opacity: 1, transform: 'translateX(0)' }}>
             Explore Properties
-          </motion.h1>
-          <motion.p
-            className="text-2xl max-w-xl mx-auto"
-            initial={{ opacity: 0, x: 50 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-          >
+          </h1>
+          <p className="text-2xl max-w-xl mx-auto transition-opacity duration-600" style={{ opacity: 1, transform: 'translateX(0)' }}>
             Discover a wide range of premium residential and commercial properties curated by Zivaas Properties.
-          </motion.p>
+          </p>
         </div>
-      </motion.section>
+      </section>
 
       {/* Properties Section */}
-      <motion.section
+      <section
         id="section2"
         ref={(el) => (sectionRefs.current[1] = el)}
         className={`max-w-6xl mx-auto py-12 px-4 transition-all duration-1000 transform ${
-          isVisible('section2') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+          isVisible('section2') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-30'
         }`}
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
       >
         <h2 className="text-4xl font-bold text-stone-700 mb-6 text-center">Available Properties</h2>
         {error && (
@@ -447,7 +430,6 @@ const Listings = () => {
                       <div className="mt-1">
                         <Link
                           to={`/listings/${property.id}`}
-                          
                           className="underline text-white hover:font-semibold"
                         >
                           View Details
@@ -512,7 +494,7 @@ const Listings = () => {
             </Link>
           </div>
         )}
-      </motion.section>
+      </section>
     </div>
   );
 };
