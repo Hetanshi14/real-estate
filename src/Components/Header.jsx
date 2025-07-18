@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, Home } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 
 const Header = () => {
@@ -60,9 +60,14 @@ const Header = () => {
       className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${scrolled ? 'bg-stone-700 shadow-md' : 'bg-transparent'}`}
     >
       <div className="max-w-screen mx-auto px-6 py-4 flex items-center justify-between text-white">
-        <Link to="/" className="flex items-center gap-2">
-          <span className="text-2xl font-semibold hidden sm:inline">Zivaas Properties</span>
-        </Link>
+        {/* Left-aligned Zivaas Properties with Home icon */}
+        <div className="flex items-center gap-2">
+          <Link to="/" className="flex items-center gap-2">
+            <span className="text-2xl font-semibold">Zivaas Properties</span>
+          </Link>
+        </div>
+
+        {/* Desktop navigation */}
         <nav className="hidden md:flex items-center gap-6 text-md">
           <div className="flex justify-center gap-8 flex-grow">
             {navLinks.map((link) =>
@@ -98,18 +103,24 @@ const Header = () => {
             )}
           </div>
         </nav>
-        <div className="md:hidden flex items-center gap-4">
+
+        {/* Mobile menu toggle button on the left */}
+        <div className="md:hidden flex items-center gap-2">
           <button
             className="text-white"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
           >
             {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
       </div>
+
+      {/* Mobile menu */}
       {mobileMenuOpen && (
         <div className="md:hidden px-6 pb-4 bg-stone-700">
-          <nav className="space-y-2">
+          <nav className="space-y-4">
+            {/* Navigation links */}
             {navLinks.map((link) =>
               link.name === 'Profile' ? (
                 <button

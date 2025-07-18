@@ -373,7 +373,7 @@ const Details = () => {
         transition={{ duration: 0.6 }}
       >
         <div className="max-w-6xl mx-auto px-4 py-2">
-          <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-4 text-center">
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-8 md:gap-4 text-center">
             <div className="p-3">
               <div className="text-lg font-bold text-stone-700">₹{property.price.toLocaleString('en-IN')}</div>
               <div className="text-sm text-stone-600">Price</div>
