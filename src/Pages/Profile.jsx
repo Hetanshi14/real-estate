@@ -567,7 +567,7 @@ const Profile = () => {
                   before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
                   before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
               >
-                <FaPlus className="inline mr-2" /> {showAddForm ? 'Hide Add Form' : 'Add New Property'}
+                <FaPlus className="inline mr-2" /> {showAddForm ? 'Property' : 'Add New Property'}
               </button>
 
               {showAddForm && (

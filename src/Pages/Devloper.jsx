@@ -111,9 +111,11 @@ const Developer = () => {
       <section
         id="hero"
         ref={(el) => (sectionRefs.current[0] = el)}
-        className={`bg-gray-500 text-white py-16 transition-all duration-1000 transform ${isVisible('hero') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+        className={`bg-cover bg-center text-white py-16 transition-all duration-1000 transform ${isVisible('hero') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+        style={{ backgroundImage: `ur[](https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Bg%20img/bgabout.jpg)` }}
       >
-        <div className="container mx-auto px-4 text-center">
+        <div className="absolute inset-0 bg-black/60 z-0" />
+        <div className="container mx-auto px-4 text-center relative z-10">
           <h2 className="text-3xl font-bold mb-3">Discover Premium Properties</h2>
           <p className="text-base mb-5 max-w-xl mx-auto">
             Explore a world of innovative and sustainable real estate solutions from our top developers.

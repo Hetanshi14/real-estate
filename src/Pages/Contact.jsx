@@ -97,7 +97,7 @@ const ContactUs = () => {
                             <FaEnvelope className="text-stone-700 text-xl" />
                             <div>
                                 <p className="font-semibold text-stone-700">Email</p>
-                                <p className="text-stone-600">info@realestate.com</p>
+                                <p className="text-stone-600">contact@zivaas.in</p>
                             </div>
                         </div>
 
@@ -105,8 +105,7 @@ const ContactUs = () => {
                             <FaMapMarkerAlt className="text-stone-700 text-xl" />
                             <div>
                                 <p className="font-semibold text-stone-700">Office</p>
-                                <p className="text-stone-600">123 Developer Avenue</p>
-                                <p className="text-stone-600">New York, NY 10001</p>
+                                <p className="text-stone-600">Ahmedabad, Gujarat, India</p>
                             </div>
                         </div>
                     </div>

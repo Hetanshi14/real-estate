@@ -128,7 +128,7 @@ const AboutUs = () => {
       <section
         ref={bannerRef}
         className={`relative bg-cover bg-center text-white h-[80vh] flex items-center pt-20 px-6 pb-20 transition-all duration-1000 transform ${bannerInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
-        style={{ backgroundImage: `url(https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Bg%20img/bgabout.jpg)` }}
+        style={{ backgroundImage: `ur[](https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Bg%20img/bgabout.jpg)` }}
       >
         <div className="absolute inset-0 bg-black/60 z-0" />
         <div className="relative z-10 max-w-3xl mx-auto">
@@ -324,18 +324,21 @@ const AboutUs = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
           {developers.length > 0 ? (
-            developers.map((developer) => {
+            developers.slice(0, 6).map((developer) => {
               const developerProperties = properties.filter((p) => p.developer_id === developer.id);
-              console.log(`Developer ${developer.username} Properties:`, developerProperties);
+              const developerImage = developerProperties.length > 0 && developerProperties[0].images
+                ? developerProperties[0].images.split(',')[0]
+                : 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images//default%20logo.jpg';
+
               return (
                 <div key={developer.id} className="bg-white rounded-lg shadow-md p-6">
                   <div className="flex items-center gap-4 mb-4">
                     <img
-                      src={developer.logo_url || 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images//default%20logo.jpg'}
-                      alt={`${developer.username} logo`}
+                      src={developerImage}
+                      alt={`${developer.username} image`}
                       className="w-16 h-16 object-cover rounded-full border"
                       onError={(e) => {
-                        console.error(`Failed to load developer logo: ${e.target.src}`);
+                        console.error(`Failed to load developer image: ${e.target.src}`);
                         e.target.src = 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images//default%20logo.jpg';
                       }}
                     />
