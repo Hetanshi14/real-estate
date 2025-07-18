@@ -190,7 +190,9 @@ const PropertyDetails = () => {
                                         <p className="text-sm text-stone-600 mb-1">Carpet Area: {prop.carpetArea} sq.ft.</p>
                                         <Link
                                             to={`/listings/${prop.id}`}
-                                            className="mt-4 inline-block bg-stone-700 text-white font-medium py-2 px-4 rounded-full hover:bg-stone-600 transition-all duration-200 text-sm"
+                                            className="relative inline-block px-4 py-2 mt-4 rounded-full font-medium text-white bg-stone-700 text-sm z-10 overflow-hidden
+    before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
+    before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
                                         >
                                             View Details
                                         </Link>
@@ -211,7 +213,9 @@ const PropertyDetails = () => {
                     >
                         <Link
                             to="/developer"
-                            className="inline-block px-6 py-3 bg-stone-700 text-white font-medium rounded-lg hover:bg-stone-600 transition-colors"
+                            className="relative inline-block px-5 py-2 rounded-lg font-medium text-white bg-stone-700 z-10 overflow-hidden
+    before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600 
+    before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
                         >
                             Back to Developers
                         </Link>

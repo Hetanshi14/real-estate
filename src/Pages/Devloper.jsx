@@ -122,7 +122,9 @@ const Developer = () => {
           </p>
           <a
             href="#developers"
-            className="inline-block bg-white text-blue-900 font-medium py-2 px-5 rounded-lg hover:bg-blue-100 transition-colors"
+            className="relative inline-block px-5 py-2 rounded-lg font-medium text-stone-700 bg-white z-10 overflow-hidden
+    before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600 
+    before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
           >
             Explore Now
           </a>
@@ -168,7 +170,9 @@ const Developer = () => {
                 </p>
                 <Link
                   to={`/properties/developer/${encodeURIComponent(developer.name)}`}
-                  className="mt-4 inline-block bg-stone-700 text-white font-medium py-2 px-4 rounded-full hover:bg-stone-600 transition-all duration-200 text-sm"
+                  className="relative inline-block px-4 py-2 rounded-full font-medium text-white bg-stone-700 z-10 overflow-hidden
+    before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600 
+    before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white text-sm"
                 >
                   View All
                 </Link>
