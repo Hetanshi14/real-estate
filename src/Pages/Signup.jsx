@@ -14,11 +14,21 @@ const SignUp = () => {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
   const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+
+    if (name === 'password') {
+      const isValid = validatePassword(value);
+      setPasswordError(
+        !isValid
+          ? 'Password must start with an uppercase letter, include a symbol (!@#$%^&*(),.?":{}|<>), a lowercase letter, and be at least 6 characters.'
+          : ''
+      );
+    }
   };
 
   const validatePassword = (password) => {
@@ -34,8 +44,13 @@ const SignUp = () => {
     setSuccess(false);
     setLoading(true);
 
+    if (!validatePassword(formData.password)) {
+      setError('Invalid password. Please check the requirements.');
+      setLoading(false);
+      return;
+    }
+
     try {
-      // Check for duplicate username
       const { data: existingUsers, error: checkError } = await supabase
         .from('users')
         .select('username')
@@ -43,11 +58,6 @@ const SignUp = () => {
 
       if (checkError) throw new Error('Error checking username availability.');
       if (existingUsers.length > 0) throw new Error('Username already taken. Please choose a different one.');
-
-      // Validate password
-      if (!validatePassword(formData.password)) {
-        throw new Error('Password must start with an uppercase letter, include at least one symbol (!@#$%^&*(),.?":{}|<>), and contain at least one lowercase letter.');
-      }
 
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
@@ -57,10 +67,7 @@ const SignUp = () => {
         },
       });
 
-      if (authError) {
-        console.error('Auth error:', authError.message);
-        throw new Error(authError.message);
-      }
+      if (authError) throw new Error(authError.message);
 
       const { error: insertError } = await supabase.from('users').insert([
         {
@@ -71,21 +78,15 @@ const SignUp = () => {
         },
       ]);
 
-      if (insertError) {
-        console.error('Insert error:', insertError.message);
-        throw new Error(`Failed to create user profile: ${insertError.message}`);
-      }
+      if (insertError) throw new Error(`Failed to create user profile: ${insertError.message}`);
 
-      // Redirect to login with success message
       setSuccess(true);
-      navigate('/login', { state: { message: 'Signup successful! Confirm your email.' } });
+      // Delay redirect to allow user to see success message
+      setTimeout(() => navigate('/login', { state: { message: 'Signup successful! Please confirm your email to log in.' } }), 2000);
     } catch (err) {
-      console.error('Error in handleSubmit:', err);
       setError(
         err.message.includes('email')
           ? 'This email is already registered. Please use a different email or log in.'
-          : err.message.includes('weak')
-          ? 'Password is too weak. Use at least 6 characters.'
           : err.message
       );
     } finally {
@@ -93,11 +94,13 @@ const SignUp = () => {
     }
   };
 
+  const backgroundImageUrl = 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Bg%20img/bgsignup.jpg';
+
   return (
     <div
       className="min-h-screen flex items-center justify-center"
       style={{
-        backgroundImage: `url('https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Bg%20img/bgsignup.jpg')`,
+        backgroundImage: `url(${backgroundImageUrl})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
@@ -122,7 +125,7 @@ const SignUp = () => {
         )}
         {success && !error && (
           <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg mb-6 text-center">
-            Redirecting to login...
+            Signup successful! Redirecting to login in 2 seconds...
           </div>
         )}
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -167,6 +170,9 @@ const SignUp = () => {
               className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500 focus:border-transparent text-sm"
               placeholder="Enter your password"
             />
+            {passwordError && (
+              <p className="text-red-500 text-xs mt-1">{passwordError}</p>
+            )}
           </div>
           <div>
             <label className="text-sm font-semibold text-stone-700 mb-2 flex items-center">
@@ -184,7 +190,7 @@ const SignUp = () => {
           </div>
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || !!passwordError}
             className={`relative w-full py-3 px-6 rounded-lg font-semibold text-white bg-stone-700 z-10 overflow-hidden
               before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
               before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white
