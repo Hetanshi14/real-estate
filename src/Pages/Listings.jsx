@@ -1,6 +1,10 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
+import { motion } from 'framer-motion';
+
+// Placeholder Base64 image (1x1 transparent pixel)
+const PLACEHOLDER_IMAGE = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/wcAAwAB/8Vq6QAAAAABJRU5ErkJggg==';
 
 const FilterBar = ({ filters, setFilters, clearFilters }) => {
   const handleChange = (e) => {
@@ -9,7 +13,12 @@ const FilterBar = ({ filters, setFilters, clearFilters }) => {
   };
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-6 gap-3 justify-center items-center p-4 max-w-8xl mx-auto">
+    <motion.div
+      className="grid grid-cols-2 md:grid-cols-6 gap-3 justify-center items-center p-4 max-w-8xl mx-auto"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6, delay: 0.2 }}
+    >
       <input
         type="text"
         name="location"
@@ -69,12 +78,12 @@ const FilterBar = ({ filters, setFilters, clearFilters }) => {
       <button
         onClick={clearFilters}
         className="relative inline-block px-4 py-2 rounded font-medium text-white bg-stone-700 z-10 overflow-hidden w-auto
-    before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
-    before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white shadow transition"
+          before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
+          before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white shadow transition"
       >
         Clear Filters
       </button>
-    </div>
+    </motion.div>
   );
 };
 
@@ -102,8 +111,7 @@ const Listings = () => {
         };
   });
 
-  const [userRole, setUserRole] = useState(null); // New state to track user role
-
+  const [userRole, setUserRole] = useState(null);
   const sectionRefs = useRef([]);
   const [visibleSections, setVisibleSections] = useState([]);
 
@@ -168,8 +176,8 @@ const Listings = () => {
           location: p.location || 'Unknown',
           status: p.status || 'Unknown',
           progress: p.status === 'Upcoming' ? 0 : 1,
-          image: p.images ? p.images.split(',')[0] || null : null, // Split the string and take the first URL
-          developer: p.users?.username || 'Unknown Developer' || (p.developer_id ? 'Developer Not Found' : 'No Developer Assigned'),
+          image: p.images ? p.images.split(',')[0] || null : null,
+          developer: p.users?.username || 'Unknown Developer',
           developer_logo: p.users?.email
             ? `https://via.placeholder.com/50?text=${encodeURIComponent(p.users.email)}`
             : 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images//default%20logo.jpg',
@@ -191,7 +199,7 @@ const Listings = () => {
   useEffect(() => {
     const fetchWishlistStatus = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user || user.role === 'developer' || userRole === 'developer') return; // Skip for developers
+      if (!user || user.role === 'developer' || userRole === 'developer') return;
 
       const { data: wishlistData, error: wishlistError } = await supabase
         .from('wishlist')
@@ -356,38 +364,80 @@ const Listings = () => {
   };
 
   return (
-    <div className="min-h-screen">
-      <section
+    <div className="min-h-screen bg-stone-50">
+      {/* Hero Section */}
+      <motion.section
         id="section1"
         ref={(el) => (sectionRefs.current[0] = el)}
-        className={`relative bg-cover bg-center text-white h-[80vh] flex items-center p-20 transition-all duration-1000 transform ${isVisible('section1') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
-        style={{ backgroundImage: `ur[](https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Bg%20img/bglisting.jpg)` }}
+        className={`relative bg-cover bg-center text-white h-[80vh] flex items-center p-20 transition-all duration-1000 transform ${
+          isVisible('section1') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+        }`}
+        style={{ backgroundImage: `url(https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Bg%20img/bglisting.jpg)` }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.6 }}
       >
         <div className="absolute inset-0 bg-black/60 z-0" />
         <div className="relative z-10 px-4 max-w-6xl mx-auto">
-          <h1 className="text-3xl md:text-5xl font-bold mb-3">Explore Properties</h1>
-          <p className="text-2xl max-w-xl mx-auto">
+          <motion.h1
+            className="text-3xl md:text-5xl font-bold mb-3"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
+            Explore Properties
+          </motion.h1>
+          <motion.p
+            className="text-2xl max-w-xl mx-auto"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+          >
             Discover a wide range of premium residential and commercial properties curated by Zivaas Properties.
-          </p>
+          </motion.p>
         </div>
-      </section>
+      </motion.section>
 
-      <section
+      {/* Properties Section */}
+      <motion.section
         id="section2"
         ref={(el) => (sectionRefs.current[1] = el)}
-        className={`max-w-6xl mx-auto py-12 px-4 transition-all duration-1000 transform ${isVisible('section2') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+        className={`max-w-6xl mx-auto py-12 px-4 transition-all duration-1000 transform ${
+          isVisible('section2') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+        }`}
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
       >
-        <h2 className="text-4xl font-bold text-stone-700 mb-6 text-center">Available Properties</h2>
+        <motion.h2
+          className="text-4xl font-bold text-stone-700 mb-6 text-center"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+        >
+          Available Properties
+        </motion.h2>
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6 text-center">
+          <motion.div
+            className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6 text-center"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+          >
             {error}
-          </div>
+          </motion.div>
         )}
         <FilterBar filters={filters} setFilters={setFilters} clearFilters={clearFilters} />
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mt-10">
           {paginatedProperties.length > 0 ? (
-            paginatedProperties.map((property) => (
-              <div key={property.id} className="rounded shadow hover:shadow-lg transition text-white">
+            paginatedProperties.map((property, index) => (
+              <motion.div
+                key={property.id}
+                className="rounded shadow hover:shadow-lg transition text-white"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.2 * (index % 3) }}
+              >
                 <div className="relative group h-[300px] w-full overflow-hidden rounded">
                   {property.image ? (
                     <img
@@ -395,8 +445,9 @@ const Listings = () => {
                       alt={property.name}
                       className="w-full h-full transition-transform duration-300 group-hover:scale-105 rounded"
                       onError={(e) => {
-                        e.target.style.display = 'none';
+                        e.target.src = PLACEHOLDER_IMAGE;
                         e.target.parentElement.classList.add('flex', 'items-center', 'justify-center', 'bg-gray-200');
+                        console.error('Image load failed:', property.image);
                       }}
                     />
                   ) : (
@@ -419,7 +470,9 @@ const Listings = () => {
                       <div className="mt-1">
                         <Link
                           to={`/listings/${property.id}`}
-                          className="inline-block text-rose-100 hover:underline"
+                          className="relative inline-block px-2 py-1 rounded-full font-medium text-white bg-stone-700 z-10 overflow-hidden
+                            before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
+                            before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
                         >
                           View Details
                         </Link>
@@ -428,7 +481,7 @@ const Listings = () => {
                         <div className="mt-1">
                           <button
                             onClick={() => toggleWishlist(property.id)}
-                            className="relative inline-block px-2 rounded-full font-medium text-white bg-green-600 z-10 overflow-hidden
+                            className="relative inline-block px-2 py-1 rounded-full font-medium text-white bg-green-600 z-10 overflow-hidden
                               before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-green-700
                               before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
                           >
@@ -439,23 +492,33 @@ const Listings = () => {
                     </div>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             ))
           ) : (
-            <p className="text-center text-stone-600 text-lg col-span-full">
+            <motion.p
+              className="text-center text-stone-600 text-lg col-span-full"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+            >
               {error || 'No properties found in the database.'}
-            </p>
+            </motion.p>
           )}
         </div>
         {filteredProperties.length > perPage && (
-          <div className="flex justify-center mt-6 space-x-4">
+          <motion.div
+            className="flex justify-center mt-6 space-x-4"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
             <button
               onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
               disabled={page === 1}
               className="relative inline-block px-6 py-2 rounded font-medium text-white bg-stone-700 z-10 overflow-hidden
-    before:absolute before:right-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
-    before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white
-    disabled:opacity-50 disabled:cursor-not-allowed"
+                before:absolute before:right-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
+                before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white
+                disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Previous
             </button>
@@ -466,23 +529,30 @@ const Listings = () => {
               onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
               disabled={page === totalPages}
               className="relative inline-block px-6 py-2 rounded font-medium text-white bg-stone-700 z-10 overflow-hidden
-    before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
-    before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white
-    disabled:opacity-50 disabled:cursor-not-allowed"
+                before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
+                before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white
+                disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Next
             </button>
-          </div>
+          </motion.div>
         )}
-        <div className="flex justify-center mt-4">
+        <motion.div
+          className="flex justify-center mt-4"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+        >
           <Link
             to="/profile"
-            className="inline-block text-stone-700 underline hover:font-semibold"
+            className="relative inline-block px-4 py-2 rounded font-medium text-white bg-stone-700 z-10 overflow-hidden
+              before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
+              before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
           >
             Wishlist
           </Link>
-        </div>
-      </section>
+        </motion.div>
+      </motion.section>
     </div>
   );
 };
