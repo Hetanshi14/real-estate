@@ -13,12 +13,7 @@ const FilterBar = ({ filters, setFilters, clearFilters }) => {
   };
 
   return (
-    <motion.div
-      className="grid grid-cols-2 md:grid-cols-6 gap-3 justify-center items-center p-4 max-w-8xl mx-auto"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, delay: 0.2 }}
-    >
+    <div className="grid grid-cols-2 md:grid-cols-6 gap-3 justify-center items-center p-4 max-w-8xl mx-auto">
       <input
         type="text"
         name="location"
@@ -83,7 +78,7 @@ const FilterBar = ({ filters, setFilters, clearFilters }) => {
       >
         Clear Filters
       </button>
-    </motion.div>
+    </div>
   );
 };
 
@@ -372,25 +367,25 @@ const Listings = () => {
         className={`relative bg-cover bg-center text-white h-[80vh] flex items-center p-20 transition-all duration-1000 transform ${
           isVisible('section1') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
         }`}
-        style={{ backgroundImage: `url(https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Bg%20img/bglisting.jpg)` }}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.6 }}
+        style={{ backgroundImage: `ur[](https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Bg%20img/bglisting.jpg)` }}
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.8 }}
       >
         <div className="absolute inset-0 bg-black/60 z-0" />
         <div className="relative z-10 px-4 max-w-6xl mx-auto">
           <motion.h1
             className="text-3xl md:text-5xl font-bold mb-3"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, x: -50 }}
+            animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
             Explore Properties
           </motion.h1>
           <motion.p
             className="text-2xl max-w-xl mx-auto"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
           >
             Discover a wide range of premium residential and commercial properties curated by Zivaas Properties.
@@ -409,35 +404,17 @@ const Listings = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
       >
-        <motion.h2
-          className="text-4xl font-bold text-stone-700 mb-6 text-center"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-        >
-          Available Properties
-        </motion.h2>
+        <h2 className="text-4xl font-bold text-stone-700 mb-6 text-center">Available Properties</h2>
         {error && (
-          <motion.div
-            className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6 text-center"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-          >
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6 text-center">
             {error}
-          </motion.div>
+          </div>
         )}
         <FilterBar filters={filters} setFilters={setFilters} clearFilters={clearFilters} />
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mt-10">
           {paginatedProperties.length > 0 ? (
             paginatedProperties.map((property, index) => (
-              <motion.div
-                key={property.id}
-                className="rounded shadow hover:shadow-lg transition text-white"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.2 * (index % 3) }}
-              >
+              <div key={property.id} className="rounded shadow hover:shadow-lg transition text-white">
                 <div className="relative group h-[300px] w-full overflow-hidden rounded">
                   {property.image ? (
                     <img
@@ -470,48 +447,38 @@ const Listings = () => {
                       <div className="mt-1">
                         <Link
                           to={`/listings/${property.id}`}
-                          className="relative inline-block px-2 py-1 rounded-full font-medium text-white bg-stone-700 z-10 overflow-hidden
-                            before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
-                            before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
+                          onClick={(e) => e.preventDefault()} // Prevent default navigation for demo
+                          className="underline text-white hover:font-semibold"
                         >
                           View Details
                         </Link>
                       </div>
                       {userRole === 'customer' && property.isInWishlist !== undefined && (
                         <div className="mt-1">
-                          <button
-                            onClick={() => toggleWishlist(property.id)}
-                            className="relative inline-block px-2 py-1 rounded-full font-medium text-white bg-green-600 z-10 overflow-hidden
-                              before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-green-700
-                              before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
+                          <Link
+                            onClick={(e) => {
+                              e.preventDefault();
+                              toggleWishlist(property.id);
+                            }}
+                            className="underline text-green-300 hover:font-semibold"
                           >
                             {property.isInWishlist ? 'Remove' : 'Add to Wishlist'}
-                          </button>
+                          </Link>
                         </div>
                       )}
                     </div>
                   </div>
                 </div>
-              </motion.div>
+              </div>
             ))
           ) : (
-            <motion.p
-              className="text-center text-stone-600 text-lg col-span-full"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-            >
+            <p className="text-center text-stone-600 text-lg col-span-full">
               {error || 'No properties found in the database.'}
-            </motion.p>
+            </p>
           )}
         </div>
         {filteredProperties.length > perPage && (
-          <motion.div
-            className="flex justify-center mt-6 space-x-4"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-          >
+          <div className="flex justify-center mt-6 space-x-4">
             <button
               onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
               disabled={page === 1}
@@ -522,9 +489,7 @@ const Listings = () => {
             >
               Previous
             </button>
-            <span className="text-stone-700">
-              Page {page} of {totalPages}
-            </span>
+            <span className="text-stone-700">Page {page} of {totalPages}</span>
             <button
               onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
               disabled={page === totalPages}
@@ -535,23 +500,18 @@ const Listings = () => {
             >
               Next
             </button>
-          </motion.div>
+          </div>
         )}
-        <motion.div
-          className="flex justify-center mt-4"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.4 }}
-        >
-          <Link
-            to="/profile"
-            className="relative inline-block px-4 py-2 rounded font-medium text-white bg-stone-700 z-10 overflow-hidden
-              before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
-              before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
-          >
-            Wishlist
-          </Link>
-        </motion.div>
+        {userRole === 'customer' && (
+          <div className="flex justify-center mt-4">
+            <Link
+              to="/profile"
+              className="underline text-stone-700 hover:font-semibold"
+            >
+              Wishlist
+            </Link>
+          </div>
+        )}
       </motion.section>
     </div>
   );

@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
+import { motion } from 'framer-motion';
 
 const PropertyDetails = () => {
     const { developerName } = useParams();
@@ -42,12 +43,10 @@ const PropertyDetails = () => {
                 }
 
                 const firstProperty = data[0];
-                // Use developer_image if available and non-empty, fallback to first image from images
+                // Use developer_image if available and non-empty
                 const developerImg = firstProperty.developer_image && firstProperty.developer_image.trim() !== ''
                     ? firstProperty.developer_image
-                    : (firstProperty.images && Array.isArray(firstProperty.images) && firstProperty.images.length > 0
-                        ? firstProperty.images[0]
-                        : null);
+                    : null;
                 setDeveloperImage(developerImg);
 
                 const mappedProperties = data.map((p) => ({
@@ -62,8 +61,8 @@ const PropertyDetails = () => {
                     units: p.total_units || 'N/A',
                     carpetArea: p.carpet_area || 0,
                     reraNumber: p.rera_number || 'N/A',
-                    amenities: Array.isArray(p.amenities) ? p.amenities : [],
-                    image: p.images && (Array.isArray(p.images) ? p.images[0] : p.images) || null,
+                    amenities: Array.isArray(p.amenities) ? p.amenities : p.amenities ? p.amenities.split(',') : [],
+                    image: p.images && p.images.trim() !== '' ? p.images.split(',')[0] : null,
                     developer: p.developer_name || 'Unknown Developer',
                     tagline: p.developer_tagline || 'No tagline',
                     experience: p.developer_experience || 0,
@@ -90,7 +89,12 @@ const PropertyDetails = () => {
     if (loading) return <div className="text-center py-12">Loading...</div>;
 
     return (
-        <div className="min-h-screen bg-gray-50 px-4 relative">
+        <motion.div
+            className="min-h-screen bg-gray-50 relative"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+        >
             {error && (
                 <div className="bg-red-100 border border-red-400 text-red-700 px-6 py-4 rounded-lg max-w-4xl mx-auto mb-8 text-center relative z-10">
                     {error}
@@ -99,21 +103,31 @@ const PropertyDetails = () => {
             {properties.length > 0 && (
                 <div>
                     {/* Top Background Image Section */}
-                    <section
+                    <motion.section
                         id="section1"
                         ref={(el) => (sectionRefs.current[0] = el)}
                         className={`relative bg-cover bg-center text-white h-[80vh] flex items-center p-20 transition-all duration-1000 transform ${isVisible('section1') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
-                        style={{ backgroundImage: `url('https://via.placeholder.com/1200x800?text=Background+Image')` }} // Replace with your image URL
+                        style={{ backgroundImage: `url('https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Bg%20img/bgdev1.jpg')` }} 
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.8 }}
                     >
                         <div className="absolute inset-0 bg-black/60 z-0" />
                         <div className="relative z-10 px-4 max-w-6xl mx-auto">
                             <h1 className="text-3xl md:text-5xl font-bold mb-3">{properties[0].developer}</h1>
-                            <p className="text-2xl max-w-xl mx-auto">{properties[0].developer_description || 'No description available.'}</p>
+                            <p className="text-2xl max-w-xl mx-auto">{properties[0].description || 'No description available.'}</p>
                         </div>
-                    </section>
+                    </motion.section>
 
                     {/* Hero Section - Developer Info */}
-                    <div className="p-6 flex flex-col md:flex-row items-center text-stone-700 relative z-10">
+                    <motion.div
+                        id="section2"
+                        ref={(el) => (sectionRefs.current[1] = el)}
+                        className="p-6 flex flex-col md:flex-row items-center text-stone-700 relative z-10"
+                        initial={{ opacity: 0, y: 30 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.6, delay: 0.2 }}
+                    >
                         {/* Developer Image - Left Top */}
                         <div className="w-full md:w-1/3 mb-4 md:mb-0">
                             <div className="relative w-2xs h-80 bg-gray-200 rounded overflow-hidden">
@@ -148,10 +162,17 @@ const PropertyDetails = () => {
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </motion.div>
 
                     {/* Properties Section */}
-                    <div className="p-6 relative z-10">
+                    <motion.div
+                        id="section3"
+                        ref={(el) => (sectionRefs.current[2] = el)}
+                        className="p-6 relative z-10"
+                        initial={{ opacity: 0, y: 30 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.6, delay: 0.4 }}
+                    >
                         <h2 className="text-3xl text-center font-semibold text-stone-800 mb-8">Developer Property Name</h2>
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mt-10">
                             {properties.map((prop) => (
@@ -177,20 +198,27 @@ const PropertyDetails = () => {
                                 </div>
                             ))}
                         </div>
-                    </div>
+                    </motion.div>
 
                     {/* Navigation */}
-                    <div className="p-6 border-t border-gray-200 text-center relative z-10">
+                    <motion.div
+                        id="section4"
+                        ref={(el) => (sectionRefs.current[3] = el)}
+                        className="p-6 border-t border-gray-200 text-center relative z-10"
+                        initial={{ opacity: 0, y: 30 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.6, delay: 0.6 }}
+                    >
                         <Link
                             to="/developer"
                             className="inline-block px-6 py-3 bg-stone-700 text-white font-medium rounded-lg hover:bg-stone-600 transition-colors"
                         >
                             Back to Developers
                         </Link>
-                    </div>
+                    </motion.div>
                 </div>
             )}
-        </div>
+        </motion.div>
     );
 };
 
