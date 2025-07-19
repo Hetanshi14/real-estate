@@ -187,9 +187,7 @@ const PropertyDetails = () => {
                                         <p className="text-sm text-stone-600 mb-1">Carpet Area: {prop.carpetArea} sq.ft.</p>
                                         <Link
                                             to={`/listings/${prop.id}`}
-                                            className="relative inline-block px-4 py-2 mt-4 rounded-full font-medium text-white bg-stone-700 text-sm z-10 overflow-hidden
-    before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
-    before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
+                                            className="relative inline-block mt-4 font-medium text-stone-700 text-sm after:absolute after:left-0 after:bottom-0 after:h-[1.5px] after:w-full after:bg-stone-700 hover:font-bold"
                                         >
                                             View Details
                                         </Link>

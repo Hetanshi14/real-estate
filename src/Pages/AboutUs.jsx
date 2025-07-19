@@ -306,97 +306,60 @@ const AboutUs = () => {
         </div>
       </section>
 
-      <section
-        id="section4"
-        ref={(el) => (sectionRefs.current[3] = el)}
-        className={`py-16 px-6 bg-stone-100 transition-all duration-1000 transform ${isVisible('section4') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
-      >
-        <h2 className="text-4xl font-bold text-center text-stone-800 mb-4">Featured Developers</h2>
-        <p className="text-center text-stone-500 mb-12 max-w-3xl mx-auto">
-          Discover our trusted developers and their exceptional projects. Join as a developer to showcase your properties or explore listings to find your dream home.
+  <section className="bg-stone-100 text-stone-700 py-16 px-4">
+  <div className="max-w-6xl mx-auto bg-white rounded-xl shadow-lg p-10">
+    <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-stone-800">
+      Our Core Values
+    </h2>
+
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-10 text-center">
+      {/* Integrity */}
+      <div>
+        <div className="bg-stone-200 rounded-full h-20 w-20 mx-auto mb-4 flex items-center justify-center">
+          <span className="text-stone-700 text-3xl">👥</span>
+        </div>
+        <h3 className="text-xl font-semibold mb-2 text-stone-800">Integrity</h3>
+        <p className="text-sm text-stone-600">
+          We uphold the highest standards of honesty, ensuring trust and accountability in all our actions.
         </p>
+      </div>
 
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6 text-center max-w-6xl mx-auto">
-            {error}
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-          {developers.length > 0 ? (
-            developers.slice(0, 6).map((developer) => {
-              const developerProperties = properties.filter((p) => p.developer_id === developer.id);
-              const developerImage = developerProperties.length > 0 && developerProperties[0].images
-                ? developerProperties[0].images.split(',')[0]
-                : 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images//default%20logo.jpg';
-
-              return (
-                <div key={developer.id} className="bg-white rounded-lg shadow-md p-6">
-                  <div className="flex items-center gap-4 mb-4">
-                    <img
-                      src={developerImage}
-                      alt={`${developer.username} image`}
-                      className="w-16 h-16 object-cover rounded-full border"
-                      onError={(e) => {
-                        console.error(`Failed to load developer image: ${e.target.src}`);
-                        e.target.src = 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images//default%20logo.jpg';
-                      }}
-                    />
-                    <div>
-                      <h3 className="text-xl font-semibold text-stone-700">{developer.username}</h3>
-                      <p className="text-stone-600 text-sm">{developer.email}</p>
-                      <p className="text-stone-600 text-sm">No tagline available</p>
-                      <p className="text-stone-600 text-sm">Experience: N/A</p>
-                    </div>
-                  </div>
-                  <div>
-                    <h4 className="text-lg font-semibold text-stone-700 mb-2">Projects</h4>
-                    {developerProperties.length > 0 ? (
-                      <ul className="list-disc list-inside text-stone-600 space-y-1">
-                        {developerProperties.map((property) => (
-                          <li key={property.id}>
-                            <Link
-                              to={`/listings/${property.id}`}
-                              className="text-stone-700 hover:text-stone-600 hover:underline"
-                            >
-                              {property.name} ({property.property_type})
-                            </Link>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p className="text-stone-600 text-sm">No projects listed yet.</p>
-                    )}
-                  </div>
-                </div>
-              );
-            })
-          ) : (
-            <p className="text-center text-stone-600 text-lg col-span-full">
-              No developers found.
-            </p>
-          )}
+      {/* Excellence */}
+      <div>
+        <div className="bg-stone-200 rounded-full h-20 w-20 mx-auto mb-4 flex items-center justify-center">
+          <span className="text-stone-700 text-3xl">🏢</span>
         </div>
+        <h3 className="text-xl font-semibold mb-2 text-stone-800">Excellence</h3>
+        <p className="text-sm text-stone-600">
+          We relentlessly pursue superior quality, delivering exceptional results that inspire confidence.
+        </p>
+      </div>
 
-        <div className="mt-12 text-center">
-          <Link
-            to="/signup"
-            className="relative inline-block px-6 py-2 rounded font-medium text-white bg-stone-700 z-10 overflow-hidden mr-4
-    before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
-    before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white shadow transition"
-          >
-            Join as a Developer
-          </Link>
-          <Link
-            to="/listings"
-            className="relative inline-block px-6 py-2 rounded font-medium text-stone-600 border border-stone-600 z-10 overflow-hidden
-    before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-700
-    before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white transition"
-          >
-            Browse All Properties
-          </Link>
+      {/* Innovation */}
+      <div>
+        <div className="bg-stone-200 rounded-full h-20 w-20 mx-auto mb-4 flex items-center justify-center">
+          <span className="text-stone-700 text-3xl">📚</span>
         </div>
-      </section>
+        <h3 className="text-xl font-semibold mb-2 text-stone-800">Innovation</h3>
+        <p className="text-sm text-stone-600">
+          We drive progress by embracing bold ideas and pioneering solutions for a better future.
+        </p>
+      </div>
+
+      {/* Collaboration */}
+      <div>
+        <div className="bg-stone-200 rounded-full h-20 w-20 mx-auto mb-4 flex items-center justify-center">
+          <span className="text-stone-700 text-3xl">🤝</span>
+        </div>
+        <h3 className="text-xl font-semibold mb-2 text-stone-800">Collaboration</h3>
+        <p className="text-sm text-stone-600">
+          We foster meaningful partnerships, uniting diverse perspectives to achieve collective success.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
     </div>
   );
 };

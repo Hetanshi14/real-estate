@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, Home } from 'lucide-react';
+import { Menu, X, Home, UserCircle } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 
 const Header = () => {
@@ -75,14 +75,17 @@ const Header = () => {
                 <button
                   key={link.name}
                   onClick={handleProfileClick}
-                  className={`bg-blue-600 text-white text-sm px-4 py-1 rounded-lg font-semibold hover:bg-blue-700 transition-colors ${
-                    !isAuthenticated ? 'bg-blue-400 hover:bg-blue-500 cursor-pointer relative group' : ''
+                  className={`text-white text-sm px-2 py-1 font-semibold relative inline-block ${
+                    !isAuthenticated ? 'cursor-pointer relative group' : ''
                   }`}
                   title={!isAuthenticated ? 'Please log in to view your profile' : ''}
                 >
-                  {link.name}
+                  <UserCircle size={18} className="inline mr-1" />
+                  <span className="relative inline-block after:absolute after:left-0 after:bottom-0 after:h-[1px] after:w-0 after:bg-rose-200 after:transition-all after:duration-300 hover:after:w-full">
+                    {link.name}
+                  </span>
                   {!isAuthenticated && (
-                    <span className="absolute top-full left-1/2 transform -translate-x-1/2 mt-1 hidden group-hover:block bg-gray-800 text-white text-xs rounded py-1 px-2">
+                    <span className="absolute top-full left-1/2 transform -translate-x-1/2 mt-1 hidden group-hover:block bg-stone-600 text-white text-xs rounded py-1 px-2">
                       Log in required
                     </span>
                   )}
@@ -129,14 +132,14 @@ const Header = () => {
                     handleProfileClick();
                     setMobileMenuOpen(false);
                   }}
-                  className={`bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors w-full text-left ${
-                    !isAuthenticated ? 'bg-blue-400 hover:bg-blue-500 cursor-pointer relative group' : ''
+                  className={`text-white px-4 py-2 rounded font-semibold hover:text-rose-200 w-full text-left ${
+                    !isAuthenticated ? 'cursor-pointer relative group' : ''
                   }`}
                   title={!isAuthenticated ? 'Please log in to view your profile' : ''}
                 >
-                  {link.name}
+                  <UserCircle size={18} className="inline mr-1" /> {link.name}
                   {!isAuthenticated && (
-                    <span className="absolute top-full left-1/2 transform -translate-x-1/2 mt-1 hidden group-hover:block bg-gray-800 text-white text-xs rounded py-1 px-2">
+                    <span className="absolute top-full left-1/2 transform -translate-x-1/2 mt-1 hidden group-hover:block bg-stone-600 text-white text-xs rounded py-1 px-2">
                       Log in required
                     </span>
                   )}

@@ -467,37 +467,38 @@ const Details = () => {
       </motion.section>
 
       <motion.section
-        className="py-12 bg-white"
-        initial={{ opacity: 0, y: 30 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.3 }}
-        transition={{ duration: 0.6 }}
-      >
-        <div className="max-w-6xl mx-auto px-4">
-          <h2 className="text-4xl font-bold text-stone-700 mb-6 text-center">World-Class Amenities</h2>
-          <p className="text-lg text-stone-600 mb-6 text-center">Explore the premium facilities available at {property.name}</p>
-          {Array.isArray(property.amenities) && property.amenities.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-              {property.amenities.map((amenity, index) => (
-                <div
-                  key={index}
-                  className="bg-stone-50 p-4 rounded-lg text-center hover:shadow-md transition-shadow"
-                >
-                  <div className="w-8 h-4 bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <img
-                      src={amenityImages[amenity] || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=32&h=32'}
-                      alt={`${amenity} icon`}
-                    />
-                  </div>
-                  <h3 className="font-semibold text-stone-700 text-sm">{amenity}</h3>
-                </div>
-              ))}
+  className="py-16 bg-white"
+  initial={{ opacity: 0, y: 30 }}
+  whileInView={{ opacity: 1, y: 0 }}
+  viewport={{ once: true, amount: 0.3 }}
+  transition={{ duration: 0.6 }}
+>
+  <div className="max-w-6xl mx-auto px-4">
+    <h2 className="text-4xl font-bold text-stone-700 mb-8 text-center">World-Class Amenities</h2>
+    <p className="text-lg text-stone-600 mb-10 text-center max-w-2xl mx-auto">Explore the premium facilities available at {property.name}</p>
+    {Array.isArray(property.amenities) && property.amenities.length > 0 ? (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+        {property.amenities.map((amenity, index) => (
+          <div
+            key={index}
+            className="bg-stone-100 p-6 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 hover:bg-stone-200 flex items-center gap-4"
+          >
+            <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0">
+              <img
+                src={amenityImages[amenity] || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=48&h=48'}
+                alt={`${amenity} icon`}
+                className="w-10 h-10 object-contain"
+              />
             </div>
-          ) : (
-            <p className="text-center text-stone-500 text-lg">No amenities available for this property.</p>
-          )}
-        </div>
-      </motion.section>
+            <h3 className="font-semibold text-stone-700 text-base text-left flex-1">{amenity}</h3>
+          </div>
+        ))}
+      </div>
+    ) : (
+      <p className="text-center text-stone-500 text-lg py-8">No amenities available for this property.</p>
+    )}
+  </div>
+</motion.section>
 
       <motion.section
         className="py-12 bg-stone-50"

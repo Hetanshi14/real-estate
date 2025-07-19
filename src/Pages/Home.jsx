@@ -1,8 +1,19 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { supabase } from '../supabaseClient';
+import { supabase } from "../supabaseClient";
 import { motion } from "framer-motion";
-import { Home as HomeIcon, CalendarDays, ClipboardList, MessageCircle, FileCheck2 } from 'lucide-react';
+import {
+  Home as HomeIcon,
+  CalendarDays,
+  ClipboardList,
+  MessageCircle,
+  FileCheck2,
+  BookOpen,
+  DollarSign,
+  Gavel,
+  Palette,
+  PhoneCall,
+} from "lucide-react";
 
 const Home = () => {
   const [searchInput, setSearchInput] = useState("");
@@ -19,60 +30,70 @@ const Home = () => {
   const zivaasRef = useRef(null);
   const [zivaasInView, setZivaasInView] = useState(false);
   const [zivaasCounts, setZivaasCounts] = useState([0, 0, 0]);
+  const serviceRefs = useRef([]);
 
   useEffect(() => {
     const fetchProperties = async () => {
       try {
-        console.log('Fetching properties from Supabase');
+        console.log("Fetching properties from Supabase");
         setLoading(true);
         const { data: propertiesData, error: propertiesError } = await supabase
-          .from('properties')
-          .select('*');
+          .from("properties")
+          .select("*");
 
         if (propertiesError) {
-          console.error('Properties fetch error:', propertiesError.message);
-          throw new Error(`Failed to fetch properties: ${propertiesError.message}`);
+          console.error("Properties fetch error:", propertiesError.message);
+          throw new Error(
+            `Failed to fetch properties: ${propertiesError.message}`
+          );
         }
 
         if (!propertiesData || propertiesData.length === 0) {
-          console.warn('No properties returned from Supabase');
-          throw new Error('No properties available.');
+          console.warn("No properties returned from Supabase");
+          throw new Error("No properties available.");
         }
 
         const mappedProperties = propertiesData.map((p) => {
-          const bhkMatch = (p.configuration || '').match(/\d+/);
-          let imageUrl = 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80';
+          const bhkMatch = (p.configuration || "").match(/\d+/);
+          let imageUrl =
+            "https://images.unsplash.com/photo-1568605114967-8130f3a36994?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80";
 
-          // Use first URL from comma-separated string in images field
           if (p.images) {
-            const firstUrl = p.images.split(',')[0].trim();
+            const firstUrl = p.images.split(",")[0].trim();
             if (firstUrl) {
               imageUrl = firstUrl;
             }
           }
 
-          // Validate image URL
           try {
-            fetch(imageUrl, { method: 'HEAD' });
+            fetch(imageUrl, { method: "HEAD" });
           } catch (err) {
-            console.warn(`Invalid image URL for ${p.name}: ${imageUrl}, using fallback`);
-            imageUrl = 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80';
+            console.warn(
+              `Invalid image URL for ${p.name}: ${imageUrl}, using fallback`
+            );
+            imageUrl =
+              "https://images.unsplash.com/photo-1568605114967-8130f3a36994?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80";
           }
 
           return {
             ...p,
             bhk: bhkMatch ? parseInt(bhkMatch[0]) : 0,
-            type: (p.property_type || '').trim().toLowerCase(),
-            progress: p.progress !== undefined ? p.progress : (p.status === 'Upcoming' ? 0 : 1),
+            type: (p.property_type || "").trim().toLowerCase(),
+            progress:
+              p.progress !== undefined
+                ? p.progress
+                : p.status === "Upcoming"
+                ? 0
+                : 1,
             image: imageUrl,
           };
         });
 
-        console.log('Mapped properties:', mappedProperties);
+        console.log("Mapped properties:", mappedProperties);
         setProperties(mappedProperties);
         setError(null);
       } catch (error) {
-        console.error('Error fetching properties:', error.message);
+        console.error("Error fetching properties:", error.message);
         setError(error.message);
         setProperties([]);
       } finally {
@@ -219,6 +240,31 @@ const Home = () => {
     };
   }, []);
 
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const el = entry.target;
+          if (entry.isIntersecting) {
+            el.classList.add("opacity-100", "translate-y-0");
+            el.classList.remove("opacity-0", "translate-y-6");
+          }
+        });
+      },
+      { threshold: 0.2 }
+    );
+
+    serviceRefs.current.forEach((el) => {
+      if (el) observer.observe(el);
+    });
+
+    return () => {
+      serviceRefs.current.forEach((el) => {
+        if (el) observer.unobserve(el);
+      });
+    };
+  }, []);
+
   const handleSearch = () => {
     if (searchInput.trim() !== "") {
       navigate(`/listings?search=${encodeURIComponent(searchInput.trim())}`);
@@ -226,30 +272,33 @@ const Home = () => {
   };
 
   const filteredProperties = properties.filter((property) => {
-    const type = (property.type || '').toLowerCase();
-    const status = (property.status || '').toLowerCase();
-    console.log(`Filtering property: ${property.name}, type: ${type}, status: ${status}, progress: ${property.progress}`);
+    const type = (property.type || "").toLowerCase();
+    const status = (property.status || "").toLowerCase();
+    console.log(
+      `Filtering property: ${property.name}, type: ${type}, status: ${status}, progress: ${property.progress}`
+    );
     if (selectedFilter === "All") return true;
     if (selectedFilter === "Residential")
       return ["flat", "villa", "plot"].includes(type);
     if (selectedFilter === "Commercial")
       return ["office", "shop", "commercial"].includes(type);
     if (selectedFilter === "Ready") return status === "ready";
-    if (selectedFilter === "Ongoing")
-      return status === "under construction";
+    if (selectedFilter === "Ongoing") return status === "under construction";
     if (selectedFilter === "Upcoming")
       return status === "upcoming" && property.progress === 0;
     return true;
   });
 
-  console.log('Filtered properties:', filteredProperties);
+  console.log("Filtered properties:", filteredProperties);
 
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
       <section
         className="relative bg-cover bg-center text-white h-[100vh] flex items-center justify-center"
-        style={{ backgroundImage: `url(https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Bg%20img/bghome.jpg)` }}
+        style={{
+          backgroundImage: `url(https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Bg%20img/bghome.jpg)`,
+        }}
       >
         <div className="absolute inset-0 bg-black opacity-60 z-0"></div>
         <div className="relative z-10 max-w-6xl mx-auto">
@@ -268,7 +317,8 @@ const Home = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.5 }}
             >
-              Explore luxury flats, spacious plots, and premium upcoming projects across India.
+              Explore luxury flats, spacious plots, and premium upcoming
+              projects across India.
             </motion.p>
             <motion.div
               className="flex flex-col md:flex-row justify-center gap-4"
@@ -290,7 +340,7 @@ const Home = () => {
                   before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-700
                   before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:border-none hover:text-white"
               >
-               Contact Us 
+                Contact Us
               </Link>
             </motion.div>
           </div>
@@ -314,14 +364,22 @@ const Home = () => {
         )}
 
         <div className="flex justify-center gap-2 mb-6 flex-wrap">
-          {["All", "Residential", "Commercial", "Ready", "Ongoing", "Upcoming"].map((filter) => (
+          {[
+            "All",
+            "Residential",
+            "Commercial",
+            "Ready",
+            "Ongoing",
+            "Upcoming",
+          ].map((filter) => (
             <button
               key={filter}
               onClick={() => setSelectedFilter(filter)}
-              className={`px-4 py-2 rounded-full border ${selectedFilter === filter
-                ? "bg-stone-700 text-white"
-                : "bg-white text-stone-700"
-                }`}
+              className={`px-4 py-2 rounded-full border ${
+                selectedFilter === filter
+                  ? "bg-stone-700 text-white"
+                  : "bg-white text-stone-700"
+              }`}
             >
               {filter}
             </button>
@@ -329,56 +387,67 @@ const Home = () => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {filteredProperties.length > 0 && !loading ? (
-            filteredProperties.slice(0, 3).map((property, i) => (
-              <div
-                key={property.id}
-                ref={(el) => (featuredRefs.current[i] = el)}
-                className="opacity-100 translate-y-0 transition-all duration-700"
-              >
-                {loading && (
-                  <p className="text-center text-stone-600 text-lg col-span-full">
-                    Loading properties...
-                  </p>
-                )}
-                <div className="rounded shadow hover:shadow-lg transition text-white">
-                  <div className="relative group h-80 w-full overflow-hidden rounded">
-                    <img
-                      src={property.image}
-                      alt={property.name || 'Property'}
-                      className="w-full h-80 transition-transform duration-300 group-hover:scale-105 rounded"
-                      onError={(e) => {
-                        console.error('Failed to load property image:', e.target.src);
-                        e.target.src =
-                          'https://images.unsplash.com/photo-1568605114967-8130f3a36994?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80';
-                      }}
-                    />
-                    <div className="absolute inset-0 bg-black opacity-40 md:opacity-0 md:group-hover:opacity-40 transition-opacity duration-300 z-0"></div>
-                    <div className="absolute inset-0 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity duration-400">
-                      <div className="absolute bottom-4 left-4 text-left">
-                        <h3 className="text-lg font-semibold">{property.name || 'Unnamed Property'}</h3>
-                        <p className="text-sm">{property.location || 'Unknown Location'}</p>
-                        <p className="text-sm">{property.bhk} BHK • ₹{(property.price || 0).toLocaleString()}</p>
-                        <p className="text-sm">{property.type || 'Unknown Type'} • {property.status || 'Unknown Status'}</p>
-                        <Link
-                          to={`/listings/${property.id}`}
-                          className="inline-block text-rose-100 hover:underline mt-1"
-                        >
-                          View Details
-                        </Link>
+          {filteredProperties.length > 0 && !loading
+            ? filteredProperties.slice(0, 6).map((property, i) => (
+                <div
+                  key={property.id}
+                  ref={(el) => (featuredRefs.current[i] = el)}
+                  className="opacity-100 translate-y-0 transition-all duration-700"
+                >
+                  {loading && (
+                    <p className="text-center text-stone-600 text-lg col-span-full">
+                      Loading properties...
+                    </p>
+                  )}
+                  <div className="rounded shadow hover:shadow-lg transition text-white">
+                    <div className="relative group h-80 w-full overflow-hidden rounded">
+                      <img
+                        src={property.image}
+                        alt={property.name || "Property"}
+                        className="w-full h-80 transition-transform duration-300 group-hover:scale-105 rounded"
+                        onError={(e) => {
+                          console.error(
+                            "Failed to load property image:",
+                            e.target.src
+                          );
+                          e.target.src =
+                            "https://images.unsplash.com/photo-1568605114967-8130f3a36994?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80";
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-black opacity-40 md:opacity-0 md:group-hover:opacity-40 transition-opacity duration-300 z-0"></div>
+                      <div className="absolute inset-0 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity duration-400">
+                        <div className="absolute bottom-4 left-4 text-left">
+                          <h3 className="text-lg font-semibold">
+                            {property.name || "Unnamed Property"}
+                          </h3>
+                          <p className="text-sm">
+                            {property.location || "Unknown Location"}
+                          </p>
+                          <p className="text-sm">
+                            {property.bhk} BHK • ₹
+                            {(property.price || 0).toLocaleString()}
+                          </p>
+                          <p className="text-sm">
+                            {property.type || "Unknown Type"} •{" "}
+                            {property.status || "Unknown Status"}
+                          </p>
+                          <Link
+                            to={`/listings/${property.id}`}
+                            className="inline-block text-rose-100 hover:underline mt-1"
+                          >
+                            View Details
+                          </Link>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))
-          ) : (
-            !loading && (
-              <p className="text-center text-stone-600 text-lg col-span-full">
-                No properties found for the selected filter.
-              </p>
-            )
-          )}
+              ))
+            : !loading && (
+                <p className="text-center text-stone-600 text-lg col-span-full">
+                  No properties found for the selected filter.
+                </p>
+              )}
         </div>
 
         <div className="flex justify-center mt-8 mb-8">
@@ -393,18 +462,98 @@ const Home = () => {
         </div>
       </section>
 
+      {/* Our Process Section */}
+      <section className="bg-stone-100 py-16 px-4">
+        <div className="max-w-7xl mx-auto text-center mb-12">
+          <h2 className="text-4xl font-bold text-stone-800 mb-4">
+            Our Process: Simple & Transparent
+          </h2>
+          <p className="text-lg text-stone-600">
+            We guide you step-by-step to ensure a smooth and confident real
+            estate journey.
+          </p>
+        </div>
+
+        <div className="relative max-w-7xl mx-auto">
+          <div className="hidden md:block absolute top-1/2 left-0 w-full h-1 bg-stone-300 z-0 transform -translate-y-1/2" />
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-6 relative z-10">
+            <div className="bg-white p-6 rounded shadow text-center flex flex-col items-center">
+              <ClipboardList className="w-10 h-10 text-stone-700 mb-3" />
+              <h3 className="text-lg font-semibold text-stone-800 mb-2">
+                Browse Listings
+              </h3>
+              <p className="text-sm text-stone-600">
+                Explore verified listings tailored to your preferences and
+                budget.
+              </p>
+            </div>
+            <div className="bg-white p-6 rounded shadow text-center flex flex-col items-center">
+              <CalendarDays className="w-10 h-10 text-stone-700 mb-3" />
+              <h3 className="text-lg font-semibold text-stone-800 mb-2">
+                Schedule Visit
+              </h3>
+              <p className="text-sm text-stone-600">
+                Book a site visit to experience the property in person.
+              </p>
+            </div>
+            <div className="bg-white p-6 rounded shadow text-center flex flex-col items-center">
+              <MessageCircle className="w-10 h-10 text-stone-700 mb-3" />
+              <h3 className="text-lg font-semibold text-stone-800 mb-2">
+                Discuss Requirements
+              </h3>
+              <p className="text-sm text-stone-600">
+                Our experts will understand your needs and suggest ideal
+                options.
+              </p>
+            </div>
+            <div className="bg-white p-6 rounded shadow text-center flex flex-col items-center">
+              <FileCheck2 className="w-10 h-10 text-stone-700 mb-3" />
+              <h3 className="text-lg font-semibold text-stone-800 mb-2">
+                Finalize Deal
+              </h3>
+              <p className="text-sm text-stone-600">
+                We assist with price negotiation, paperwork, and legalities.
+              </p>
+            </div>
+            <div className="bg-white p-6 rounded shadow text-center flex flex-col items-center">
+              <HomeIcon className="w-10 h-10 text-stone-700 mb-3" />
+              <h3 className="text-lg font-semibold text-stone-800 mb-2">
+                Move In
+              </h3>
+              <p className="text-sm text-stone-600">
+                Take possession with peace of mind and full documentation.
+              </p>
+            </div>
+          </div>
+        </div>
+        <div className="mt-10 text-center">
+          <Link
+            to="/listings"
+            className="relative inline-block px-6 py-2 rounded font-medium text-white bg-stone-700 z-10 overflow-hidden
+              before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600 
+              before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
+          >
+            Start Exploring
+          </Link>
+        </div>
+      </section>
+
       {/* Building Dreams Section */}
       <section
         ref={zivaasRef}
         className="relative md:h-100 h-[60vh] bg-cover bg-center text-white flex flex-col justify-center items-center text-center px-4"
-        style={{ backgroundImage: `url(https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Bg%20img/bghome.jpg)` }}
+        style={{
+          backgroundImage: `url(https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Bg%20img/bghome.jpg)`,
+        }}
       >
         <div className="absolute inset-0 bg-black/60 z-0" />
         <div className="relative z-10 max-w-4xl mx-auto">
           <motion.h1
             className="text-4xl md:text-5xl font-bold leading-tight mb-4"
             initial={{ opacity: 0, y: -50 }}
-            animate={zivaasInView ? { opacity: 1, y: 0 } : { opacity: 0, y: -50 }}
+            animate={
+              zivaasInView ? { opacity: 1, y: 0 } : { opacity: 0, y: -50 }
+            }
             transition={{ duration: 0.6, delay: 0.2 }}
           >
             Building Dreams with Zivaas
@@ -413,7 +562,9 @@ const Home = () => {
           <motion.p
             className="mb-6 text-lg"
             initial={{ opacity: 0, y: 30 }}
-            animate={zivaasInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+            animate={
+              zivaasInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }
+            }
             transition={{ duration: 0.6, delay: 0.5 }}
           >
             Explore thoughtfully designed spaces crafted for comfort, elegance,
@@ -441,34 +592,97 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Search Section */}
-      <section className="bg-cover bg-center h-[50vh] flex items-center justify-center text-white text-center px-4">
-        <div className="bg-white shadow-md p-6 rounded">
-          <h1 className="text-4xl md:text-5xl text-stone-700 font-bold mb-4">
-            Find Your Dream Property
-          </h1>
-          <p className="mb-6 text-lg text-stone-700">
-            Buy | Sell | Ongoing | Upcoming Projects
+      {/* Services Section */}
+      <section className="bg-stone-100 py-16 px-4">
+        <div className="max-w-7xl mx-auto text-center mb-12">
+          <h2 className="text-4xl font-bold text-stone-800 mb-4">
+            Our Comprehensive Services
+          </h2>
+          <p className="text-lg text-stone-600">
+            At Zivaas, we offer end-to-end solutions to make your real estate
+            journey seamless and rewarding.
           </p>
-          <div className="flex justify-center gap-1">
-            <input
-              type="text"
-              name="search"
-              id="search"
-              placeholder="Search by location, developer, or project..."
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              autoComplete="search"
-              className="px-4 py-2 w-full max-w-md rounded-l border text-stone-700 bg-stone-50 placeholder:text-stone-500 shadow"
-            />
-            <button
-              onClick={handleSearch}
-              className="relative inline-block px-6 py-2 rounded font-medium text-white bg-stone-700 z-10 overflow-hidden
-                before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600 
-                before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
+        </div>
+
+        <div className="relative max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
+            <div
+              ref={(el) => (serviceRefs.current[0] = el)}
+              className="bg-white p-6 rounded shadow text-center flex flex-col items-center opacity-0 translate-y-6 transition-all duration-1000"
+              style={{ transitionDelay: "0ms" }}
             >
-              Search
-            </button>
+              <BookOpen className="w-12 h-12 text-stone-700 mb-4" />
+              <h3 className="text-lg font-semibold text-stone-800 mb-2">
+                Property Consultation
+              </h3>
+              <p className="text-sm text-stone-600">
+                Our expert consultants provide personalized advice to help you
+                choose the perfect property based on your lifestyle, budget, and
+                future goals. We analyze market trends to ensure informed
+                decisions.
+              </p>
+            </div>
+            <div
+              ref={(el) => (serviceRefs.current[1] = el)}
+              className="bg-white p-6 rounded shadow text-center flex flex-col items-center opacity-0 translate-y-6 transition-all duration-1000"
+              style={{ transitionDelay: "150ms" }}
+            >
+              <DollarSign className="w-12 h-12 text-stone-700 mb-4" />
+              <h3 className="text-lg font-semibold text-stone-800 mb-2">
+                Investment Planning
+              </h3>
+              <p className="text-sm text-stone-600">
+                Maximize your returns with our tailored investment strategies.
+                We identify high-growth properties and guide you through
+                financing options, tax benefits, and long-term value
+                appreciation.
+              </p>
+            </div>
+            <div
+              ref={(el) => (serviceRefs.current[2] = el)}
+              className="bg-white p-6 rounded shadow text-center flex flex-col items-center opacity-0 translate-y-6 transition-all duration-1000"
+              style={{ transitionDelay: "300ms" }}
+            >
+              <Gavel className="w-12 h-12 text-stone-700 mb-4" />
+              <h3 className="text-lg font-semibold text-stone-800 mb-2">
+                Legal Assistance
+              </h3>
+              <p className="text-sm text-stone-600">
+                Navigate complex legal processes with ease. Our team handles
+                documentation, RERA compliance, title verification, and dispute
+                resolution to ensure a secure transaction.
+              </p>
+            </div>
+            <div
+              ref={(el) => (serviceRefs.current[3] = el)}
+              className="bg-white p-6 rounded shadow text-center flex flex-col items-center opacity-0 translate-y-6 transition-all duration-1000"
+              style={{ transitionDelay: "450ms" }}
+            >
+              <Palette className="w-12 h-12 text-stone-700 mb-4" />
+              <h3 className="text-lg font-semibold text-stone-800 mb-2">
+                Interior Design
+              </h3>
+              <p className="text-sm text-stone-600">
+                Transform your space with our interior design services. From
+                concept to execution, we offer customized solutions that blend
+                functionality with aesthetic appeal.
+              </p>
+            </div>
+            <div
+              ref={(el) => (serviceRefs.current[4] = el)}
+              className="bg-white p-6 rounded shadow text-center flex flex-col items-center opacity-0 translate-y-6 transition-all duration-1000"
+              style={{ transitionDelay: "600ms" }}
+            >
+              <PhoneCall className="w-12 h-12 text-stone-700 mb-4" />
+              <h3 className="text-lg font-semibold text-stone-800 mb-2">
+                After-Sales Support
+              </h3>
+              <p className="text-sm text-stone-600">
+                Our commitment continues post-purchase with dedicated support
+                for maintenance, upgrades, and community services, ensuring your
+                satisfaction for years to come.
+              </p>
+            </div>
           </div>
         </div>
       </section>
@@ -527,75 +741,25 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Our Process Section */}
-      <section className="bg-stone-100 py-16 px-4">
-        <div className="max-w-7xl mx-auto text-center mb-12">
-          <h2 className="text-4xl font-bold text-stone-800 mb-4">Our Process: Simple & Transparent</h2>
-          <p className="text-lg text-stone-600">
-            We guide you step-by-step to ensure a smooth and confident real estate journey.
-          </p>
-        </div>
-
-        <div className="relative max-w-7xl mx-auto">
-          <div className="hidden md:block absolute top-1/2 left-0 w-full h-1 bg-stone-300 z-0 transform -translate-y-1/2" />
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-6 relative z-10">
-            <div className="bg-white p-6 rounded shadow text-center flex flex-col items-center">
-              <div className="bg-stone-200 text-stone-700 w-14 h-14 flex items-center justify-center rounded-full mb-4 text-2xl font-bold">1</div>
-              <ClipboardList className="w-10 h-10 text-stone-700 mb-3" />
-              <h3 className="text-lg font-semibold text-stone-800 mb-2">Browse Listings</h3>
-              <p className="text-sm text-stone-600">Explore verified listings tailored to your preferences and budget.</p>
-            </div>
-            <div className="bg-white p-6 rounded shadow text-center flex flex-col items-center">
-              <div className="bg-stone-200 text-stone-700 w-14 h-14 flex items-center justify-center rounded-full mb-4 text-2xl font-bold">2</div>
-              <CalendarDays className="w-10 h-10 text-stone-700 mb-3" />
-              <h3 className="text-lg font-semibold text-stone-800 mb-2">Schedule Visit</h3>
-              <p className="text-sm text-stone-600">Book a site visit to experience the property in person.</p>
-            </div>
-            <div className="bg-white p-6 rounded shadow text-center flex flex-col items-center">
-              <div className="bg-stone-200 text-stone-700 w-14 h-14 flex items-center justify-center rounded-full mb-4 text-2xl font-bold">3</div>
-              <MessageCircle className="w-10 h-10 text-stone-700 mb-3" />
-              <h3 className="text-lg font-semibold text-stone-800 mb-2">Discuss Requirements</h3>
-              <p className="text-sm text-stone-600">Our experts will understand your needs and suggest ideal options.</p>
-            </div>
-            <div className="bg-white p-6 rounded shadow text-center flex flex-col items-center">
-              <div className="bg-stone-200 text-stone-700 w-14 h-14 flex items-center justify-center rounded-full mb-4 text-2xl font-bold">4</div>
-              <FileCheck2 className="w-10 h-10 text-stone-700 mb-3" />
-              <h3 className="text-lg font-semibold text-stone-800 mb-2">Finalize Deal</h3>
-              <p className="text-sm text-stone-600">We assist with price negotiation, paperwork, and legalities.</p>
-            </div>
-            <div className="bg-white p-6 rounded shadow text-center flex flex-col items-center">
-              <div className="bg-stone-200 text-stone-700 w-14 h-14 flex items-center justify-center rounded-full mb-4 text-2xl font-bold">5</div>
-              <HomeIcon className="w-10 h-10 text-stone-700 mb-3" />
-              <h3 className="text-lg font-semibold text-stone-800 mb-2">Move In</h3>
-              <p className="text-sm text-stone-600">Take possession with peace of mind and full documentation.</p>
-            </div>
-          </div>
-        </div>
-        <div className="mt-10 text-center">
-          <Link
-            to="/listings"
-            className="relative inline-block px-6 py-2 rounded font-medium text-white bg-stone-700 z-10 overflow-hidden
-              before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600 
-              before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
-          >
-            Start Exploring
-          </Link>
-        </div>
-      </section>
-
       {/* Testimonials Section */}
       <section className="py-12 px-4 text-center">
         <h2 className="text-2xl text-stone-700 font-bold mb-6">
           What Our Clients Say
         </h2>
+        <p className="text-lg text-stone-600 mb-8 max-w-3xl mx-auto">
+          Hear from our satisfied clients who have experienced our commitment to
+          excellence across India.
+        </p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
           {[
             {
-              quote: "Zivaas helped me find the perfect flat in my budget. Great service!",
+              quote:
+                "Zivaas helped me find the perfect flat in my budget. Great service!",
               author: "— Ramesh Patel",
             },
             {
-              quote: "Very professional team and quick response. Highly recommended!",
+              quote:
+                "Very professional team and quick response. Highly recommended!",
               author: "— Riya Shah",
             },
           ].map(({ quote, author }, i) => (
@@ -609,14 +773,84 @@ const Home = () => {
 
       {/* Contact Section */}
       <section className="text-stone-700 py-10 text-center">
-        <h2 className="text-xl font-bold mb-2">FAQs – Everything You Need to Know</h2>
-        <p className="mb-4">We’d love to help you find your dream property.</p>
-        <a
-          href="tel:+919999999999"
-          className="hover:font-bold underline text-stone-700"
-        >
-          Contact Us
-        </a>
+        <h2 className="text-xl font-bold mb-2">
+          Contact Us – Your Real Estate Partners
+        </h2>
+        <p className="mb-6 px-40 text-lg">
+          At Zivaas Properties, we support you throughout your real estate
+          journey with expert guidance and care. Whether you're buying a home,
+          investing, or needing legal/design help, our team is here for you.
+          With over 20 years of experience in India, we offer top-notch service
+          from start to finish.
+        </p>
+
+        <h3 className="text-lg font-semibold mb-4">
+          Frequently Asked Questions
+        </h3>
+        <div className="max-w-4xl mx-auto space-y-4 mb-8">
+          <div>
+            <h4 className="font-semibold text-base">
+              What types of properties does Zivaas offer?
+            </h4>
+            <p className="text-sm">
+              We offer flats, villas, plots, offices, shops, and industrial
+              spaces at various development stages across India.
+            </p>
+          </div>
+          <div>
+            <h4 className="font-semibold text-base">
+              How can I schedule a property visit?
+            </h4>
+            <p className="text-sm">
+              Contact us at +91 99999 99999 or info@zivaas.com with your
+              preferred date, time, and property details. Book 48 hours in
+              advance.
+            </p>
+          </div>
+          <div>
+            <h4 className="font-semibold text-base">
+              What is the process for property investment?
+            </h4>
+            <p className="text-sm">
+              We start with a free consultation, analyze markets, provide ROI
+              options, and assist with documentation and support.
+            </p>
+          </div>
+          <div>
+            <h4 className="font-semibold text-base">
+              Are there additional costs for legal assistance?
+            </h4>
+            <p className="text-sm">
+              Basic legal help is included; extra costs may apply for complex
+              cases. Contact us for details.
+            </p>
+          </div>
+          <div>
+            <h4 className="font-semibold text-base">
+              How long does interior design take?
+            </h4>
+            <p className="text-sm">
+              It typically takes 4-12 weeks, depending on the project scope. We
+              provide a schedule after consultation.
+            </p>
+          </div>
+        </div>
+        <p className="text-base mb-2">Contact us directly:</p>
+        <p className="text-sm mb-2">
+          <a href="tel:+919999999999" className="hover:font-bold underline">
+            Phone: +91 99999 99999
+          </a>{" "}
+          (9 AM - 6 PM IST, Mon-Sat)
+        </p>
+        <p className="text-sm mb-2">
+          <a
+            href="mailto:info@zivaas.com"
+            className="hover:font-bold underline"
+          >
+            Email: info@zivaas.com
+          </a>{" "}
+          (24-48 hr response)
+        </p>
       </section>
     </div>
   );

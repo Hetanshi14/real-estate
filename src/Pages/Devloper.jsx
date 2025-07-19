@@ -1,6 +1,6 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { Link } from 'react-router-dom';
-import { supabase } from '../supabaseClient';
+import React, { useEffect, useState, useRef } from "react";
+import { Link } from "react-router-dom";
+import { supabase } from "../supabaseClient";
 
 const Developer = () => {
   const [developers, setDevelopers] = useState([]);
@@ -12,9 +12,8 @@ const Developer = () => {
   useEffect(() => {
     const fetchDevelopersAndProperties = async () => {
       try {
-        console.log('Fetching developers and properties...');
-        const { data, error: fetchError } = await supabase
-          .from('properties')
+        console.log("Fetching developers and properties...");
+        const { data, error: fetchError } = await supabase.from("properties")
           .select(`
             id, name, property_type, images, price, location, status, configuration,
             total_floors, total_units, carpet_area, rera_number, amenities,
@@ -24,16 +23,16 @@ const Developer = () => {
           `);
 
         if (fetchError) {
-          console.error('Supabase fetch error:', fetchError.message);
+          console.error("Supabase fetch error:", fetchError.message);
           throw new Error(`Supabase error: ${fetchError.message}`);
         }
 
-        console.log('Raw data from Supabase:', data);
+        console.log("Raw data from Supabase:", data);
 
         if (!data || data.length === 0) {
-          console.warn('No properties found in database');
+          console.warn("No properties found in database");
           setDevelopers([]);
-          setError('No developers found. Please try again later.');
+          setError("No developers found. Please try again later.");
           return;
         }
 
@@ -44,34 +43,36 @@ const Developer = () => {
           if (!developerMap.has(developerName)) {
             developerMap.set(developerName, {
               name: developerName,
-              tagline: property.developer_tagline || 'No tagline',
+              tagline: property.developer_tagline || "No tagline",
               experience: property.developer_experience || 0,
               projectsCompleted: property.developer_projects_completed || 0,
               happyFamilies: property.developer_happy_families || 0,
-              awards: property.developer_awards || 'None',
-              certifications: property.developer_certifications || 'None',
-              description: property.developer_description || 'No description available.',
+              awards: property.developer_awards || "None",
+              certifications: property.developer_certifications || "None",
+              description:
+                property.developer_description || "No description available.",
               properties: [],
             });
           }
           developerMap.get(developerName).properties.push({
             id: property.id,
-            name: property.name || 'Unnamed Property',
-            type: property.property_type || 'Unknown',
-            location: property.location || 'Unknown',
-            status: property.status || 'Unknown',
-            image: property.images.length > 0 ? property.images[0] || null : null,
+            name: property.name || "Unnamed Property",
+            type: property.property_type || "Unknown",
+            location: property.location || "Unknown",
+            status: property.status || "Unknown",
+            image:
+              property.images.length > 0 ? property.images[0] || null : null,
             carpetArea: property.carpet_area || 0,
-            reraNumber: property.rera_number || 'N/A',
+            reraNumber: property.rera_number || "N/A",
           });
         });
 
         const developersArray = Array.from(developerMap.values());
-        console.log('Mapped developers:', developersArray);
+        console.log("Mapped developers:", developersArray);
         setDevelopers(developersArray);
         setError(null);
       } catch (error) {
-        console.error('Error in fetchDevelopersAndProperties:', error);
+        console.error("Error in fetchDevelopersAndProperties:", error);
         setError(`Failed to load developers and properties: ${error.message}`);
         setDevelopers([]);
       }
@@ -84,7 +85,10 @@ const Developer = () => {
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting && !visibleSections.includes(entry.target.id)) {
+          if (
+            entry.isIntersecting &&
+            !visibleSections.includes(entry.target.id)
+          ) {
             setVisibleSections((prev) => [...prev, entry.target.id]);
           }
         });
@@ -111,18 +115,27 @@ const Developer = () => {
       <section
         id="hero"
         ref={(el) => (sectionRefs.current[0] = el)}
-        className={`bg-cover bg-center text-white py-48 transition-all duration-1000 transform ${isVisible('hero') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
-        style={{ backgroundImage: `url(https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Bg%20img/bgdev.jpg)` }}
+        className={`bg-cover bg-center text-white py-48 transition-all duration-1000 transform ${
+          isVisible("hero")
+            ? "opacity-100 translate-y-0"
+            : "opacity-0 translate-y-8"
+        }`}
+        style={{
+          backgroundImage: `url(https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Bg%20img/bgdev.jpg)`,
+        }}
       >
         <div className="absolute inset-0 bg-black/60 z-0" />
         <div className="container mx-auto px-4 text-center relative z-10">
-          <h2 className="text-3xl font-bold mb-3">Discover Premium Properties</h2>
+          <h2 className="text-3xl font-bold mb-3">
+            Discover Premium Properties
+          </h2>
           <p className="text-base mb-5 max-w-xl mx-auto">
-            Explore a world of innovative and sustainable real estate solutions from our top developers.
+            Explore a world of innovative and sustainable real estate solutions
+            from our top developers.
           </p>
           <a
             href="#developers"
-            className="relative inline-block px-5 py-2 rounded-lg font-medium text-stone-700 bg-white z-10 overflow-hidden
+            className="relative inline-block px-5 py-2 rounded-md font-medium text-stone-700 bg-white z-10 overflow-hidden
     before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600 
     before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
           >
@@ -135,7 +148,11 @@ const Developer = () => {
       <section
         id="developers"
         ref={(el) => (sectionRefs.current[1] = el)}
-        className={`max-w-7xl mx-auto py-12 px-4 transition-all duration-1000 transform ${isVisible('developers') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+        className={`max-w-7xl mx-auto py-12 px-4 transition-all duration-1000 transform ${
+          isVisible("developers")
+            ? "opacity-100 translate-y-0"
+            : "opacity-0 translate-y-8"
+        }`}
       >
         <h2 className="text-3xl font-extrabold text-center text-gray-900 mb-8 tracking-tight">
           Our Esteemed Developers
@@ -152,27 +169,47 @@ const Developer = () => {
                 key={developer.name}
                 className="bg-white border border-gray-100 p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300"
               >
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">{developer.name}</h3>
-                <p className="text-base text-gray-500 italic mb-4">{developer.tagline}</p>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  {developer.name}
+                </h3>
+                <p className="text-base text-gray-500 italic mb-4">
+                  {developer.tagline}
+                </p>
                 <div className="grid grid-cols-2 gap-3 text-gray-700 mb-4">
                   <div>
-                    <p><strong className="text-gray-900">Experience:</strong> {developer.experience} years</p>
-                    <p><strong className="text-gray-900">Projects:</strong> {developer.projectsCompleted}</p>
-                    <p><strong className="text-gray-900">Families:</strong> {developer.happyFamilies}</p>
+                    <p>
+                      <strong className="text-gray-900">Experience:</strong>{" "}
+                      {developer.experience} years
+                    </p>
+                    <p>
+                      <strong className="text-gray-900">Projects:</strong>{" "}
+                      {developer.projectsCompleted}
+                    </p>
+                    <p>
+                      <strong className="text-gray-900">Families:</strong>{" "}
+                      {developer.happyFamilies}
+                    </p>
                   </div>
                   <div>
-                    <p><strong className="text-gray-900">Awards:</strong> {developer.awards}</p>
-                    <p><strong className="text-gray-900">Certifications:</strong> {developer.certifications}</p>
+                    <p>
+                      <strong className="text-gray-900">Awards:</strong>{" "}
+                      {developer.awards}
+                    </p>
+                    <p>
+                      <strong className="text-gray-900">Certifications:</strong>{" "}
+                      {developer.certifications}
+                    </p>
                   </div>
                 </div>
                 <p className="text-sm text-gray-600 mb-4 leading-relaxed">
-                  <strong className="text-gray-900">Description:</strong> {developer.description}
+                  <strong className="text-gray-900">Description:</strong>{" "}
+                  {developer.description}
                 </p>
                 <Link
-                  to={`/properties/developer/${encodeURIComponent(developer.name)}`}
-                  className="relative inline-block px-4 py-2 rounded-full font-medium text-white bg-stone-700 z-10 overflow-hidden
-    before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600 
-    before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white text-sm"
+                  to={`/properties/developer/${encodeURIComponent(
+                    developer.name
+                  )}`}
+                  className="relative inline-block font-medium text-stone-700 text-sm after:absolute after:left-0 after:bottom-0 after:h-[1.5px] after:w-full after:bg-stone-700 hover:font-bold"
                 >
                   View All
                 </Link>
