@@ -69,7 +69,7 @@ const Header = () => {
 
         {/* Desktop navigation */}
         <nav className="hidden md:flex items-center gap-6 text-md">
-          <div className="flex justify-center gap-8 flex-grow">
+          <div className="flex justify-center gap-6 flex-grow">
             {navLinks.map((link) =>
               link.name === 'Profile' ? (
                 <button

@@ -2,8 +2,8 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 
-// Placeholder Base64 image (1x1 transparent pixel)
-const PLACEHOLDER_IMAGE = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/wcAAwAB/8Vq6QAAAAABJRU5ErkJggg==';
+// Default image URL (replace with your actual default image URL)
+const DEFAULT_IMAGE = 'https://via.placeholder.com/300x300?text=No+Image';
 
 const FilterBar = ({ filters, setFilters, clearFilters }) => {
   const handleChange = (e) => {
@@ -11,72 +11,106 @@ const FilterBar = ({ filters, setFilters, clearFilters }) => {
     setFilters((prev) => ({ ...prev, [name]: value }));
   };
 
+  // Function to remove a specific filter
+  const removeFilter = (filterName) => {
+    setFilters((prev) => {
+      const updatedFilters = { ...prev, [filterName]: '' };
+      localStorage.setItem('zivaasFilters', JSON.stringify(updatedFilters));
+      return updatedFilters;
+    });
+  };
+
+  // Get active filters for display
+  const activeFilters = Object.entries(filters).filter(([key, value]) => value && key !== 'sort');
+
   return (
-    <div className="grid grid-cols-2 md:grid-cols-6 gap-3 justify-center items-center p-4 max-w-8xl mx-auto">
-      <input
-        type="text"
-        name="location"
-        value={filters.location}
-        onChange={handleChange}
-        placeholder="Location"
-        className="border bg-stone-200 text-stone-700 border-stone-300 p-2 rounded w-[130px] md:w-[150px]"
-      />
-      <select
-        name="price"
-        value={filters.price}
-        onChange={handleChange}
-        className="border bg-stone-200 text-stone-700 border-stone-300 p-2 rounded w-[130px] md:w-[150px]"
-      >
-        <option value="">Price</option>
-        <option value="0-5000000">0-₹50L</option>
-        <option value="5000000-7000000">₹50L-₹70L</option>
-        <option value="7000000-10000000">₹70L-₹1cr</option>
-        <option value="10000000-15000000">₹1cr-₹1.5cr</option>
-        <option value="15000000+">₹1.5cr+</option>
-      </select>
-      <select
-        name="type"
-        value={filters.type}
-        onChange={handleChange}
-        className="border bg-stone-200 text-stone-700 border-stone-300 p-2 rounded w-[130px] md:w-[150px]"
-      >
-        <option value="">Type</option>
-        <option value="Plot">Plot</option>
-        <option value="Villa">Villa</option>
-        <option value="Flat">Flat</option>
-        <option value="Commercial">Commercial</option>
-      </select>
-      <select
-        name="status"
-        value={filters.status}
-        onChange={handleChange}
-        className="border bg-stone-200 text-stone-700 border-stone-300 p-2 rounded w-[130px] md:w-[150px]"
-      >
-        <option value="">Status</option>
-        <option value="Ready">Ready to Move</option>
-        <option value="Under Construction">Under Construction</option>
-        <option value="Upcoming">Upcoming</option>
-      </select>
-      <div className="flex space-x-2">
+    <div className="w-full h-fit md:w-64 bg-white p-6 rounded-lg shadow-lg border border-gray-200 sticky top-20 z-20">
+      <h3 className="text-xl font-serif text-stone-800 mb-4 border-b border-gray-300 pb-2">Filter Properties</h3>
+      {/* Selected Filters Display */}
+      {activeFilters.length > 0 && (
+        <div className="mb-4">
+          <h4 className="text-sm font-medium text-stone-600 mb-2">Selected Filters:</h4>
+          <div className="flex flex-wrap gap-2">
+            {activeFilters.map(([key, value]) => (
+              <span
+                key={key}
+                className="bg-stone-100 text-stone-700 text-xs font-medium px-2 py-1 rounded-full flex items-center space-x-1"
+              >
+                <span>{key === 'price' ? value.replace('-', ' - ').replace('15000000+', '₹1.5cr+') : value}</span>
+                <button
+                  onClick={() => removeFilter(key)}
+                  className="text-red-500 hover:text-red-700 text-xs font-bold ml-1"
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+      {/* Filter Inputs */}
+      <div className="space-y-4">
+        <input
+          type="text"
+          name="location"
+          value={filters.location}
+          onChange={handleChange}
+          placeholder="Location"
+          className="w-full border border-stone-300 bg-stone-50 text-stone-700 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-stone-400 transition"
+        />
+        <select
+          name="price"
+          value={filters.price}
+          onChange={handleChange}
+          className="w-full border border-stone-300 bg-stone-50 text-stone-700 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-stone-400 transition"
+        >
+          <option value="">Price</option>
+          <option value="0-5000000">0-₹50L</option>
+          <option value="5000000-7000000">₹50L-₹70L</option>
+          <option value="7000000-10000000">₹70L-₹1cr</option>
+          <option value="10000000-15000000">₹1cr-₹1.5cr</option>
+          <option value="15000000+">₹1.5cr+</option>
+        </select>
+        <select
+          name="type"
+          value={filters.type}
+          onChange={handleChange}
+          className="w-full border border-stone-300 bg-stone-50 text-stone-700 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-stone-400 transition"
+        >
+          <option value="">Type</option>
+          <option value="Plot">Plot</option>
+          <option value="Villa">Villa</option>
+          <option value="Flat">Flat</option>
+          <option value="Commercial">Commercial</option>
+        </select>
+        <select
+          name="status"
+          value={filters.status}
+          onChange={handleChange}
+          className="w-full border border-stone-300 bg-stone-50 text-stone-700 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-stone-400 transition"
+        >
+          <option value="">Status</option>
+          <option value="Ready">Ready to Move</option>
+          <option value="Under Construction">Under Construction</option>
+          <option value="Upcoming">Upcoming</option>
+        </select>
         <select
           name="sort"
           value={filters.sort}
           onChange={handleChange}
-          className="border bg-stone-200 text-stone-700 border-stone-300 p-2 rounded w-[130px] md:w-[150px]"
+          className="w-full border border-stone-300 bg-stone-50 text-stone-700 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-stone-400 transition"
         >
           <option value="">Sort</option>
           <option value="priceLowHigh">Price: Low to High</option>
           <option value="priceHighLow">Price: High to Low</option>
         </select>
+        <button
+          onClick={clearFilters}
+          className="w-full bg-stone-700 text-white py-2 rounded-md hover:bg-stone-800 transition duration-300"
+        >
+          Clear Filters
+        </button>
       </div>
-      <button
-        onClick={clearFilters}
-        className="relative inline-block px-4 py-2 rounded font-medium text-white bg-stone-700 z-10 overflow-hidden w-[130px] md:w-[150px]
-          before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
-          before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white shadow transition"
-      >
-        Clear Filters
-      </button>
     </div>
   );
 };
@@ -97,12 +131,12 @@ const Listings = () => {
     return stored
       ? JSON.parse(stored)
       : {
-          location: '',
-          price: '',
-          type: '',
-          status: '',
-          sort: '',
-        };
+        location: '',
+        price: '',
+        type: '',
+        status: '',
+        sort: '',
+      };
   });
 
   const [userRole, setUserRole] = useState(null);
@@ -363,10 +397,9 @@ const Listings = () => {
       <section
         id="section1"
         ref={(el) => (sectionRefs.current[0] = el)}
-        className={`relative bg-cover bg-center text-white h-[80vh] flex items-center p-20 transition-all duration-1000 transform ${
-          isVisible('section1') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-        }`}
-        style={{ backgroundImage: `url(https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Bg%20img/bglisting.jpg)` }}
+        className={`relative bg-cover bg-center text-white h-[80vh] flex items-center p-20 transition-all duration-1000 transform ${isVisible('section1') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+          }`}
+        style={{ backgroundImage: `ur[](https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Bg%20img/bglisting.jpg)` }}
       >
         <div className="absolute inset-0 bg-black/60 z-0" />
         <div className="relative z-10 px-4 max-w-6xl mx-auto">
@@ -383,117 +416,125 @@ const Listings = () => {
       <section
         id="section2"
         ref={(el) => (sectionRefs.current[1] = el)}
-        className={`max-w-6xl mx-auto py-12 px-4 transition-all duration-1000 transform ${
+        className="max-w-7xl mx-auto py-12 transition-all duration-1000 transform grid grid-cols-[auto_1fr] gap-6 ${
           isVisible('section2') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-30'
-        }`}
+        }"
       >
-        <h2 className="text-4xl font-bold text-stone-700 mb-6 text-center">Available Properties</h2>
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6 text-center">
-            {error}
-          </div>
-        )}
+        {/* FilterBar */}
         <FilterBar filters={filters} setFilters={setFilters} clearFilters={clearFilters} />
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mt-10">
-          {paginatedProperties.length > 0 ? (
-            paginatedProperties.map((property, index) => (
-              <div key={property.id} className="rounded shadow hover:shadow-lg transition text-white">
-                <div className="relative group h-[300px] w-full overflow-hidden rounded">
-                  {property.image ? (
-                    <img
-                      src={property.image}
-                      alt={property.name}
-                      className="w-full h-full transition-transform duration-300 group-hover:scale-105 rounded"
-                      onError={(e) => {
-                        e.target.src = PLACEHOLDER_IMAGE;
-                        e.target.parentElement.classList.add('flex', 'items-center', 'justify-center', 'bg-gray-200');
-                        console.error('Image load failed:', property.image);
-                      }}
-                    />
-                  ) : (
-                    <div className="flex items-center justify-center w-full h-full bg-gray-200 text-stone-700">
-                      Image not uploaded
-                    </div>
-                  )}
-                  <div className="absolute inset-0 bg-black opacity-40 md:opacity-0 md:group-hover:opacity-40 transition-opacity duration-300 z-0"></div>
-                  <div className="absolute inset-0 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity duration-400">
-                    <div className="absolute bottom-4 left-4 text-left">
-                      <h3 className="text-lg font-semibold">{property.name}</h3>
-                      <p className="text-sm">{property.location}</p>
-                      <p className="text-sm">
-                        {property.bhk ? `${property.bhk} BHK • ` : ''}₹{property.price.toLocaleString()}
-                      </p>
-                      <p className="text-sm">{property.type} • {property.status}</p>
-                      <p className="text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        Built by: {property.developer}
-                      </p>
-                      <div className="mt-1">
-                        <Link
-                          to={`/listings/${property.id}`}
-                          className="underline text-white hover:font-semibold"
-                        >
-                          View Details
-                        </Link>
-                      </div>
-                      {userRole === 'customer' && property.isInWishlist !== undefined && (
-                        <div className="mt-1">
-                          <Link
-                            onClick={(e) => {
-                              e.preventDefault();
-                              toggleWishlist(property.id);
+        <div className="">
+          {/* Properties Grid on the right */}
+          <div className="w-full">
+            <h2 className="text-4xl font-bold text-stone-700 mb-6 text-center md:text-left">Available Properties</h2>
+            {error && (
+              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6 text-center">
+                {error}
+              </div>
+            )}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mt-10">
+              {paginatedProperties.length > 0 ? (
+                paginatedProperties.map((property, index) => (
+                  <div key={property.id} className="rounded shadow hover:shadow-lg transition text-white">
+                    <div className="relative group h-[300px] w-full overflow-hidden rounded">
+                      <Link to={`/listings/${property.id}`}>
+                        {property.image ? (
+                          <img
+                            src={property.image}
+                            alt={property.name}
+                            className="w-full h-full transition-transform duration-300 group-hover:scale-105 rounded"
+                            onError={(e) => {
+                              e.target.src = DEFAULT_IMAGE;
+                              e.target.parentElement.classList.add('flex', 'items-center', 'justify-center', 'bg-gray-200');
+                              console.error('Image load failed:', property.image);
                             }}
-                            className="underline text-green-300 hover:font-semibold"
-                          >
-                            {property.isInWishlist ? 'Remove' : 'Add to Wishlist'}
-                          </Link>
+                          />
+                        ) : (
+                          <div className="flex items-center justify-center w-full h-full bg-gray-200 text-stone-700">
+                            Image not uploaded
+                          </div>
+                        )}
+                        <div className="absolute inset-0 bg-black opacity-40 md:opacity-0 md:group-hover:opacity-40 transition-opacity duration-300 z-0"></div>
+                        <div className="absolute inset-0 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity duration-400">
+                          <div className="absolute bottom-4 left-4 text-left">
+                            <h3 className="text-lg font-semibold">{property.name}</h3>
+                            <p className="text-sm">{property.location}</p>
+                            <p className="text-sm">
+                              {property.bhk ? `${property.bhk} BHK • ` : ''}₹{property.price.toLocaleString()}
+                            </p>
+                            <p className="text-sm">{property.type} • {property.status}</p>
+                            <p className="text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                              Built by: {property.developer}
+                            </p>
+                            <div className="mt-1">
+                              <Link
+                                to={`/listings/${property.id}`}
+                                className="underline text-white hover:font-semibold"
+                              >
+                                View Details
+                              </Link>
+                            </div>
+                            {userRole === 'customer' && property.isInWishlist !== undefined && (
+                              <div className="mt-1">
+                                <Link
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    toggleWishlist(property.id);
+                                  }}
+                                  className="underline text-green-300 hover:font-semibold"
+                                >
+                                  {property.isInWishlist ? 'Remove' : 'Add to Wishlist'}
+                                </Link>
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      )}
+                      </Link>
                     </div>
                   </div>
-                </div>
+                ))
+              ) : (
+                <p className="text-center text-stone-600 text-lg col-span-full">
+                  {error || 'No properties found in the database.'}
+                </p>
+              )}
+            </div>
+            {filteredProperties.length > perPage && (
+              <div className="flex justify-center mt-6 space-x-4">
+                <button
+                  onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+                  disabled={page === 1}
+                  className="relative inline-block px-6 py-2 rounded font-medium text-white bg-stone-700 z-10 overflow-hidden
+                    before:absolute before:right-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
+                    before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white
+                    disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Previous
+                </button>
+                <span className="text-stone-700">Page {page} of {totalPages}</span>
+                <button
+                  onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
+                  disabled={page === totalPages}
+                  className="relative inline-block px-6 py-2 rounded font-medium text-white bg-stone-700 z-10 overflow-hidden
+                    before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
+                    before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white
+                    disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next
+                </button>
               </div>
-            ))
-          ) : (
-            <p className="text-center text-stone-600 text-lg col-span-full">
-              {error || 'No properties found in the database.'}
-            </p>
-          )}
+            )}
+            {userRole === 'customer' && (
+              <div className="flex justify-center mt-4">
+                <Link
+                  to="/profile"
+                  className="underline text-stone-700 hover:font-semibold"
+                >
+                  Wishlist
+                </Link>
+              </div>
+            )}
+          </div>
         </div>
-        {filteredProperties.length > perPage && (
-          <div className="flex justify-center mt-6 space-x-4">
-            <button
-              onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
-              disabled={page === 1}
-              className="relative inline-block px-6 py-2 rounded font-medium text-white bg-stone-700 z-10 overflow-hidden
-                before:absolute before:right-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
-                before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white
-                disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Previous
-            </button>
-            <span className="text-stone-700">Page {page} of {totalPages}</span>
-            <button
-              onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
-              disabled={page === totalPages}
-              className="relative inline-block px-6 py-2 rounded font-medium text-white bg-stone-700 z-10 overflow-hidden
-                before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
-                before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white
-                disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Next
-            </button>
-          </div>
-        )}
-        {userRole === 'customer' && (
-          <div className="flex justify-center mt-4">
-            <Link
-              to="/profile"
-              className="underline text-stone-700 hover:font-semibold"
-            >
-              Wishlist
-            </Link>
-          </div>
-        )}
       </section>
     </div>
   );

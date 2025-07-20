@@ -477,20 +477,20 @@ const Details = () => {
     <h2 className="text-4xl font-bold text-stone-700 mb-8 text-center">World-Class Amenities</h2>
     <p className="text-lg text-stone-600 mb-10 text-center max-w-2xl mx-auto">Explore the premium facilities available at {property.name}</p>
     {Array.isArray(property.amenities) && property.amenities.length > 0 ? (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         {property.amenities.map((amenity, index) => (
           <div
             key={index}
-            className="bg-stone-100 p-6 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 hover:bg-stone-200 flex items-center gap-4"
+            className="bg-stone-100 p-3 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 hover:bg-stone-200 flex items-center gap-2 w-full max-w-[180px]"
           >
-            <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0">
+            <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0">
               <img
                 src={amenityImages[amenity] || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=48&h=48'}
                 alt={`${amenity} icon`}
-                className="w-10 h-10 object-contain"
+                className="w-8 h-8 object-contain"
               />
             </div>
-            <h3 className="font-semibold text-stone-700 text-base text-left flex-1">{amenity}</h3>
+            <h3 className="font-semibold text-stone-700 text-sm text-left flex-1">{amenity}</h3>
           </div>
         ))}
       </div>

@@ -401,6 +401,9 @@ const Home = () => {
                   )}
                   <div className="rounded shadow hover:shadow-lg transition text-white">
                     <div className="relative group h-80 w-full overflow-hidden rounded">
+                      <Link
+                            to={`/listings/${property.id}`}
+                          >
                       <img
                         src={property.image}
                         alt={property.name || "Property"}
@@ -439,6 +442,7 @@ const Home = () => {
                           </Link>
                         </div>
                       </div>
+                      </Link>
                     </div>
                   </div>
                 </div>
@@ -462,15 +466,15 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Our Process Section */}
+      {/* Our Approach Section */}
       <section className="bg-stone-100 py-16 px-4">
         <div className="max-w-7xl mx-auto text-center mb-12">
           <h2 className="text-4xl font-bold text-stone-800 mb-4">
-            Our Process: Simple & Transparent
+            Our Approach: Clear & Streamlined
           </h2>
           <p className="text-lg text-stone-600">
-            We guide you step-by-step to ensure a smooth and confident real
-            estate journey.
+            We guide you seamlessly from property discovery to management and
+            wishlist customization.
           </p>
         </div>
 
@@ -480,48 +484,47 @@ const Home = () => {
             <div className="bg-white p-6 rounded shadow text-center flex flex-col items-center">
               <ClipboardList className="w-10 h-10 text-stone-700 mb-3" />
               <h3 className="text-lg font-semibold text-stone-800 mb-2">
-                Browse Listings
+                Explore Properties
               </h3>
               <p className="text-sm text-stone-600">
-                Explore verified listings tailored to your preferences and
-                budget.
+                Browse verified listings tailored to your preferences and
+                add them to your profile.
               </p>
             </div>
             <div className="bg-white p-6 rounded shadow text-center flex flex-col items-center">
               <CalendarDays className="w-10 h-10 text-stone-700 mb-3" />
               <h3 className="text-lg font-semibold text-stone-800 mb-2">
-                Schedule Visit
+                Schedule Viewing
               </h3>
               <p className="text-sm text-stone-600">
-                Book a site visit to experience the property in person.
+                Book a visit to inspect properties in person with ease.
               </p>
             </div>
             <div className="bg-white p-6 rounded shadow text-center flex flex-col items-center">
               <MessageCircle className="w-10 h-10 text-stone-700 mb-3" />
               <h3 className="text-lg font-semibold text-stone-800 mb-2">
-                Discuss Requirements
+                Customize Wishlist
               </h3>
               <p className="text-sm text-stone-600">
-                Our experts will understand your needs and suggest ideal
-                options.
+                Define criteria and save preferred properties to your wishlist.
               </p>
             </div>
             <div className="bg-white p-6 rounded shadow text-center flex flex-col items-center">
               <FileCheck2 className="w-10 h-10 text-stone-700 mb-3" />
               <h3 className="text-lg font-semibold text-stone-800 mb-2">
-                Finalize Deal
+                Manage Listings
               </h3>
               <p className="text-sm text-stone-600">
-                We assist with price negotiation, paperwork, and legalities.
+                Developers can update or delete properties with full control.
               </p>
             </div>
             <div className="bg-white p-6 rounded shadow text-center flex flex-col items-center">
               <HomeIcon className="w-10 h-10 text-stone-700 mb-3" />
               <h3 className="text-lg font-semibold text-stone-800 mb-2">
-                Move In
+                Finalize Ownership
               </h3>
               <p className="text-sm text-stone-600">
-                Take possession with peace of mind and full documentation.
+                Complete transactions with secure documentation support.
               </p>
             </div>
           </div>
@@ -592,15 +595,15 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Services Section */}
+      {/* Our Full-Spectrum Solutions Section */}
       <section className="bg-stone-100 py-16 px-4">
         <div className="max-w-7xl mx-auto text-center mb-12">
           <h2 className="text-4xl font-bold text-stone-800 mb-4">
-            Our Comprehensive Services
+            Our Full-Spectrum Solutions
           </h2>
           <p className="text-lg text-stone-600">
-            At Zivaas, we offer end-to-end solutions to make your real estate
-            journey seamless and rewarding.
+            We provide end-to-end support for property management and user
+            preferences.
           </p>
         </div>
 
@@ -616,10 +619,8 @@ const Home = () => {
                 Property Consultation
               </h3>
               <p className="text-sm text-stone-600">
-                Our expert consultants provide personalized advice to help you
-                choose the perfect property based on your lifestyle, budget, and
-                future goals. We analyze market trends to ensure informed
-                decisions.
+                Get personalized advice to select properties and set wishlist
+                criteria based on your needs.
               </p>
             </div>
             <div
@@ -629,13 +630,11 @@ const Home = () => {
             >
               <DollarSign className="w-12 h-12 text-stone-700 mb-4" />
               <h3 className="text-lg font-semibold text-stone-800 mb-2">
-                Investment Planning
+                Developer Support
               </h3>
               <p className="text-sm text-stone-600">
-                Maximize your returns with our tailored investment strategies.
-                We identify high-growth properties and guide you through
-                financing options, tax benefits, and long-term value
-                appreciation.
+                Assist developers in adding, editing, and managing properties
+                with detailed profiles.
               </p>
             </div>
             <div
@@ -648,9 +647,8 @@ const Home = () => {
                 Legal Assistance
               </h3>
               <p className="text-sm text-stone-600">
-                Navigate complex legal processes with ease. Our team handles
-                documentation, RERA compliance, title verification, and dispute
-                resolution to ensure a secure transaction.
+                Handle documentation and compliance for property transactions
+                and updates.
               </p>
             </div>
             <div
@@ -660,12 +658,10 @@ const Home = () => {
             >
               <Palette className="w-12 h-12 text-stone-700 mb-4" />
               <h3 className="text-lg font-semibold text-stone-800 mb-2">
-                Interior Design
+                Property Customization
               </h3>
               <p className="text-sm text-stone-600">
-                Transform your space with our interior design services. From
-                concept to execution, we offer customized solutions that blend
-                functionality with aesthetic appeal.
+                Enhance properties with image uploads and detailed amenities.
               </p>
             </div>
             <div
@@ -675,12 +671,11 @@ const Home = () => {
             >
               <PhoneCall className="w-12 h-12 text-stone-700 mb-4" />
               <h3 className="text-lg font-semibold text-stone-800 mb-2">
-                After-Sales Support
+                User Support
               </h3>
               <p className="text-sm text-stone-600">
-                Our commitment continues post-purchase with dedicated support
-                for maintenance, upgrades, and community services, ensuring your
-                satisfaction for years to come.
+                Offer ongoing assistance for wishlist updates and property
+                inquiries.
               </p>
             </div>
           </div>
@@ -771,83 +766,78 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Contact Section */}
+      {/* Reach Out – Your Trusted Real Estate Allies Section */}
       <section className="text-stone-700 py-10 text-center">
         <h2 className="text-xl font-bold mb-2">
-          Contact Us – Your Real Estate Partners
+          Reach Out – Your Trusted Real Estate Allies
         </h2>
         <p className="mb-6 px-40 text-lg">
-          At Zivaas Properties, we support you throughout your real estate
-          journey with expert guidance and care. Whether you're buying a home,
-          investing, or needing legal/design help, our team is here for you.
-          With over 20 years of experience in India, we offer top-notch service
-          from start to finish.
+          At Zivaas Properties, we support developers in managing properties and
+          users in curating wishlists with expert guidance. With over 15 years
+          of experience in India, our team ensures top-notch service from
+          listing to ownership.
         </p>
 
         <h3 className="text-lg font-semibold mb-4">
-          Frequently Asked Questions
+          Common Queries Answered
         </h3>
         <div className="max-w-4xl mx-auto space-y-4 mb-8">
           <div>
             <h4 className="font-semibold text-base">
-              What types of properties does Zivaas offer?
+              How do I add a property as a developer?
             </h4>
             <p className="text-sm">
-              We offer flats, villas, plots, offices, shops, and industrial
-              spaces at various development stages across India.
+              Log in to your profile, fill out the property details, and upload
+              images to list it.
             </p>
           </div>
           <div>
             <h4 className="font-semibold text-base">
-              How can I schedule a property visit?
+              Can I update my wishlist criteria?
             </h4>
             <p className="text-sm">
-              Contact us at +91 99999 99999 or info@zivaas.com with your
-              preferred date, time, and property details. Book 48 hours in
-              advance.
+              Yes, adjust location, price, and type in your profile under
+              wishlist settings.
             </p>
           </div>
           <div>
             <h4 className="font-semibold text-base">
-              What is the process for property investment?
+              How do I remove a property from my wishlist?
             </h4>
             <p className="text-sm">
-              We start with a free consultation, analyze markets, provide ROI
-              options, and assist with documentation and support.
+              Go to your profile, find the property, and click the remove option.
             </p>
           </div>
           <div>
             <h4 className="font-semibold text-base">
-              Are there additional costs for legal assistance?
+              What details are required for a property?
             </h4>
             <p className="text-sm">
-              Basic legal help is included; extra costs may apply for complex
-              cases. Contact us for details.
+              Name, location, price, area, type, and status are mandatory fields.
             </p>
           </div>
           <div>
             <h4 className="font-semibold text-base">
-              How long does interior design take?
+              How can I contact support?
             </h4>
             <p className="text-sm">
-              It typically takes 4-12 weeks, depending on the project scope. We
-              provide a schedule after consultation.
+              Reach us via phone or email with your query details.
             </p>
           </div>
         </div>
-        <p className="text-base mb-2">Contact us directly:</p>
+        <p className="text-base mb-2">Get in Touch with Us:</p>
         <p className="text-sm mb-2">
-          <a href="tel:+919999999999" className="hover:font-bold underline">
-            Phone: +91 99999 99999
+          <a href="tel:+919876543210" className="hover:font-bold underline">
+            Phone: +91 98765 43210
           </a>{" "}
           (9 AM - 6 PM IST, Mon-Sat)
         </p>
         <p className="text-sm mb-2">
           <a
-            href="mailto:info@zivaas.com"
+            href="contact@zivaas.in"
             className="hover:font-bold underline"
           >
-            Email: info@zivaas.com
+            Email: contact@zivaas.in
           </a>{" "}
           (24-48 hr response)
         </p>

@@ -30,7 +30,7 @@ const Footer = () => {
             <FaPhoneAlt className="text-white text-xl" />
             <div>
               <p className="font-semibold text-gray-400">Phone</p>
-              <p className="text-gray-400">+91 98765 43210</p>
+              <p href="tel:+919876543210" className="text-gray-400">+91 98765 43210</p>
             </div>
           </div>
 
@@ -38,7 +38,7 @@ const Footer = () => {
             <FaEnvelope className="text-white text-xl" />
             <div>
               <p className="font-semibold text-gray-400">Email</p>
-              <p className="text-gray-400">contact@zivaas.in</p>
+              <p href="contact@zivaas.in" className="text-gray-400">contact@zivaas.in</p>
             </div>
           </div>
           <div className="flex items-center gap-4">
