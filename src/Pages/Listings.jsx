@@ -480,7 +480,7 @@ const Listings = () => {
                                     e.preventDefault();
                                     toggleWishlist(property.id);
                                   }}
-                                  className="underline text-green-300 hover:font-semibold"
+                                  className=" text-stone-100 hover:font-semibold"
                                 >
                                   {property.isInWishlist ? 'Remove' : 'Add to Wishlist'}
                                 </Link>

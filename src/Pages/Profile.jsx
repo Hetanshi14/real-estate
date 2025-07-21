@@ -512,7 +512,7 @@ const Profile = () => {
   return (
     <div className="min-h-screen bg-stone-50">
       <motion.section
-        className="relative bg-cover bg-center text-white h-[80vh] flex items-center p-6 transition-all duration-1000 transform"
+        className="relative bg-cover bg-center text-white h-[40vh] flex items-center p-6 transition-all duration-1000 transform"
         style={{ backgroundImage: `url(${PLACEHOLDER_IMAGE_URL})` }}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
