@@ -82,7 +82,6 @@ const Header = () => {
                 >
                   <UserCircle size={18} className="inline mr-1" />
                   <span className="relative inline-block after:absolute after:left-0 after:bottom-0 after:h-[1px] after:w-0 after:bg-rose-200 after:transition-all after:duration-300 hover:after:w-full">
-                    {link.name}
                   </span>
                   {!isAuthenticated && (
                     <span className="absolute top-full left-1/2 transform -translate-x-1/2 mt-1 hidden group-hover:block bg-stone-600 text-white text-xs rounded py-1 px-2">
