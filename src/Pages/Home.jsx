@@ -544,7 +544,7 @@ const Home = () => {
       {/* Building Dreams Section */}
       <section
         ref={zivaasRef}
-        className="relative md:h-100 h-[60vh] bg-cover bg-center text-white flex flex-col justify-center items-center text-center px-4"
+        className="relative md:h-100 h-[70vh] bg-cover bg-center text-white flex flex-col justify-center items-center text-center px-4"
         style={{
           backgroundImage: `url(https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Bg%20img/bghome.jpg)`,
         }}
@@ -771,7 +771,7 @@ const Home = () => {
         <h2 className="text-xl font-bold mb-2">
           Reach Out – Your Trusted Real Estate Allies
         </h2>
-        <p className="mb-6 px-40 text-lg">
+        <p className="mb-6 text-lg">
           At Zivaas Properties, we support developers in managing properties and
           users in curating wishlists with expert guidance. With over 15 years
           of experience in India, our team ensures top-notch service from

@@ -431,7 +431,7 @@ const Listings = () => {
                 {error}
               </div>
             )}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mt-10">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mt-10 mr-3">
               {paginatedProperties.length > 0 ? (
                 paginatedProperties.map((property, index) => (
                   <div key={property.id} className="rounded shadow hover:shadow-lg transition text-white">
@@ -514,7 +514,7 @@ const Listings = () => {
                 <button
                   onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
                   disabled={page === totalPages}
-                  className="relative inline-block px-6 py-2 rounded font-medium text-white bg-stone-700 z-10 overflow-hidden
+                  className="relative inline-block px-6 py-2 mr-3 rounded font-medium text-white bg-stone-700 z-10 overflow-hidden
                     before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
                     before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white
                     disabled:opacity-50 disabled:cursor-not-allowed"

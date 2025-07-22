@@ -89,7 +89,7 @@ const Login = () => {
         style={{ zIndex: 0 }}
       ></div>
       <motion.section
-        className="max-w-md w-full bg-white shadow-md rounded-lg p-8 relative z-10"
+        className="max-w-md w-full bg-white shadow-md rounded-lg p-8 relative m-5 z-10"
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}

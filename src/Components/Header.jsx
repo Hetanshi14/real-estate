@@ -121,7 +121,7 @@ const Header = () => {
 
       {/* Mobile menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden px-6 pb-4 bg-stone-700">
+        <div className="md:hidden px-6 pb-4 pt-4 bg-stone-700">
           <nav className="space-y-4">
             {/* Navigation links */}
             {navLinks.map((link) =>
@@ -132,7 +132,7 @@ const Header = () => {
                     handleProfileClick();
                     setMobileMenuOpen(false);
                   }}
-                  className={`text-white px-4 py-2 rounded font-semibold hover:text-rose-200 w-full text-left ${
+                  className={`text-white rounded font-semibold hover:text-rose-200 w-full text-left ${
                     !isAuthenticated ? 'cursor-pointer relative group' : ''
                   }`}
                   title={!isAuthenticated ? 'Please log in to view your profile' : ''}
