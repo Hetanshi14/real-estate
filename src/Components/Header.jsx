@@ -80,7 +80,7 @@ const Header = () => {
                   }`}
                   title={!isAuthenticated ? 'Please log in to view your profile' : ''}
                 >
-                  <UserCircle size={18} className="inline mr-1" />
+                  <UserCircle size={22} className="inline mr-1" />
                   <span className="relative inline-block after:absolute after:left-0 after:bottom-0 after:h-[1px] after:w-0 after:bg-rose-200 after:transition-all after:duration-300 hover:after:w-full">
                   </span>
                   {!isAuthenticated && (

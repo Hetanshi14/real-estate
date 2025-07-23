@@ -1501,14 +1501,19 @@ const Profile = () => {
                     <label className="text-sm font-semibold text-stone-700 mb-2 flex items-center">
                       <FaMoneyBill className="mr-2" /> Price Range
                     </label>
-                    <input
-                      type="text"
+                    <select
                       name="price"
                       value={wishlistCriteria.price}
                       onChange={handleWishlistCriteriaChange}
-                      className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500"
-                      placeholder="e.g., 50L-1Cr or 1Cr+"
-                    />
+                      className="w-full border border-stone-300 bg-stone-50 text-stone-700 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-stone-400 transition"
+                    >
+                      <option value="">Any</option>
+                      <option value="0-5000000">0-₹50L</option>
+                      <option value="5000000-7000000">₹50L-₹70L</option>
+                      <option value="7000000-10000000">₹70L-₹1cr</option>
+                      <option value="10000000-15000000">₹1cr-₹1.5cr</option>
+                      <option value="15000000+">₹1.5cr+</option>
+                    </select>
                   </div>
                   <div>
                     <label className="text-sm font-semibold text-stone-700 mb-2 flex items-center">
