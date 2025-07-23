@@ -619,11 +619,20 @@ const Profile = () => {
           )}
           <div className="bg-white rounded-lg shadow-md p-6 mb-8">
             <div className="flex items-center mb-4">
-              <img
-                src={user.developer_image}
-                alt="User Logo"
-                className="w-16 h-16 rounded-full mr-4 object-cover"
-              />
+              {user.role === 'developer' && user.developer_image && (
+                <img
+                  src={user.developer_image.split(',')[0] || PLACEHOLDER_IMAGE_URL}
+                  alt="Developer Image"
+                  className="w-16 h-16 rounded-full mr-4 object-cover"
+                  onError={(e) => {
+                    e.target.src = PLACEHOLDER_IMAGE_URL;
+                    console.error('Profile: Failed to load developer image:', user.developer_image);
+                  }}
+                />
+              )}
+              {user.role !== 'developer' || !user.developer_image ? (
+                <FaUser className="inline mr-4" />
+              ) : null}
               <div>
                 <h3 className="text-xl font-bold text-stone-700">{user.username}</h3>
                 <p className="text-stone-600">{user.email}</p>
@@ -665,8 +674,8 @@ const Profile = () => {
                 navigate('/login', { state: { from: location.pathname } });
               }}
               className="relative inline-block px-6 py-2 rounded font-medium text-white bg-stone-700 z-10 overflow-hidden
-                before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
-                before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
+      before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
+      before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
               aria-label="Log out"
             >
               Log Out
@@ -1865,7 +1874,7 @@ const Profile = () => {
                           <img
                             src={property.images ? property.images.split(',')[0] || PLACEHOLDER_IMAGE_URL : PLACEHOLDER_IMAGE_URL}
                             alt={property.name}
-                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105 rounded"
+                            className="w-full h-full transition-transform duration-300 group-hover:scale-105 rounded"
                             onError={(e) => {
                               console.error('Image load failed:', property.images);
                               e.target.src = PLACEHOLDER_IMAGE_URL;

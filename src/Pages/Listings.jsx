@@ -2,12 +2,13 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { FaMapMarkerAlt, FaMoneyBill, FaBuilding, FaHome, FaRulerCombined } from 'react-icons/fa';
+import { Heart } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 // Default image URL
 const DEFAULT_IMAGE = 'https://via.placeholder.com/300x300?text=No+Image';
 
-const FilterBar = ({ filters, setFilters, clearFilters }) => {
+const FilterBar = ({ filters, setFilters, clearFilters, userRole, wishlistCriteria }) => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFilters((prev) => {
@@ -19,10 +20,25 @@ const FilterBar = ({ filters, setFilters, clearFilters }) => {
 
   const removeFilter = (filterName) => {
     setFilters((prev) => {
-      const updatedFilters = { ...prev, [filterName]: '' };
+      const updatedFilters = { ...prev, [filterName]: filterName === 'wishlistCriteria' ? false : '' };
       localStorage.setItem('zivaasFilters', JSON.stringify(updatedFilters));
       return updatedFilters;
     });
+  };
+
+  const applyWishlistCriteria = () => {
+    const savedFilters = {
+      location: wishlistCriteria.location || '',
+      price: wishlistCriteria.price || '',
+      area: wishlistCriteria.area || '',
+      property_type: wishlistCriteria.property_type || '',
+      status: wishlistCriteria.status || '',
+      sort: filters.sort || '',
+      wishlistCriteria: true,
+    };
+    setFilters(savedFilters);
+    localStorage.setItem('zivaasFilters', JSON.stringify(savedFilters));
+    applyFilters(savedFilters); // Apply filters immediately
   };
 
   const activeFilters = Object.entries(filters).filter(([key, value]) => value && key !== 'sort');
@@ -35,6 +51,15 @@ const FilterBar = ({ filters, setFilters, clearFilters }) => {
       transition={{ duration: 0.4 }}
     >
       <h3 className="text-xl font-serif text-stone-800 mb-4 border-b border-stone-300 pb-2">Filter Properties</h3>
+      {userRole === 'customer' && !filters.wishlistCriteria && (
+        <button
+          onClick={applyWishlistCriteria}
+          className="w-full bg-stone-700 text-white py-2 rounded-md hover:bg-stone-600 transition duration-300 mb-4"
+          aria-label="Apply saved criteria"
+        >
+          Apply Saved Criteria
+        </button>
+      )}
       {activeFilters.length > 0 && (
         <div className="mb-4">
           <h4 className="text-sm font-medium text-stone-600 mb-2">Selected Filters:</h4>
@@ -49,6 +74,8 @@ const FilterBar = ({ filters, setFilters, clearFilters }) => {
                     ? value.replace('-', ' - ').replace('15000000+', '₹1.5cr+')
                     : key === 'area'
                     ? `${value} sq.ft`
+                    : key === 'wishlistCriteria'
+                    ? 'Saved Criteria'
                     : value}
                 </span>
                 <button
@@ -63,99 +90,103 @@ const FilterBar = ({ filters, setFilters, clearFilters }) => {
         </div>
       )}
       <div className="space-y-4">
-        <div>
-          <label className="text-sm font-semibold text-stone-700 mb-2 flex items-center">
-            <FaMapMarkerAlt className="mr-2" /> Location
-          </label>
-          <input
-            type="text"
-            name="location"
-            value={filters.location}
-            onChange={handleChange}
-            placeholder="Enter location"
-            className="w-full border border-stone-300 bg-stone-50 text-stone-700 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-stone-400 transition"
-          />
-        </div>
-        <div>
-          <label className="text-sm font-semibold text-stone-700 mb-2 flex items-center">
-            <FaMoneyBill className="mr-2" /> Price Range
-          </label>
-          <select
-            name="price"
-            value={filters.price}
-            onChange={handleChange}
-            className="w-full border border-stone-300 bg-stone-50 text-stone-700 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-stone-400 transition"
-          >
-            <option value="">Any</option>
-            <option value="0-5000000">0-₹50L</option>
-            <option value="5000000-7000000">₹50L-₹70L</option>
-            <option value="7000000-10000000">₹70L-₹1cr</option>
-            <option value="10000000-15000000">₹1cr-₹1.5cr</option>
-            <option value="15000000+">₹1.5cr+</option>
-          </select>
-        </div>
-        <div>
-          <label className="text-sm font-semibold text-stone-700 mb-2 flex items-center">
-            <FaRulerCombined className="mr-2" /> Area (sq.ft)
-          </label>
-          <input
-            type="text"
-            name="area"
-            value={filters.area}
-            onChange={handleChange}
-            placeholder="e.g., 1000 or 1500+"
-            className="w-full border border-stone-300 bg-stone-50 text-stone-700 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-stone-400 transition"
-          />
-        </div>
-        <div>
-          <label className="text-sm font-semibold text-stone-700 mb-2 flex items-center">
-            <FaBuilding className="mr-2" /> Property Type
-          </label>
-          <select
-            name="property_type"
-            value={filters.property_type}
-            onChange={handleChange}
-            className="w-full border border-stone-300 bg-stone-50 text-stone-700 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-stone-400 transition"
-          >
-            <option value="">Any</option>
-            <option value="Flat">Flat</option>
-            <option value="Villa">Villa</option>
-            <option value="Plot">Plot</option>
-            <option value="Commercial">Commercial</option>
-          </select>
-        </div>
-        <div>
-          <label className="text-sm font-semibold text-stone-700 mb-2 flex items-center">
-            <FaHome className="mr-2" /> Status
-          </label>
-          <select
-            name="status"
-            value={filters.status}
-            onChange={handleChange}
-            className="w-full border border-stone-300 bg-stone-50 text-stone-700 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-stone-400 transition"
-          >
-            <option value="">Any</option>
-            <option value="Ready">Ready to Move</option>
-            <option value="Under Construction">Under Construction</option>
-            <option value="Upcoming">Upcoming</option>
-          </select>
-        </div>
-        <div>
-          <label className="text-sm font-semibold text-stone-700 mb-2 flex items-center">Sort</label>
-          <select
-            name="sort"
-            value={filters.sort}
-            onChange={handleChange}
-            className="w-full border border-stone-300 bg-stone-50 text-stone-700 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-stone-400 transition"
-          >
-            <option value="">Sort</option>
-            <option value="priceLowHigh">Price: Low to High</option>
-            <option value="priceHighLow">Price: High to Low</option>
-          </select>
-        </div>
+        {!filters.wishlistCriteria && (
+          <>
+            <div>
+              <label className="text-sm font-semibold text-stone-700 mb-2 flex items-center">
+                <FaMapMarkerAlt className="mr-2" /> Location
+              </label>
+              <input
+                type="text"
+                name="location"
+                value={filters.location}
+                onChange={handleChange}
+                placeholder="Enter location"
+                className="w-full border border-stone-300 bg-stone-50 text-stone-700 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-stone-400 transition"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-semibold text-stone-700 mb-2 flex items-center">
+                <FaMoneyBill className="mr-2" /> Price Range
+              </label>
+              <select
+                name="price"
+                value={filters.price}
+                onChange={handleChange}
+                className="w-full border border-stone-300 bg-stone-50 text-stone-700 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-stone-400 transition"
+              >
+                <option value="">Any</option>
+                <option value="0-5000000">0-₹50L</option>
+                <option value="5000000-7000000">₹50L-₹70L</option>
+                <option value="7000000-10000000">₹70L-₹1cr</option>
+                <option value="10000000-15000000">₹1cr-₹1.5cr</option>
+                <option value="15000000+">₹1.5cr+</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-sm font-semibold text-stone-700 mb-2 flex items-center">
+                <FaRulerCombined className="mr-2" /> Area (sq.ft)
+              </label>
+              <input
+                type="text"
+                name="area"
+                value={filters.area}
+                onChange={handleChange}
+                placeholder="e.g., 1000 or 1500+"
+                className="w-full border border-stone-300 bg-stone-50 text-stone-700 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-stone-400 transition"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-semibold text-stone-700 mb-2 flex items-center">
+                <FaBuilding className="mr-2" /> Property Type
+              </label>
+              <select
+                name="property_type"
+                value={filters.property_type}
+                onChange={handleChange}
+                className="w-full border border-stone-300 bg-stone-50 text-stone-700 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-stone-400 transition"
+              >
+                <option value="">Any</option>
+                <option value="Flat">Flat</option>
+                <option value="Villa">Villa</option>
+                <option value="Plot">Plot</option>
+                <option value="Commercial">Commercial</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-sm font-semibold text-stone-700 mb-2 flex items-center">
+                <FaHome className="mr-2" /> Status
+              </label>
+              <select
+                name="status"
+                value={filters.status}
+                onChange={handleChange}
+                className="w-full border border-stone-300 bg-stone-50 text-stone-700 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-stone-400 transition"
+              >
+                <option value="">Any</option>
+                <option value="Ready">Ready to Move</option>
+                <option value="Under Construction">Under Construction</option>
+                <option value="Upcoming">Upcoming</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-sm font-semibold text-stone-700 mb-2 flex items-center">Sort</label>
+              <select
+                name="sort"
+                value={filters.sort}
+                onChange={handleChange}
+                className="w-full border border-stone-300 bg-stone-50 text-stone-700 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-stone-400 transition"
+              >
+                <option value="">Sort</option>
+                <option value="priceLowHigh">Price: Low to High</option>
+                <option value="priceHighLow">Price: High to Low</option>
+              </select>
+            </div>
+          </>
+        )}
         <button
           onClick={clearFilters}
-          className="w-full bg-stone-700 text-white py-2 rounded-md hover:bg-stone-600 transition duration-300"
+          className="w-full bg-stone-700 text-white py-2 rounded-md hover:bg-stone-600 transition duration-300 mt-2"
         >
           Clear Filters
         </button>
@@ -186,10 +217,12 @@ const Listings = () => {
           property_type: '',
           status: '',
           sort: '',
+          wishlistCriteria: false,
         };
   });
 
   const [userRole, setUserRole] = useState(null);
+  const [wishlistCriteria, setWishlistCriteria] = useState({});
   const sectionRefs = useRef([]);
   const [visibleSections, setVisibleSections] = useState([]);
 
@@ -204,35 +237,36 @@ const Listings = () => {
             .eq('id', user.id)
             .single();
           if (userError) {
-            console.error('Error fetching user data:', userError);
+            console.error('Listings: Error fetching user data:', userError);
             setError(`Error fetching user data: ${userError.message}`);
             setUserRole(null);
+            setWishlistCriteria({});
             return;
           }
           setUserRole(userData.role);
-          if (userData.role === 'customer' && userData.wishlist_criteria) {
-            const validTypes = ['Flat', 'Villa', 'Plot', 'Commercial'];
-            const wishlistCriteria = {
-              location: userData.wishlist_criteria.location || '',
-              price: userData.wishlist_criteria.price || '',
-              area: userData.wishlist_criteria.area || '',
-              property_type: userData.wishlist_criteria.property_type || '',
-              status: userData.wishlist_criteria.status || '',
-              sort: filters.sort || '', // Preserve existing sort if any
-            };
-            console.log('Fetched wishlist_criteria:', wishlistCriteria);
-            setFilters((prev) => ({
-              ...prev,
-              ...wishlistCriteria,
-            }));
-            localStorage.setItem('zivaasFilters', JSON.stringify(wishlistCriteria));
+          const criteria = userData.wishlist_criteria || {};
+          console.log('Listings: Fetched wishlist_criteria:', criteria);
+          if (typeof criteria === 'string') {
+            try {
+              const parsedCriteria = JSON.parse(criteria);
+              setWishlistCriteria(parsedCriteria);
+              console.log('Listings: Parsed wishlist_criteria:', parsedCriteria);
+            } catch (parseError) {
+              console.error('Listings: Failed to parse wishlist_criteria:', parseError);
+              setWishlistCriteria({});
+              setError('Invalid saved criteria format. Please update your criteria.');
+            }
+          } else {
+            setWishlistCriteria(criteria);
           }
         } else {
           setUserRole(null);
+          setWishlistCriteria({});
         }
       } catch (error) {
-        console.error('Error fetching user data:', error);
+        console.error('Listings: Error fetching user data:', error);
         setError(`Error fetching user data: ${error.message}`);
+        setWishlistCriteria({});
       }
     };
     fetchUserData();
@@ -241,7 +275,7 @@ const Listings = () => {
   useEffect(() => {
     const fetchProperties = async () => {
       try {
-        console.log('Fetching properties from Supabase');
+        console.log('Listings: Fetching properties from Supabase');
         const { data: propertiesData, error: propertiesError } = await supabase
           .from('properties')
           .select(`
@@ -255,14 +289,14 @@ const Listings = () => {
           `);
 
         if (propertiesError) {
-          console.error('Supabase Error Details:', propertiesError);
+          console.error('Listings: Supabase Error Details:', propertiesError);
           throw new Error(`Failed to fetch properties: ${propertiesError.message} (Code: ${propertiesError.code})`);
         }
 
-        console.log('Raw properties data:', propertiesData);
+        console.log('Listings: Raw properties data:', propertiesData);
 
         if (!propertiesData || propertiesData.length === 0) {
-          console.warn('No properties data returned from Supabase');
+          console.warn('Listings: No properties data returned from Supabase');
           setAllProps([]);
           setError('No properties found in the database.');
           return;
@@ -270,7 +304,7 @@ const Listings = () => {
 
         const mappedProperties = propertiesData.map((p) => {
           const typeValue = p.property_type ? p.property_type.charAt(0).toUpperCase() + p.property_type.slice(1).toLowerCase() : 'Unknown';
-          console.log(`Mapping property ${p.id}: property_type=${p.property_type}, mapped type=${typeValue}`);
+          console.log(`Listings: Mapping property ${p.id}: property_type=${p.property_type}, mapped type=${typeValue}`);
           return {
             id: p.id,
             name: p.name || 'Unnamed Property',
@@ -289,11 +323,11 @@ const Listings = () => {
           };
         });
 
-        console.log('Mapped properties:', mappedProperties);
+        console.log('Listings: Mapped properties:', mappedProperties);
         setAllProps(mappedProperties);
         setError(null);
       } catch (error) {
-        console.error('Error fetching properties:', error);
+        console.error('Listings: Error fetching properties:', error);
         setError(`Error loading properties: ${error.message}. Check console for details.`);
         setAllProps([]);
       }
@@ -313,7 +347,7 @@ const Listings = () => {
         .eq('user_id', user.id);
 
       if (wishlistError) {
-        console.error('Error fetching wishlist:', wishlistError);
+        console.error('Listings: Error fetching wishlist:', wishlistError);
         setError(`Error fetching wishlist: ${wishlistError.message}`);
         return;
       }
@@ -331,62 +365,116 @@ const Listings = () => {
     fetchWishlistStatus();
   }, [allProps.length, userRole]);
 
-  useEffect(() => {
+  const applyFilters = (currentFilters) => {
     let result = [...allProps];
 
-    if (searchQuery) {
-      result = result.filter(
-        (p) =>
-          p.name.toLowerCase().includes(searchQuery) ||
-          p.developer.toLowerCase().includes(searchQuery) ||
-          p.location.toLowerCase().includes(searchQuery)
-      );
+    if (currentFilters.wishlistCriteria && wishlistCriteria && Object.keys(wishlistCriteria).length > 0) {
+      console.log('Listings: Applying wishlistCriteria:', wishlistCriteria);
+      if (wishlistCriteria.location) {
+        result = result.filter((p) =>
+          p.location?.toLowerCase().includes(wishlistCriteria.location.toLowerCase().trim())
+        );
+      }
+      if (wishlistCriteria.price) {
+        result = result.filter((p) => {
+          const price = parseFloat(p.price) || 0;
+          const [min, max] = wishlistCriteria.price
+            .split('-')
+            .map((p) => (p === '+' ? Infinity : parseFloat(p.replace(/[^0-9]/g, '')) || 0));
+          return min <= price && (max === Infinity ? true : price <= max);
+        });
+      }
+      if (wishlistCriteria.area) {
+        result = result.filter((p) => {
+          const propArea = parseInt(p.carpet_area) || 0;
+          const critArea = parseInt(wishlistCriteria.area.replace('+', '')) || 0;
+          return wishlistCriteria.area.includes('+') ? propArea >= critArea : propArea === critArea;
+        });
+      }
+      if (wishlistCriteria.property_type) {
+        result = result.filter((p) =>
+          p.type?.toLowerCase() === wishlistCriteria.property_type.toLowerCase()
+        );
+      }
+      if (wishlistCriteria.status) {
+        if (wishlistCriteria.status.toLowerCase() === 'upcoming') {
+          result = result.filter((p) => p.progress === 0);
+        } else {
+          result = result.filter((p) => p.status?.toLowerCase() === wishlistCriteria.status.toLowerCase() && p.progress > 0);
+        }
+      }
+    } else {
+      if (searchQuery) {
+        result = result.filter(
+          (p) =>
+            p.name?.toLowerCase().includes(searchQuery) ||
+            p.developer?.toLowerCase().includes(searchQuery) ||
+            p.location?.toLowerCase().includes(searchQuery)
+        );
+      }
+
+      if (currentFilters.location) {
+        console.log('Listings: Filtering by location:', currentFilters.location);
+        result = result.filter((p) =>
+          p.location?.toLowerCase().includes(currentFilters.location.toLowerCase().trim())
+        );
+        console.log('Listings: After location filter, result length:', result.length);
+      }
+
+      if (currentFilters.price) {
+        result = result.filter((p) => {
+          const price = parseFloat(p.price) || 0;
+          const [min, max] = currentFilters.price
+            .split('-')
+            .map((p) => (p === '+' ? Infinity : parseFloat(p.replace(/[^0-9]/g, '')) || 0));
+          return min <= price && (max === Infinity ? true : price <= max);
+        });
+      }
+
+      if (currentFilters.area) {
+        result = result.filter((p) => {
+          const propArea = parseInt(p.carpet_area) || 0;
+          const critArea = parseInt(currentFilters.area.replace('+', '')) || 0;
+          return currentFilters.area.includes('+') ? propArea >= critArea : propArea === critArea;
+        });
+      }
+
+      if (currentFilters.property_type) {
+        result = result.filter((p) => p.type?.toLowerCase() === currentFilters.property_type.toLowerCase());
+      }
+
+      if (currentFilters.status) {
+        if (currentFilters.status.toLowerCase() === 'upcoming') {
+          result = result.filter((p) => p.progress === 0);
+        } else {
+          result = result.filter((p) => p.status?.toLowerCase() === currentFilters.status.toLowerCase() && p.progress > 0);
+        }
+      }
+
+      if (currentFilters.sort === 'priceLowHigh') {
+        result.sort((a, b) => a.price - b.price);
+      } else if (currentFilters.sort === 'priceHighLow') {
+        result.sort((a, b) => b.price - a.price);
+      }
     }
 
-    if (filters.location) {
-      result = result.filter((p) =>
-        p.location.toLowerCase().includes(filters.location.toLowerCase())
-      );
-    }
-
-    if (filters.price) {
-      result = result.filter((p) => {
-        const price = parseFloat(p.price) || 0;
-        const [min, max] = filters.price
-          .split('-')
-          .map((p) => (p === '+' ? Infinity : parseFloat(p.replace(/[^0-9]/g, '')) || 0));
-        return min <= price && (max === Infinity ? true : price <= max);
-      });
-    }
-
-    if (filters.area) {
-      result = result.filter((p) => {
-        const propArea = parseInt(p.carpet_area) || 0;
-        const critArea = parseInt(filters.area.replace('+', '')) || 0;
-        return filters.area.includes('+') ? propArea >= critArea : propArea === critArea;
-      });
-    }
-
-    if (filters.property_type) {
-      result = result.filter((p) => p.type.toLowerCase() === filters.property_type.toLowerCase());
-    }
-
-    if (filters.status === 'Upcoming') {
-      result = result.filter((p) => p.progress === 0);
-    } else if (filters.status) {
-      result = result.filter((p) => p.status === filters.status && p.progress > 0);
-    }
-
-    if (filters.sort === 'priceLowHigh') {
-      result.sort((a, b) => a.price - b.price);
-    } else if (filters.sort === 'priceHighLow') {
-      result.sort((a, b) => b.price - a.price);
-    }
-
-    console.log('Filtered properties:', result);
+    console.log('Listings: Filtered properties:', result);
     setFilteredProperties(result);
-    setPage(1); // Reset to first page when filters change
-  }, [filters, allProps, searchQuery]);
+    setPage(1); // Reset to first page when filters are applied
+    if (currentFilters.wishlistCriteria && result.length === 0 && !error) {
+      setError('No properties match your saved criteria.');
+    } else if (!error && result.length === 0) {
+      setError('No properties match the applied filters.');
+    } else if (result.length > 0) {
+      setError(null);
+    }
+  };
+
+  useEffect(() => {
+    // Initial load with all properties, then apply initial filters
+    setFilteredProperties(allProps);
+    applyFilters(filters); // Apply initial filters from localStorage or default
+  }, [allProps, filters]); // Re-run when allProps or filters change
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -419,9 +507,11 @@ const Listings = () => {
       property_type: '',
       status: '',
       sort: '',
+      wishlistCriteria: false,
     };
     setFilters(clearedFilters);
     localStorage.setItem('zivaasFilters', JSON.stringify(clearedFilters));
+    applyFilters(clearedFilters); // Apply cleared filters
     setPage(1);
   };
 
@@ -453,7 +543,6 @@ const Listings = () => {
             prop.id === propertyId ? { ...prop, isInWishlist: false } : prop
           )
         );
-        alert('Property removed from wishlist!');
       } else {
         const { error } = await supabase
           .from('wishlist')
@@ -471,12 +560,11 @@ const Listings = () => {
               prop.id === propertyId ? { ...prop, isInWishlist: true } : prop
             )
           );
-          alert('Property added to wishlist!');
         }
       }
       setError(null);
     } catch (err) {
-      console.error('Error toggling wishlist:', err);
+      console.error('Listings: Error toggling wishlist:', err);
       setError(err.message);
     }
   };
@@ -508,15 +596,22 @@ const Listings = () => {
         className={`max-w-7xl mx-auto py-12 transition-all duration-1000 transform grid grid-cols-[auto_1fr] gap-6 ${isVisible('section2') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-30'}`}
       >
         {/* FilterBar */}
-        <FilterBar filters={filters} setFilters={setFilters} clearFilters={clearFilters} />
+        <FilterBar
+          filters={filters}
+          setFilters={setFilters}
+          applyFilters={applyFilters}
+          clearFilters={clearFilters}
+          userRole={userRole}
+          wishlistCriteria={wishlistCriteria}
+        />
         <div>
           {/* Properties Grid on the right */}
           <div className="w-full">
             <h2 className="text-4xl font-bold text-stone-700 mb-6 text-center md:text-left">Available Properties</h2>
             {error && (
-              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6 text-center">
+              <p className="text-stone-600 text-center mb-4">
                 {error}
-              </div>
+              </p>
             )}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mt-10 mr-3">
               {paginatedProperties.length > 0 ? (
@@ -532,7 +627,7 @@ const Listings = () => {
                             onError={(e) => {
                               e.target.src = DEFAULT_IMAGE;
                               e.target.parentElement.classList.add('flex', 'items-center', 'justify-center', 'bg-gray-200');
-                              console.error('Image load failed:', property.image);
+                              console.error('Listings: Image load failed:', property.image);
                             }}
                           />
                         ) : (
@@ -560,22 +655,25 @@ const Listings = () => {
                                 View Details
                               </Link>
                             </div>
-                            {userRole === 'customer' && property.isInWishlist !== undefined && (
-                              <div className="mt-1">
-                                <Link
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    toggleWishlist(property.id);
-                                  }}
-                                  className="text-stone-100 hover:font-semibold"
-                                >
-                                  {property.isInWishlist ? 'Remove' : 'Add to Wishlist'}
-                                </Link>
-                              </div>
-                            )}
                           </div>
                         </div>
                       </Link>
+                      {userRole === 'customer' && property.isInWishlist !== undefined && (
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            toggleWishlist(property.id);
+                          }}
+                          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-white hover:text-red-500"
+                          aria-label={property.isInWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
+                        >
+                          <Heart
+                            size={24}
+                            fill={property.isInWishlist ? 'white' : 'none'}
+                            stroke={property.isInWishlist ? 'white' : 'white'}
+                          />
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))
