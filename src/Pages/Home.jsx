@@ -767,81 +767,49 @@ const Home = () => {
       </section>
 
       {/* Reach Out – Your Trusted Real Estate Allies Section */}
-      <section className="text-stone-700 py-10 text-center">
-        <h2 className="text-xl font-bold mb-2">
-          Reach Out – Your Trusted Real Estate Allies
-        </h2>
-        <p className="mb-6 text-lg">
-          At Zivaas Properties, we support developers in managing properties and
-          users in curating wishlists with expert guidance. With over 15 years
-          of experience in India, our team ensures top-notch service from
-          listing to ownership.
-        </p>
+<section className="bg-stone-100 text-stone-800 py-10 px-6">
+  <div className="max-w-5xl mx-auto text-center">
+    <h2 className="text-3xl font-bold mb-4">
+      Reach Out – Your Trusted Real Estate Allies
+    </h2>
+    <p className="text-lg text-stone-600 mb-8 max-w-3xl mx-auto">
+      At Zivaas Properties, we support developers in managing properties and
+      users in curating wishlists with expert guidance. With over 15 years
+      of experience in India, our team ensures top-notch service from
+      listing to ownership.
+    </p>
 
-        <h3 className="text-lg font-semibold mb-4">
-          Common Queries Answered
-        </h3>
-        <div className="max-w-4xl mx-auto space-y-4 mb-8">
-          <div>
-            <h4 className="font-semibold text-base">
-              How do I add a property as a developer?
-            </h4>
-            <p className="text-sm">
-              Log in to your profile, fill out the property details, and upload
-              images to list it.
-            </p>
-          </div>
-          <div>
-            <h4 className="font-semibold text-base">
-              Can I update my wishlist criteria?
-            </h4>
-            <p className="text-sm">
-              Yes, adjust location, price, and type in your profile under
-              wishlist settings.
-            </p>
-          </div>
-          <div>
-            <h4 className="font-semibold text-base">
-              How do I remove a property from my wishlist?
-            </h4>
-            <p className="text-sm">
-              Go to your profile, find the property, and click the remove option.
-            </p>
-          </div>
-          <div>
-            <h4 className="font-semibold text-base">
-              What details are required for a property?
-            </h4>
-            <p className="text-sm">
-              Name, location, price, area, type, and status are mandatory fields.
-            </p>
-          </div>
-          <div>
-            <h4 className="font-semibold text-base">
-              How can I contact support?
-            </h4>
-            <p className="text-sm">
-              Reach us via phone or email with your query details.
-            </p>
-          </div>
-        </div>
-        <p className="text-base mb-2">Get in Touch with Us:</p>
-        <p className="text-sm mb-2">
-          <a href="tel:+919876543210" className="hover:font-bold underline">
-            Phone: +91 98765 43210
-          </a>{" "}
-          (9 AM - 6 PM IST, Mon-Sat)
+    <h3 className="text-2xl font-semibold mb-6">Frequently Asked Questions</h3>
+    <div className="grid md:grid-cols-3 gap-6 mb-12">
+      <div className="bg-white rounded-lg shadow p-6 text-left">
+        <h4 className="font-semibold text-base mb-2">
+          How do I add a property as a developer?
+        </h4>
+        <p className="text-sm text-stone-600">
+          Log in to your profile, fill out the property details, and upload
+          images to list it.
         </p>
-        <p className="text-sm mb-2">
-          <a
-            href="contact@zivaas.in"
-            className="hover:font-bold underline"
-          >
-            Email: contact@zivaas.in
-          </a>{" "}
-          (24-48 hr response)
+      </div>
+      <div className="bg-white rounded-lg shadow p-6 text-left">
+        <h4 className="font-semibold text-base mb-2">
+          What details are required for a property?
+        </h4>
+        <p className="text-sm text-stone-600">
+          Name, location, price, area, type, and status are mandatory fields.
         </p>
-      </section>
+      </div>
+      <div className="bg-white rounded-lg shadow p-6 text-left">
+        <h4 className="font-semibold text-base mb-2">
+          How can I contact support?
+        </h4>
+        <p className="text-sm text-stone-600">
+          Reach us via phone or email with your query details.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
     </div>
   );
 };

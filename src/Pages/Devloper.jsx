@@ -13,7 +13,8 @@ const Developer = () => {
     const fetchDevelopersAndProperties = async () => {
       try {
         console.log("Fetching developers and properties...");
-        const { data, error: fetchError } = await supabase.from("properties")
+        const { data, error: fetchError } = await supabase
+          .from("properties")
           .select(`
             id, name, property_type, images, price, location, status, configuration,
             total_floors, total_units, carpet_area, rera_number, amenities,
@@ -167,52 +168,67 @@ const Developer = () => {
             {developers.map((developer) => (
               <div
                 key={developer.name}
-                className="bg-white border border-gray-100 p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300"
+                className="bg-white border border-gray-100 p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 flex items-start"
               >
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                  {developer.name}
-                </h3>
-                <p className="text-base text-gray-500 italic mb-4">
-                  {developer.tagline}
-                </p>
-                <div className="grid grid-cols-2 gap-3 text-gray-700 mb-4">
-                  <div>
-                    <p>
-                      <strong className="text-gray-900">Experience:</strong>{" "}
-                      {developer.experience} years
-                    </p>
-                    <p>
-                      <strong className="text-gray-900">Projects:</strong>{" "}
-                      {developer.projectsCompleted}
-                    </p>
-                    <p>
-                      <strong className="text-gray-900">Families:</strong>{" "}
-                      {developer.happyFamilies}
-                    </p>
+                <div className="flex-1">
+                  <div className="flex items-center mb-4">
+                    <img
+                      src={
+                        developer.properties[0]?.image ||
+                        "https://via.placeholder.com/150?text=Default+Profile"
+                      }
+                      alt={`${developer.name} profile`}
+                      className="w-30 h-30 rounded-full object-cover mr-8"
+                      onError={(e) =>
+                        (e.target.src = "https://static.vecteezy.com/system/resources/previews/018/765/757/original/user-profile-icon-in-flat-style-member-avatar-illustration-on-isolated-background-human-permission-sign-business-concept-vector.jpg")
+                      }
+                    />
+                    <h3 className="text-xl font-semibold text-gray-900">
+                      {developer.name}
+                    </h3>
                   </div>
-                  <div>
-                    <p>
-                      <strong className="text-gray-900">Awards:</strong>{" "}
-                      {developer.awards}
-                    </p>
-                    <p>
-                      <strong className="text-gray-900">Certifications:</strong>{" "}
-                      {developer.certifications}
-                    </p>
+                  <p className="text-base text-gray-500 italic mb-4">
+                    {developer.tagline}
+                  </p>
+                  <div className="grid grid-cols-2 gap-3 text-gray-700 mb-4">
+                    <div>
+                      <p>
+                        <strong className="text-gray-900">Experience:</strong>{" "}
+                        {developer.experience} years
+                      </p>
+                      <p>
+                        <strong className="text-gray-900">Projects:</strong>{" "}
+                        {developer.projectsCompleted}
+                      </p>
+                      <p>
+                        <strong className="text-gray-900">Families:</strong>{" "}
+                        {developer.happyFamilies}
+                      </p>
+                    </div>
+                    <div>
+                      <p>
+                        <strong className="text-gray-900">Awards:</strong>{" "}
+                        {developer.awards}
+                      </p>
+                      <p>
+                        <strong className="text-gray-900">Certifications:</strong>{" "}
+                        {developer.certifications}
+                      </p>
+                    </div>
                   </div>
+                  <p className="text-sm text-gray-600 mb-4 leading-relaxed">
+                    <strong className="text-gray-900">Description:</strong>{" "}
+                    {developer.description}
+                  </p>
+                  <Link
+                    to={`/properties/developer/${encodeURIComponent(
+                      developer.name
+                    )}`}
+                    className="relative inline-block font-medium text-stone-700 text-sm after:absolute after:left-0 after:bottom-0 after:h-[1.5px] after:w-full after:bg-stone-700 hover:font-bold"
+                  >
+                    View All
+                  </Link>
                 </div>
-                <p className="text-sm text-gray-600 mb-4 leading-relaxed">
-                  <strong className="text-gray-900">Description:</strong>{" "}
-                  {developer.description}
-                </p>
-                <Link
-                  to={`/properties/developer/${encodeURIComponent(
-                    developer.name
-                  )}`}
-                  className="relative inline-block font-medium text-stone-700 text-sm after:absolute after:left-0 after:bottom-0 after:h-[1.5px] after:w-full after:bg-stone-700 hover:font-bold"
-                >
-                  View All
-                </Link>
               </div>
             ))}
           </div>

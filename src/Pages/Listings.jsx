@@ -488,7 +488,7 @@ const Listings = () => {
         id="section1"
         ref={(el) => (sectionRefs.current[0] = el)}
         className={`relative bg-cover bg-center text-white h-[80vh] flex items-center p-20 transition-all duration-1000 transform ${isVisible('section1') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
-        style={{ backgroundImage: `url(${DEFAULT_IMAGE})` }}
+        style={{ backgroundImage: `url(https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Bg%20img/bglisting.jpg)` }}
       >
         <div className="absolute inset-0 bg-black/60 z-0" />
         <div className="relative z-10 px-4 max-w-6xl mx-auto">

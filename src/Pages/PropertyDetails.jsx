@@ -126,28 +126,6 @@ const PropertyDetails = () => {
                     >
                         {/* Developer Image and Details */}
                         <div className="flex flex-col md:flex-row items-center mb-6">
-                            <div className="w-full md:w-1/3 mb-4 md:mb-0">
-                                <div className="relative w-2xs h-80 shadow-md bg-gray-200 rounded overflow-hidden">
-                                    {developerImage ? (
-                                        <img
-                                            src={developerImage || 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images//default.jpg'}
-                                            alt={`${properties[0].developer}`}
-                                            className="w-2xs rounded"
-                                            onError={(e) => {
-                                                e.target.src = 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images//default.jpg';
-                                                e.target.style.display = 'block';
-                                                setError('Failed to load developer image, using default.');
-                                            }}
-                                        />
-                                    ) : (
-                                        <img
-                                            src="https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images//default.jpg"
-                                            alt={`${properties[0].developer} logo`}
-                                            className="w-2xs h-80 rounded"
-                                        />
-                                    )}
-                                </div>
-                            </div>
                             <div className="w-full md:w-2/3 md:pl-6">
                                 <h1 className="text-4xl font-bold">{properties[0].developer}</h1>
                                 <p className="text-lg mt-2 italic">{properties[0].tagline || 'No tagline'}</p>
