@@ -16,11 +16,7 @@ const Developer = () => {
         const { data, error: fetchError } = await supabase
           .from("properties")
           .select(`
-            id, name, property_type, images, price, location, status, configuration,
-            total_floors, total_units, carpet_area, rera_number, amenities,
-            developer_name, developer_tagline, developer_experience,
-            developer_projects_completed, developer_happy_families, nearby_landmarks,
-            developer_awards, developer_certifications, developer_description
+            id, name, images, developer_name, developer_description, developer_image
           `);
 
         if (fetchError) {
@@ -44,27 +40,22 @@ const Developer = () => {
           if (!developerMap.has(developerName)) {
             developerMap.set(developerName, {
               name: developerName,
-              tagline: property.developer_tagline || "No tagline",
-              experience: property.developer_experience || 0,
-              projectsCompleted: property.developer_projects_completed || 0,
-              happyFamilies: property.developer_happy_families || 0,
-              awards: property.developer_awards || "None",
-              certifications: property.developer_certifications || "None",
               description:
                 property.developer_description || "No description available.",
+              image:
+                property.developer_image && property.developer_image.trim() !== ""
+                  ? property.developer_image
+                  : null,
               properties: [],
             });
           }
           developerMap.get(developerName).properties.push({
             id: property.id,
             name: property.name || "Unnamed Property",
-            type: property.property_type || "Unknown",
-            location: property.location || "Unknown",
-            status: property.status || "Unknown",
             image:
-              property.images.length > 0 ? property.images[0] || null : null,
-            carpetArea: property.carpet_area || 0,
-            reraNumber: property.rera_number || "N/A",
+              property.images && property.images.length > 0
+                ? property.images[0] || null
+                : null,
           });
         });
 
@@ -109,6 +100,9 @@ const Developer = () => {
   }, [visibleSections]);
 
   const isVisible = (id) => visibleSections.includes(id);
+
+  // Default image URL
+  const defaultImage = "https://tse1.mm.bing.net/th/id/OIP.NVfmC91cXZclVmv4ML3-bAHaEK?pid=Api&P=0&h=180";
 
   return (
     <div className="min-h-screen bg-gray-100 font-sans">
@@ -168,53 +162,24 @@ const Developer = () => {
             {developers.map((developer) => (
               <div
                 key={developer.name}
-                className="bg-white border border-gray-100 p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 flex items-start"
+                className="bg-white border border-gray-100 p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 flex flex-col"
               >
+                {/* Developer Image */}
+                <div className="mb-4">
+                  <img
+                    src={developer.image || defaultImage}
+                    alt={`${developer.name} logo`}
+                    className="w-full h-48 object-cover rounded-md opacity-80"
+                    onError={(e) => {
+                      e.target.src = defaultImage;
+                    }}
+                  />
+                </div>
                 <div className="flex-1">
                   <div className="flex items-center mb-4">
-                    <img
-                      src={
-                        developer.properties[0]?.image ||
-                        "https://via.placeholder.com/150?text=Default+Profile"
-                      }
-                      alt={`${developer.name} profile`}
-                      className="w-30 h-30 rounded-full object-cover mr-8"
-                      onError={(e) =>
-                        (e.target.src = "https://static.vecteezy.com/system/resources/previews/018/765/757/original/user-profile-icon-in-flat-style-member-avatar-illustration-on-isolated-background-human-permission-sign-business-concept-vector.jpg")
-                      }
-                    />
                     <h3 className="text-xl font-semibold text-gray-900">
                       {developer.name}
                     </h3>
-                  </div>
-                  <p className="text-base text-gray-500 italic mb-4">
-                    {developer.tagline}
-                  </p>
-                  <div className="grid grid-cols-2 gap-3 text-gray-700 mb-4">
-                    <div>
-                      <p>
-                        <strong className="text-gray-900">Experience:</strong>{" "}
-                        {developer.experience} years
-                      </p>
-                      <p>
-                        <strong className="text-gray-900">Projects:</strong>{" "}
-                        {developer.projectsCompleted}
-                      </p>
-                      <p>
-                        <strong className="text-gray-900">Families:</strong>{" "}
-                        {developer.happyFamilies}
-                      </p>
-                    </div>
-                    <div>
-                      <p>
-                        <strong className="text-gray-900">Awards:</strong>{" "}
-                        {developer.awards}
-                      </p>
-                      <p>
-                        <strong className="text-gray-900">Certifications:</strong>{" "}
-                        {developer.certifications}
-                      </p>
-                    </div>
                   </div>
                   <p className="text-sm text-gray-600 mb-4 leading-relaxed">
                     <strong className="text-gray-900">Description:</strong>{" "}
