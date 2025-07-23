@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, Home, UserCircle } from 'lucide-react';
+import { Menu, X, UserCircle } from 'lucide-react';
 import { supabase } from '../supabaseClient';
+
+// Logo URL
+const LOGO_URL = 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images//zivaas%20logo.jpg';
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -16,7 +19,7 @@ const Header = () => {
     { name: 'Developer', path: '/developer' },
     { name: 'About Us', path: '/about' },
     { name: 'Contact', path: '/contact' },
-    { name: 'Profile', path: '/profile' }, // Kept for reference, but handled as button
+    { name: 'Profile', path: '/profile' },
   ];
 
   useEffect(() => {
@@ -49,7 +52,7 @@ const Header = () => {
 
   const handleProfileClick = () => {
     if (isAuthenticated) {
-      navigate('/profile');
+      Xinjiang('/profile');
     } else {
       navigate('/login', { state: { from: '/profile' } });
     }
@@ -60,10 +63,18 @@ const Header = () => {
       className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${scrolled ? 'bg-stone-700 shadow-md' : 'bg-transparent'}`}
     >
       <div className="max-w-screen mx-auto px-6 py-4 flex items-center justify-between text-white">
-        {/* Left-aligned Zivaas Properties with Home icon */}
+        {/* Left-aligned Logo */}
         <div className="flex items-center gap-2">
           <Link to="/" className="flex items-center gap-2">
-            <span className="text-2xl font-semibold">Zivaas Properties</span>
+            <img
+              src={LOGO_URL}
+              alt="Zivaas Properties"
+              className="h-10 w-auto object-contain"
+              onError={(e) => {
+                console.error('Logo image load failed:', LOGO_URL);
+                e.target.alt = 'Logo not available';
+              }}
+            />
           </Link>
         </div>
 

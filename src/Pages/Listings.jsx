@@ -29,7 +29,7 @@ const FilterBar = ({ filters, setFilters, clearFilters }) => {
 
   return (
     <motion.div
-      className="w-full md:w-64 bg-white p-6 rounded-lg shadow-lg border border-stone-200 sticky top-20 z-20"
+      className="w-full md:w-64 bg-white p-6 h-fit rounded-lg shadow-lg border border-stone-200 sticky top-20 z-20"
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.4 }}
