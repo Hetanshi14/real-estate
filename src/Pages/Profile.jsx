@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { motion } from 'framer-motion';
@@ -43,17 +43,25 @@ const Profile = () => {
     agent_availability: '',
     agent_rating: '',
     agent_reviews: '',
-    images: '', // Changed to string to store comma-separated URLs
+    images: '',
     agents_image: '',
     developer_image: '',
     developer_awards: '',
     developer_certifications: '',
+    developer_description: '',
+    developer_logo: '',
   });
   const [editProperty, setEditProperty] = useState(null);
-  const [showAddForm, setShowAddForm] = useState(false); // Toggle state for form visibility
+  const [showAddForm, setShowAddForm] = useState(false);
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [previewImages, setPreviewImages] = useState({
+    developer_logo: [],
+    developer_image: [],
+    images: [],
+    agents_image: [],
+  });
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -75,24 +83,34 @@ const Profile = () => {
 
   useEffect(() => {
     const checkAuthAndFetch = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        if (location.pathname !== '/login') {
-          navigate('/login', { state: { from: '/profile' } });
-        }
-        return;
-      }
-
       try {
+        setLoading(true);
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        console.log('Profile: Session:', session);
+        if (sessionError) throw new Error(`Session error: ${sessionError.message}`);
+        if (!session) {
+          console.log('Profile: No session, redirecting to login');
+          navigate('/login', { state: { from: location.pathname } });
+          return;
+        }
+
         const { data: userData, error: userError } = await supabase
           .from('users')
-          .select('id, username, email, role, wishlist_criteria')
+          .select('id, username, email, role, wishlist_criteria, developer_logo, developer_image')
           .eq('id', session.user.id)
           .single();
 
-        if (userError) throw new Error(`Failed to fetch user: ${userError.message}`);
+        if (userError || !userData) {
+          throw new Error(userError ? `Failed to fetch user: ${userError.message}` : 'User data not found');
+        }
 
         setUser(userData);
+        // Do not set developer_logo in previewImages from database; only show after upload
+        setPreviewImages((prev) => ({
+          ...prev,
+          developer_logo: [], // Reset to empty to show only after new upload
+          developer_image: userData.developer_image ? userData.developer_image.split(',').filter((url) => url.trim()) : [],
+        }));
         setWishlistCriteria(
           userData.wishlist_criteria || {
             location: '',
@@ -121,32 +139,29 @@ const Profile = () => {
           setWishlist(wishlistData || []);
         }
       } catch (err) {
+        console.error('Profile: Error in checkAuthAndFetch:', err);
         setError(err.message);
       } finally {
         setLoading(false);
-      }
-
-      if (location.state?.from === '/login') {
-        navigate('/profile', { replace: true });
       }
     };
 
     checkAuthAndFetch();
 
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Profile: Auth state changed:', event, session);
       if (event === 'SIGNED_IN' && session) {
         checkAuthAndFetch();
       } else if (event === 'SIGNED_OUT' || !session) {
         setUser(null);
         setProperties([]);
         setWishlist([]);
-        if (location.pathname !== '/login') {
-          navigate('/login', { state: { from: '/profile' } });
-        }
+        setPreviewImages({ developer_logo: [], developer_image: [], images: [], agents_image: [] });
+        navigate('/login', { state: { from: location.pathname } });
       }
     });
 
-    return () => authListener.subscription.unsubscribe();
+    return () => authListener?.subscription?.unsubscribe?.();
   }, [navigate, location.pathname]);
 
   const handlePropertyChange = (e) => {
@@ -183,10 +198,10 @@ const Profile = () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       setError('Please log in to upload images.');
+      navigate('/login', { state: { from: location.pathname } });
       return;
     }
 
-    // Validate files
     const maxSize = 5 * 1024 * 1024; // 5MB limit
     for (const file of files) {
       if (!file.type.startsWith('image/')) {
@@ -219,24 +234,39 @@ const Profile = () => {
       });
 
       const uploadedUrls = await Promise.all(uploadPromises);
-      const updatedImages = uploadedUrls.join(',');
+      setPreviewImages((prev) => ({
+        ...prev,
+        [field]: [...prev[field], ...uploadedUrls],
+      }));
 
-      if (editProperty) {
+      if (field === 'developer_logo' || field === 'developer_image') {
+        const existingUrls = user[field] ? user[field].split(',').filter((url) => url.trim()) : [];
+        const updatedUrls = [...existingUrls, ...uploadedUrls].join(',');
+        const { error } = await supabase
+          .from('users')
+          .update({ [field]: updatedUrls })
+          .eq('id', user.id);
+
+        if (error) throw new Error(`Failed to update ${field}: ${error.message}`);
+
+        setUser((prev) => ({ ...prev, [field]: updatedUrls }));
+        setSuccessMessage(`Successfully uploaded ${field}!`);
+      } else if (editProperty) {
         setEditProperty((prev) => ({
           ...prev,
-          [field]: field === 'images' ? (prev[field] ? `${prev[field]},${updatedImages}` : updatedImages) : updatedImages,
+          [field]: prev[field] ? `${prev[field]},${uploadedUrls.join(',')}` : uploadedUrls.join(','),
         }));
       } else {
         setNewProperty((prev) => ({
           ...prev,
-          [field]: field === 'images' ? (prev[field] ? `${prev[field]},${updatedImages}` : updatedImages) : updatedImages,
+          [field]: prev[field] ? `${prev[field]},${uploadedUrls.join(',')}` : uploadedUrls.join(','),
         }));
       }
       setSuccessMessage(`Successfully uploaded ${field} images!`);
       setError(null);
     } catch (err) {
-      console.error('Error in handleImageUpload:', err);
-      setError(`Failed to upload ${field}: ${err.message}. Please try again.`);
+      console.error('Profile: Error in handleImageUpload:', err);
+      setError(`Failed to upload ${field}: ${err.message.includes('unique') ? 'RERA number already exists.' : err.message}. Please try again.`);
     }
   };
 
@@ -245,7 +275,7 @@ const Profile = () => {
       e.preventDefault();
       if (!user) {
         setError('You must be logged in to add a property.');
-        navigate('/login', { state: { from: '/profile' } });
+        navigate('/login', { state: { from: location.pathname } });
         return;
       }
 
@@ -263,9 +293,11 @@ const Profile = () => {
           agent_reviews: parseInt(newProperty.agent_reviews) || null,
           nearby_landmarks: newProperty.nearby_landmarks || '',
           developer_id: user.id,
-          images: newProperty.images || '', // Ensure images is a string
+          images: newProperty.images || '',
           agents_image: newProperty.agents_image || '',
           developer_image: newProperty.developer_image || '',
+          developer_logo: newProperty.developer_logo || '',
+          developer_description: newProperty.developer_description || '',
         };
 
         const missingFields = requiredFields.filter(
@@ -274,7 +306,7 @@ const Profile = () => {
         if (missingFields.length > 0) throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
 
         const { data, error } = await supabase.from('properties').insert([propertyData]).select('*');
-        if (error) throw new Error(`Failed to add property: ${error.message}`);
+        if (error) throw new Error(`Failed to add property: ${error.message.includes('unique') ? 'RERA number already exists.' : error.message}`);
 
         setProperties((prev) => [...prev, data[0]]);
         setNewProperty({
@@ -302,20 +334,30 @@ const Profile = () => {
           agent_availability: '',
           agent_rating: '',
           agent_reviews: '',
-          images: '', // Reset to empty string
+          images: '',
           agents_image: '',
           developer_image: '',
           developer_awards: '',
           developer_certifications: '',
+          developer_description: '',
+          developer_logo: '',
         });
-        setShowAddForm(false); // Hide form after successful submission
+        setPreviewImages((prev) => ({
+          ...prev,
+          images: [],
+          agents_image: [],
+          developer_image: [],
+          developer_logo: [],
+        }));
+        setShowAddForm(false);
         setSuccessMessage('Property added successfully!');
         setError(null);
       } catch (err) {
+        console.error('Profile: Error in handleAddProperty:', err);
         setError(err.message);
       }
     },
-    [user, newProperty, navigate]
+    [user, newProperty, navigate, location.pathname]
   );
 
   const handleEditProperty = useCallback(
@@ -337,9 +379,11 @@ const Profile = () => {
           agent_reviews: parseInt(editProperty.agent_reviews) || null,
           nearby_landmarks: editProperty.nearby_landmarks || '',
           developer_id: user.id,
-          images: editProperty.images || '', // Ensure images is a string
+          images: editProperty.images || '',
           agents_image: editProperty.agents_image || '',
           developer_image: editProperty.developer_image || '',
+          developer_logo: editProperty.developer_logo || '',
+          developer_description: editProperty.developer_description || '',
         };
 
         const missingFields = requiredFields.filter(
@@ -353,13 +397,21 @@ const Profile = () => {
           .eq('id', editProperty.id)
           .select('*');
 
-        if (error) throw new Error(`Failed to update property: ${error.message}`);
+        if (error) throw new Error(`Failed to update property: ${error.message.includes('unique') ? 'RERA number already exists.' : error.message}`);
 
         setProperties((prev) => prev.map((p) => (p.id === editProperty.id ? data[0] : p)));
         setEditProperty(null);
+        setPreviewImages((prev) => ({
+          ...prev,
+          images: [],
+          agents_image: [],
+          developer_image: [],
+          developer_logo: [],
+        }));
         setSuccessMessage('Property updated successfully!');
         setError(null);
       } catch (err) {
+        console.error('Profile: Error in handleEditProperty:', err);
         setError(err.message);
       }
     },
@@ -371,7 +423,10 @@ const Profile = () => {
       const { error } = await supabase.from('properties').delete().eq('id', id);
       if (error) throw new Error(`Failed to delete property: ${error.message}`);
       setProperties(properties.filter((p) => p.id !== id));
+      setSuccessMessage('Property deleted successfully!');
+      setError(null);
     } catch (err) {
+      console.error('Profile: Error in handleDeleteProperty:', err);
       setError(err.message);
     }
   };
@@ -392,6 +447,7 @@ const Profile = () => {
       setSuccessMessage('Wishlist criteria saved successfully!');
       setError(null);
     } catch (err) {
+      console.error('Profile: Error in handleSaveWishlistCriteria:', err);
       setError(err.message);
     }
   };
@@ -406,7 +462,10 @@ const Profile = () => {
 
       if (error) throw new Error(`Failed to remove wishlist item: ${error.message}`);
       setWishlist(wishlist.filter((item) => item.property_id !== propertyId));
+      setSuccessMessage('Wishlist item removed successfully!');
+      setError(null);
     } catch (err) {
+      console.error('Profile: Error in handleRemoveWishlistItem:', err);
       setError(err.message);
     }
   };
@@ -433,7 +492,7 @@ const Profile = () => {
         const critArea = parseInt(criteria.area) || criteria.area.toLowerCase();
         return isNaN(propArea) || isNaN(parseInt(critArea))
           ? property.carpet_area?.toLowerCase().includes(critArea)
-          : propArea === parseInt(critArea);
+          : propArea >= parseInt(critArea);
       })();
     const typeMatch = !criteria.property_type || property.property_type === criteria.property_type;
     const statusMatch = !criteria.status || property.status === criteria.status;
@@ -449,42 +508,31 @@ const Profile = () => {
         if (newProperty[name] && newProperty[name].trim() !== '') {
           const nextIndex = (currentIndex + 1) % requiredFields.length;
           const nextField = requiredFields[nextIndex];
-          const nextInput = document.querySelector(
-            `input[name="${nextField}"], select[name="${nextField}"]`
-          );
+          const nextInput = document.querySelector(`input[name="${nextField}"], select[name="${nextField}"]`);
           if (nextInput) nextInput.focus();
         }
       } else {
         const allFields = Object.keys(newProperty).filter(
-          (f) => f !== 'amenities' && f !== 'images' && f !== 'agents_image' && f !== 'developer_image'
+          (f) => !['amenities', 'images', 'agents_image', 'developer_image', 'developer_logo'].includes(f)
         );
         const currentIndexOptional = allFields.indexOf(name);
         if (currentIndexOptional !== -1) {
           const nextIndex = (currentIndexOptional + 1) % allFields.length;
           const nextField = allFields[nextIndex];
-          const nextInput = document.querySelector(
-            `input[name="${nextField}"], select[name="${nextField}"]`
-          );
+          const nextInput = document.querySelector(`input[name="${nextField}"], select[name="${nextField}"]`);
           if (nextInput) nextInput.focus();
         }
       }
     }
   };
 
-  // Render images safely, with fallback to placeholder URL
-  const renderImages = (imageUrl, altPrefix) => {
-    if (!imageUrl || imageUrl.trim() === '') {
-      console.log(`No ${altPrefix.toLowerCase()} image available, using fallback`);
-      return (
-        <div className="flex items-center justify-center w-20 h-20 bg-gray-200 text-stone-700 rounded">
-          No Image
-        </div>
-      );
+  const renderImages = (imageUrls, altPrefix) => {
+    if (!imageUrls || imageUrls.length === 0) {
+      return null;
     }
 
-    const imageUrls = imageUrl.split(',').filter((url) => url.trim() !== '');
     return (
-      <div className="flex space-x-2">
+      <div className="flex flex-wrap gap-2 mt-2" role="region" aria-label={`${altPrefix} preview`}>
         {imageUrls.map((url, index) => (
           <div key={index} className="relative">
             <img
@@ -492,7 +540,7 @@ const Profile = () => {
               alt={`${altPrefix} ${index + 1}`}
               className="w-20 h-20 object-cover rounded"
               onError={(e) => {
-                console.error(`Failed to load ${altPrefix.toLowerCase()} image:`, url);
+                console.error(`Profile: Failed to load ${altPrefix.toLowerCase()} image:`, url);
                 e.target.src = PLACEHOLDER_IMAGE_URL;
                 setError(`Failed to load ${altPrefix.toLowerCase()} image. Using placeholder.`);
               }}
@@ -506,24 +554,37 @@ const Profile = () => {
     );
   };
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center text-stone-700">Loading...</div>;
-  if (!user) return null;
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-stone-700 text-lg">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-red-700 text-lg">Not authenticated. Redirecting to login...</div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-stone-50">
+    <div>
       <motion.section
-        className="relative bg-cover bg-center text-white h-[40vh] flex items-center p-6 transition-all duration-1000 transform"
-        style={{ backgroundImage: `url(${PLACEHOLDER_IMAGE_URL})` }}
+        className="relative bg-center bg-no-repeat text-white h-[80vh] bg-contain flex items-center p-6 transition-all duration-1000 transform"
+        style={{ backgroundImage: `url(${user.developer_logo || PLACEHOLDER_IMAGE_URL})` }}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.6 }}
       >
-        <div className="absolute inset-0 bg-black/60 z-0" />
-        <div className="relative z-10 text-center w-full">
-          <h1 className="text-3xl md:text-4xl font-bold mb-2">
+        <div className="absolute inset-0 bg-black/40 z-0"></div>
+        <div className="relative z-10">
+          <h1 className="text-4xl font-bold">
             Welcome, {user.role === 'developer' ? 'Developer' : 'User'} {user.username}!
           </h1>
-          <p className="text-lg md:text-xl">
+          <p className="mt-2">
             {user.role === 'developer' ? 'Manage your properties here.' : 'Explore your wishlist and criteria.'}
           </p>
         </div>
@@ -537,23 +598,76 @@ const Profile = () => {
       >
         <div className="max-w-6xl mx-auto">
           <h2 className="text-4xl font-bold text-stone-700 mb-6 text-center">Profile</h2>
+          {error && (
+            <div className="mb-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg text-center">
+              {error}
+              <button onClick={() => setError(null)} className="ml-2 text-red-700 hover:text-red-900">
+                ×
+              </button>
+            </div>
+          )}
+          {successMessage && (
+            <div className="mb-6 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg text-center">
+              {successMessage}
+              <button
+                onClick={() => setSuccessMessage(null)}
+                className="ml-2 text-green-700 hover:text-green-900"
+              >
+                ×
+              </button>
+            </div>
+          )}
           <div className="bg-white rounded-lg shadow-md p-6 mb-8">
             <div className="flex items-center mb-4">
-              <FaUser className="text-stone-700 text-2xl mr-3" />
+              <img
+                src={user.developer_image}
+                alt="User Logo"
+                className="w-16 h-16 rounded-full mr-4 object-cover"
+              />
               <div>
                 <h3 className="text-xl font-bold text-stone-700">{user.username}</h3>
                 <p className="text-stone-600">{user.email}</p>
-                <p className="text-stone-600">Role: {user.role}</p>
               </div>
             </div>
+            {user.role === 'developer' && (
+              <div className="mt-4">
+                <div className="mb-4">
+                  <label className="block text-sm font-semibold text-stone-700 mb-2">Developer Logo</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleImageUpload(e, 'developer_logo')}
+                    className="w-full px-4 py-3 border border-stone-300 rounded-lg"
+                    aria-label="Upload developer logo"
+                  />
+                  {previewImages.developer_logo.length > 0 && (
+                    <div className="mt-2">
+                      <p className="text-sm text-stone-600">Uploaded Developer Logo:</p>
+                      {renderImages(previewImages.developer_logo, 'Developer Logo')}
+                    </div>
+                  )}
+                </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-semibold text-stone-700 mb-2">Developer Image</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleImageUpload(e, 'developer_image')}
+                    className="w-full px-4 py-3 border border-stone-300 rounded-lg"
+                    aria-label="Upload developer image"
+                  />
+                </div>
+              </div>
+            )}
             <button
               onClick={async () => {
                 await supabase.auth.signOut();
-                navigate('/login', { state: { from: '/profile' } });
+                navigate('/login', { state: { from: location.pathname } });
               }}
               className="relative inline-block px-6 py-2 rounded font-medium text-white bg-stone-700 z-10 overflow-hidden
                 before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
                 before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
+              aria-label="Log out"
             >
               Log Out
             </button>
@@ -566,8 +680,9 @@ const Profile = () => {
                 className="relative mb-6 inline-block px-6 py-2 rounded-lg font-semibold text-white bg-stone-700 z-10 overflow-hidden
                   before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
                   before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
+                aria-label={showAddForm ? 'Hide add property form' : 'Show add property form'}
               >
-                <FaPlus className="inline mr-2" /> {showAddForm ? 'Property' : 'Add New Property'}
+                <FaPlus className="inline mr-2" /> {showAddForm ? 'Hide Form' : 'Add New Property'}
               </button>
 
               {showAddForm && (
@@ -586,6 +701,7 @@ const Profile = () => {
                       required
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500"
                       placeholder="Enter property name"
+                      aria-label="Property name"
                     />
                   </div>
                   <div>
@@ -599,6 +715,7 @@ const Profile = () => {
                       required
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500"
                       placeholder="Enter location"
+                      aria-label="Location"
                     />
                   </div>
                   <div>
@@ -612,6 +729,7 @@ const Profile = () => {
                       required
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500"
                       placeholder="Enter price"
+                      aria-label="Price"
                     />
                   </div>
                   <div>
@@ -625,6 +743,7 @@ const Profile = () => {
                       required
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500"
                       placeholder="Enter carpet area"
+                      aria-label="Carpet area"
                     />
                   </div>
                   <div>
@@ -638,6 +757,7 @@ const Profile = () => {
                       required
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500"
                       placeholder="e.g., 2 BHK"
+                      aria-label="Configuration"
                     />
                   </div>
                   <div>
@@ -649,6 +769,7 @@ const Profile = () => {
                       onKeyPress={(e) => handleEnterKey(e, 'property_type')}
                       required
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500"
+                      aria-label="Property type"
                     >
                       <option value="">Select type</option>
                       <option value="Flat">Flat</option>
@@ -668,6 +789,7 @@ const Profile = () => {
                       required
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500"
                       placeholder="Enter total floors"
+                      aria-label="Total floors"
                     />
                   </div>
                   <div>
@@ -681,6 +803,7 @@ const Profile = () => {
                       required
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500"
                       placeholder="Enter total units"
+                      aria-label="Total units"
                     />
                   </div>
                   <div>
@@ -692,6 +815,7 @@ const Profile = () => {
                       onKeyPress={(e) => handleEnterKey(e, 'status')}
                       required
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500"
+                      aria-label="Status"
                     >
                       <option value="">Select status</option>
                       <option value="Ready">Ready to Move</option>
@@ -710,6 +834,7 @@ const Profile = () => {
                       required
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500"
                       placeholder="Enter RERA number"
+                      aria-label="RERA number"
                     />
                   </div>
                   <div className="md:col-span-2">
@@ -723,6 +848,7 @@ const Profile = () => {
                             checked={newProperty.amenities.includes(amenity)}
                             onChange={handleAmenitiesChange}
                             className="mr-2"
+                            aria-label={`Amenity: ${amenity}`}
                           />
                           {amenity}
                         </label>
@@ -740,6 +866,7 @@ const Profile = () => {
                       required
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500"
                       placeholder="Enter developer name"
+                      aria-label="Developer name"
                     />
                   </div>
                   <div>
@@ -752,6 +879,7 @@ const Profile = () => {
                       onKeyPress={(e) => handleEnterKey(e, 'developer_tagline')}
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500"
                       placeholder="Enter developer tagline (optional)"
+                      aria-label="Developer tagline"
                     />
                   </div>
                   <div>
@@ -764,6 +892,7 @@ const Profile = () => {
                       onKeyPress={(e) => handleEnterKey(e, 'developer_experience')}
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500"
                       placeholder="Enter developer experience (optional)"
+                      aria-label="Developer experience"
                     />
                   </div>
                   <div>
@@ -778,6 +907,7 @@ const Profile = () => {
                       onKeyPress={(e) => handleEnterKey(e, 'developer_projects_completed')}
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500"
                       placeholder="Enter projects completed (optional)"
+                      aria-label="Developer projects completed"
                     />
                   </div>
                   <div>
@@ -790,6 +920,7 @@ const Profile = () => {
                       onKeyPress={(e) => handleEnterKey(e, 'developer_happy_families')}
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500"
                       placeholder="Enter happy families (optional)"
+                      aria-label="Developer happy families"
                     />
                   </div>
                   <div>
@@ -803,6 +934,7 @@ const Profile = () => {
                       required
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500"
                       placeholder="Enter landmarks as text (e.g., Park, School)"
+                      aria-label="Nearby landmarks"
                     />
                   </div>
                   <div>
@@ -815,6 +947,7 @@ const Profile = () => {
                       onKeyPress={(e) => handleEnterKey(e, 'agent_name')}
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500"
                       placeholder="Enter agent name (optional)"
+                      aria-label="Agent name"
                     />
                   </div>
                   <div>
@@ -827,6 +960,7 @@ const Profile = () => {
                       onKeyPress={(e) => handleEnterKey(e, 'agent_role')}
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500"
                       placeholder="Enter agent role (optional)"
+                      aria-label="Agent role"
                     />
                   </div>
                   <div>
@@ -839,6 +973,7 @@ const Profile = () => {
                       onKeyPress={(e) => handleEnterKey(e, 'agent_phone')}
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500"
                       placeholder="Enter agent phone (optional)"
+                      aria-label="Agent phone"
                     />
                   </div>
                   <div>
@@ -851,6 +986,7 @@ const Profile = () => {
                       onKeyPress={(e) => handleEnterKey(e, 'agent_email')}
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500"
                       placeholder="Enter agent email (optional)"
+                      aria-label="Agent email"
                     />
                   </div>
                   <div>
@@ -863,6 +999,7 @@ const Profile = () => {
                       onKeyPress={(e) => handleEnterKey(e, 'agent_availability')}
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500"
                       placeholder="Enter agent availability (optional)"
+                      aria-label="Agent availability"
                     />
                   </div>
                   <div>
@@ -876,6 +1013,7 @@ const Profile = () => {
                       onKeyPress={(e) => handleEnterKey(e, 'agent_rating')}
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500"
                       placeholder="Enter agent rating (optional, 0-5)"
+                      aria-label="Agent rating"
                     />
                   </div>
                   <div>
@@ -888,6 +1026,7 @@ const Profile = () => {
                       onKeyPress={(e) => handleEnterKey(e, 'agent_reviews')}
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500"
                       placeholder="Enter agent reviews (optional)"
+                      aria-label="Agent reviews"
                     />
                   </div>
                   <div>
@@ -895,12 +1034,16 @@ const Profile = () => {
                     <input
                       type="file"
                       accept="image/*"
-                      multiple // Allow multiple file selection
+                      multiple
                       onChange={(e) => handleImageUpload(e, 'images')}
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg"
+                      aria-label="Upload property images"
                     />
-                    {newProperty.images && (
-                      <div className="mt-2">{renderImages(newProperty.images, 'Property Image')}</div>
+                    {previewImages.images.length > 0 && (
+                      <div className="mt-2">
+                        <p className="text-sm text-stone-600">Uploaded Property Images:</p>
+                        {renderImages(previewImages.images, 'Property Image')}
+                      </div>
                     )}
                   </div>
                   <div>
@@ -910,9 +1053,13 @@ const Profile = () => {
                       accept="image/*"
                       onChange={(e) => handleImageUpload(e, 'agents_image')}
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg"
+                      aria-label="Upload agent image"
                     />
-                    {newProperty.agents_image && (
-                      <div className="mt-2">{renderImages(newProperty.agents_image, 'Agent Image')}</div>
+                    {previewImages.agents_image.length > 0 && (
+                      <div className="mt-2">
+                        <p className="text-sm text-stone-600">Uploaded Agent Image:</p>
+                        {renderImages(previewImages.agents_image, 'Agent Image')}
+                      </div>
                     )}
                   </div>
                   <div>
@@ -922,10 +1069,42 @@ const Profile = () => {
                       accept="image/*"
                       onChange={(e) => handleImageUpload(e, 'developer_image')}
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg"
+                      aria-label="Upload developer image"
                     />
-                    {newProperty.developer_image && (
-                      <div className="mt-2">{renderImages(newProperty.developer_image, 'Developer Image')}</div>
+                    {previewImages.developer_image.length > 0 && (
+                      <div className="mt-2">
+                        <p className="text-sm text-stone-600">Uploaded Developer Image:</p>
+                        {renderImages(previewImages.developer_image, 'Developer Image')}
+                      </div>
                     )}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-stone-700 mb-2">Developer Logo</label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleImageUpload(e, 'developer_logo')}
+                      className="w-full px-4 py-3 border border-stone-300 rounded-lg"
+                      aria-label="Upload developer logo"
+                    />
+                    {previewImages.developer_logo.length > 0 && (
+                      <div className="mt-2">
+                        <p className="text-sm text-stone-600">Uploaded Developer Logo:</p>
+                        {renderImages(previewImages.developer_logo, 'Developer Logo')}
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-stone-700 mb-2">Developer Description</label>
+                    <textarea
+                      name="developer_description"
+                      value={newProperty.developer_description}
+                      onChange={handlePropertyChange}
+                      onKeyPress={(e) => handleEnterKey(e, 'developer_description')}
+                      className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500"
+                      placeholder="Enter developer description (optional)"
+                      aria-label="Developer description"
+                    />
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-stone-700 mb-2">Developer Awards</label>
@@ -937,6 +1116,7 @@ const Profile = () => {
                       onKeyPress={(e) => handleEnterKey(e, 'developer_awards')}
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500"
                       placeholder="Enter developer awards (optional)"
+                      aria-label="Developer awards"
                     />
                   </div>
                   <div>
@@ -949,6 +1129,7 @@ const Profile = () => {
                       onKeyPress={(e) => handleEnterKey(e, 'developer_certifications')}
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500"
                       placeholder="Enter developer certifications (optional)"
+                      aria-label="Developer certifications"
                     />
                   </div>
                   <button
@@ -956,12 +1137,16 @@ const Profile = () => {
                     className="relative md:col-span-2 h-9 w-40 rounded-lg font-semibold text-white bg-stone-700 z-10 overflow-hidden
                       before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
                       before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
+                    aria-label="Add property"
                   >
                     Add Property
                   </button>
                   {error && (
                     <div className="mt-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg text-center md:col-span-2">
                       {error}
+                      <button onClick={() => setError(null)} className="ml-2 text-red-700 hover:text-red-900" aria-label="Dismiss error">
+                        ×
+                      </button>
                     </div>
                   )}
                   {successMessage && (
@@ -970,6 +1155,7 @@ const Profile = () => {
                       <button
                         onClick={() => setSuccessMessage(null)}
                         className="ml-2 text-green-700 hover:text-green-900"
+                        aria-label="Dismiss success message"
                       >
                         ×
                       </button>
@@ -994,6 +1180,7 @@ const Profile = () => {
                       required
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500"
                       placeholder="Enter property name"
+                      aria-label="Property name"
                     />
                   </div>
                   <div>
@@ -1007,6 +1194,7 @@ const Profile = () => {
                       required
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500"
                       placeholder="Enter location"
+                      aria-label="Location"
                     />
                   </div>
                   <div>
@@ -1020,6 +1208,7 @@ const Profile = () => {
                       required
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500"
                       placeholder="Enter price"
+                      aria-label="Price"
                     />
                   </div>
                   <div>
@@ -1033,6 +1222,7 @@ const Profile = () => {
                       required
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500"
                       placeholder="Enter carpet area"
+                      aria-label="Carpet area"
                     />
                   </div>
                   <div>
@@ -1046,6 +1236,7 @@ const Profile = () => {
                       required
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500"
                       placeholder="e.g., 2 BHK"
+                      aria-label="Configuration"
                     />
                   </div>
                   <div>
@@ -1057,6 +1248,7 @@ const Profile = () => {
                       onKeyPress={(e) => handleEnterKey(e, 'property_type')}
                       required
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500"
+                      aria-label="Property type"
                     >
                       <option value="">Select type</option>
                       <option value="Flat">Flat</option>
@@ -1076,6 +1268,7 @@ const Profile = () => {
                       required
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500"
                       placeholder="Enter total floors"
+                      aria-label="Total floors"
                     />
                   </div>
                   <div>
@@ -1089,6 +1282,7 @@ const Profile = () => {
                       required
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500"
                       placeholder="Enter total units"
+                      aria-label="Total units"
                     />
                   </div>
                   <div>
@@ -1100,6 +1294,7 @@ const Profile = () => {
                       onKeyPress={(e) => handleEnterKey(e, 'status')}
                       required
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500"
+                      aria-label="Status"
                     >
                       <option value="">Select status</option>
                       <option value="Ready">Ready to Move</option>
@@ -1118,6 +1313,7 @@ const Profile = () => {
                       required
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500"
                       placeholder="Enter RERA number"
+                      aria-label="RERA number"
                     />
                   </div>
                   <div className="md:col-span-2">
@@ -1131,6 +1327,7 @@ const Profile = () => {
                             checked={editProperty.amenities.includes(amenity)}
                             onChange={handleAmenitiesChange}
                             className="mr-2"
+                            aria-label={`Amenity: ${amenity}`}
                           />
                           {amenity}
                         </label>
@@ -1148,6 +1345,7 @@ const Profile = () => {
                       required
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500"
                       placeholder="Enter developer name"
+                      aria-label="Developer name"
                     />
                   </div>
                   <div>
@@ -1160,6 +1358,7 @@ const Profile = () => {
                       onKeyPress={(e) => handleEnterKey(e, 'developer_tagline')}
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500"
                       placeholder="Enter developer tagline (optional)"
+                      aria-label="Developer tagline"
                     />
                   </div>
                   <div>
@@ -1172,6 +1371,7 @@ const Profile = () => {
                       onKeyPress={(e) => handleEnterKey(e, 'developer_experience')}
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500"
                       placeholder="Enter developer experience (optional)"
+                      aria-label="Developer experience"
                     />
                   </div>
                   <div>
@@ -1186,6 +1386,7 @@ const Profile = () => {
                       onKeyPress={(e) => handleEnterKey(e, 'developer_projects_completed')}
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500"
                       placeholder="Enter projects completed (optional)"
+                      aria-label="Developer projects completed"
                     />
                   </div>
                   <div>
@@ -1198,6 +1399,7 @@ const Profile = () => {
                       onKeyPress={(e) => handleEnterKey(e, 'developer_happy_families')}
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500"
                       placeholder="Enter happy families (optional)"
+                      aria-label="Developer happy families"
                     />
                   </div>
                   <div>
@@ -1211,6 +1413,7 @@ const Profile = () => {
                       required
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500"
                       placeholder="Enter landmarks as text (e.g., Park, School)"
+                      aria-label="Nearby landmarks"
                     />
                   </div>
                   <div>
@@ -1223,6 +1426,7 @@ const Profile = () => {
                       onKeyPress={(e) => handleEnterKey(e, 'agent_name')}
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500"
                       placeholder="Enter agent name (optional)"
+                      aria-label="Agent name"
                     />
                   </div>
                   <div>
@@ -1235,6 +1439,7 @@ const Profile = () => {
                       onKeyPress={(e) => handleEnterKey(e, 'agent_role')}
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500"
                       placeholder="Enter agent role (optional)"
+                      aria-label="Agent role"
                     />
                   </div>
                   <div>
@@ -1247,6 +1452,7 @@ const Profile = () => {
                       onKeyPress={(e) => handleEnterKey(e, 'agent_phone')}
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500"
                       placeholder="Enter agent phone (optional)"
+                      aria-label="Agent phone"
                     />
                   </div>
                   <div>
@@ -1259,6 +1465,7 @@ const Profile = () => {
                       onKeyPress={(e) => handleEnterKey(e, 'agent_email')}
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500"
                       placeholder="Enter agent email (optional)"
+                      aria-label="Agent email"
                     />
                   </div>
                   <div>
@@ -1271,6 +1478,7 @@ const Profile = () => {
                       onKeyPress={(e) => handleEnterKey(e, 'agent_availability')}
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500"
                       placeholder="Enter agent availability (optional)"
+                      aria-label="Agent availability"
                     />
                   </div>
                   <div>
@@ -1284,6 +1492,7 @@ const Profile = () => {
                       onKeyPress={(e) => handleEnterKey(e, 'agent_rating')}
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500"
                       placeholder="Enter agent rating (optional, 0-5)"
+                      aria-label="Agent rating"
                     />
                   </div>
                   <div>
@@ -1296,6 +1505,7 @@ const Profile = () => {
                       onKeyPress={(e) => handleEnterKey(e, 'agent_reviews')}
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500"
                       placeholder="Enter agent reviews (optional)"
+                      aria-label="Agent reviews"
                     />
                   </div>
                   <div>
@@ -1303,12 +1513,16 @@ const Profile = () => {
                     <input
                       type="file"
                       accept="image/*"
-                      multiple // Allow multiple file selection
+                      multiple
                       onChange={(e) => handleImageUpload(e, 'images')}
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg"
+                      aria-label="Upload property images"
                     />
-                    {editProperty.images && (
-                      <div className="mt-2">{renderImages(editProperty.images, 'Property Image')}</div>
+                    {previewImages.images.length > 0 && (
+                      <div className="mt-2">
+                        <p className="text-sm text-stone-600">Uploaded Property Images:</p>
+                        {renderImages(previewImages.images, 'Property Image')}
+                      </div>
                     )}
                   </div>
                   <div>
@@ -1318,9 +1532,13 @@ const Profile = () => {
                       accept="image/*"
                       onChange={(e) => handleImageUpload(e, 'agents_image')}
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg"
+                      aria-label="Upload agent image"
                     />
-                    {editProperty.agents_image && (
-                      <div className="mt-2">{renderImages(editProperty.agents_image, 'Agent Image')}</div>
+                    {previewImages.agents_image.length > 0 && (
+                      <div className="mt-2">
+                        <p className="text-sm text-stone-600">Uploaded Agent Image:</p>
+                        {renderImages(previewImages.agents_image, 'Agent Image')}
+                      </div>
                     )}
                   </div>
                   <div>
@@ -1330,10 +1548,42 @@ const Profile = () => {
                       accept="image/*"
                       onChange={(e) => handleImageUpload(e, 'developer_image')}
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg"
+                      aria-label="Upload developer image"
                     />
-                    {editProperty.developer_image && (
-                      <div className="mt-2">{renderImages(editProperty.developer_image, 'Developer Image')}</div>
+                    {previewImages.developer_image.length > 0 && (
+                      <div className="mt-2">
+                        <p className="text-sm text-stone-600">Uploaded Developer Image:</p>
+                        {renderImages(previewImages.developer_image, 'Developer Image')}
+                      </div>
                     )}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-stone-700 mb-2">Developer Logo</label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleImageUpload(e, 'developer_logo')}
+                      className="w-full px-4 py-3 border border-stone-300 rounded-lg"
+                      aria-label="Upload developer logo"
+                    />
+                    {previewImages.developer_logo.length > 0 && (
+                      <div className="mt-2">
+                        <p className="text-sm text-stone-600">Uploaded Developer Logo:</p>
+                        {renderImages(previewImages.developer_logo, 'Developer Logo')}
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-stone-700 mb-2">Developer Description</label>
+                    <textarea
+                      name="developer_description"
+                      value={editProperty.developer_description}
+                      onChange={handlePropertyChange}
+                      onKeyPress={(e) => handleEnterKey(e, 'developer_description')}
+                      className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500"
+                      placeholder="Enter developer description (optional)"
+                      aria-label="Developer description"
+                    />
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-stone-700 mb-2">Developer Awards</label>
@@ -1345,6 +1595,7 @@ const Profile = () => {
                       onKeyPress={(e) => handleEnterKey(e, 'developer_awards')}
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500"
                       placeholder="Enter developer awards (optional)"
+                      aria-label="Developer awards"
                     />
                   </div>
                   <div>
@@ -1357,6 +1608,7 @@ const Profile = () => {
                       onKeyPress={(e) => handleEnterKey(e, 'developer_certifications')}
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500"
                       placeholder="Enter developer certifications (optional)"
+                      aria-label="Developer certifications"
                     />
                   </div>
                   <button
@@ -1364,21 +1616,35 @@ const Profile = () => {
                     className="relative md:col-span-2 h-9 w-40 rounded-lg font-semibold text-white bg-stone-700 z-10 overflow-hidden
                       before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
                       before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
+                    aria-label="Save property changes"
                   >
                     Save Changes
                   </button>
                   <button
                     type="button"
-                    onClick={() => setEditProperty(null)}
+                    onClick={() => {
+                      setEditProperty(null);
+                      setPreviewImages((prev) => ({
+                        ...prev,
+                        images: [],
+                        agents_image: [],
+                        developer_image: [],
+                        developer_logo: [],
+                      }));
+                    }}
                     className="relative md:col-span-2 mt-2 h-9 w-40 rounded-lg font-semibold text-white bg-red-500 z-10 overflow-hidden
                       before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-red-600
                       before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
+                    aria-label="Cancel property edit"
                   >
                     Cancel
                   </button>
                   {error && (
                     <div className="mt-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg text-center md:col-span-2">
                       {error}
+                      <button onClick={() => setError(null)} className="ml-2 text-red-700 hover:text-red-900" aria-label="Dismiss error">
+                        ×
+                      </button>
                     </div>
                   )}
                   {successMessage && (
@@ -1387,6 +1653,7 @@ const Profile = () => {
                       <button
                         onClick={() => setSuccessMessage(null)}
                         className="ml-2 text-green-700 hover:text-green-900"
+                        aria-label="Dismiss success message"
                       >
                         ×
                       </button>
@@ -1411,7 +1678,7 @@ const Profile = () => {
                           alt={property.name}
                           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105 rounded"
                           onError={(e) => {
-                            console.error('Image load failed:', property.images);
+                            console.error('Profile: Image load failed:', property.images);
                             e.target.src = PLACEHOLDER_IMAGE_URL;
                             e.target.parentElement.classList.add('flex', 'items-center', 'justify-center', 'bg-gray-200');
                             setError(`Failed to load image for ${property.name}. Using placeholder.`);
@@ -1426,20 +1693,21 @@ const Profile = () => {
                             <p className="text-sm">
                               {property.property_type} • {property.status}
                             </p>
-                            {property.developer_image && (
+                            {property.developer_logo && (
                               <div className="mt-2 w-12 h-12">
                                 <img
-                                  src={property.developer_image}
+                                  src={property.developer_logo}
                                   alt={`${property.developer_name} logo`}
                                   className="w-full h-full object-cover rounded-full"
                                   onError={(e) => {
-                                    console.error('Developer image load failed:', property.developer_image);
+                                    console.error('Profile: Developer logo load failed:', property.developer_logo);
                                     e.target.src = PLACEHOLDER_IMAGE_URL;
                                   }}
                                 />
                               </div>
                             )}
-                            <p className="text-sm mt-2">{property.developer_awards}</p>
+                            <p className="text-sm mt-2">{property.developer_description}</p>
+                            <p className="text-sm">{property.developer_awards}</p>
                             <p className="text-sm">{property.developer_certifications}</p>
                             <div className="mt-1">
                               <button
@@ -1460,11 +1728,6 @@ const Profile = () => {
                               >
                                 <FaTrash className="inline mr-2" /> Delete
                               </button>
-                              {error && (
-                                <div className="mt-2 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg text-center">
-                                  {error}
-                                </div>
-                              )}
                             </div>
                           </div>
                         </div>
@@ -1505,7 +1768,7 @@ const Profile = () => {
                       name="price"
                       value={wishlistCriteria.price}
                       onChange={handleWishlistCriteriaChange}
-                      className="w-full border border-stone-300 bg-stone-50 text-stone-700 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-stone-400 transition"
+                      className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500"
                     >
                       <option value="">Any</option>
                       <option value="0-5000000">0-₹50L</option>

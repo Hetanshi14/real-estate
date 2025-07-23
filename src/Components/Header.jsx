@@ -24,23 +24,29 @@ const Header = () => {
 
   useEffect(() => {
     const handleScroll = () => {
-      if (window.scrollY > 50) {
-        setScrolled(true);
-      } else {
-        setScrolled(false);
-      }
+      setScrolled(window.scrollY > 50);
     };
 
     const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      console.log('Session check:', session);
-      setIsAuthenticated(!!session);
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error('Header: Session check error:', error.message);
+          setIsAuthenticated(false);
+          return;
+        }
+        console.log('Header: Session check:', session);
+        setIsAuthenticated(!!session);
+      } catch (err) {
+        console.error('Header: Error in checkAuth:', err);
+        setIsAuthenticated(false);
+      }
     };
 
     window.addEventListener('scroll', handleScroll);
     checkAuth();
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('Auth state change:', event, session);
+      console.log('Header: Auth state change:', event, session);
       setIsAuthenticated(!!session);
     });
 
@@ -51,11 +57,14 @@ const Header = () => {
   }, []);
 
   const handleProfileClick = () => {
+    console.log('Header: Profile clicked, isAuthenticated:', isAuthenticated);
     if (isAuthenticated) {
-      Xinjiang('/profile');
+      navigate('/profile');
     } else {
-      navigate('/login', { state: { from: '/profile' } });
+      console.log('Header: Not authenticated, redirecting to login from:', location.pathname);
+      navigate('/login', { state: { from: location.pathname } });
     }
+    setMobileMenuOpen(false); // Close mobile menu after click
   };
 
   return (
@@ -71,7 +80,7 @@ const Header = () => {
               alt="Zivaas Properties"
               className="h-10 w-auto object-contain"
               onError={(e) => {
-                console.error('Logo image load failed:', LOGO_URL);
+                console.error('Header: Logo image load failed:', LOGO_URL);
                 e.target.alt = 'Logo not available';
               }}
             />
@@ -79,7 +88,7 @@ const Header = () => {
         </div>
 
         {/* Desktop navigation */}
-        <nav className="hidden md:flex items-center gap-6 text-md">
+        <nav className="hidden md:flex items-center gap-6 text-md" role="navigation" aria-label="Main navigation">
           <div className="flex justify-center gap-6 flex-grow">
             {navLinks.map((link) =>
               link.name === 'Profile' ? (
@@ -89,9 +98,10 @@ const Header = () => {
                   className={`text-white text-sm px-2 py-1 font-semibold relative inline-block ${
                     !isAuthenticated ? 'cursor-pointer relative group' : ''
                   }`}
-                  title={!isAuthenticated ? 'Please log in to view your profile' : ''}
+                  title={!isAuthenticated ? 'Please log in to view your profile' : 'View your profile'}
+                  aria-label={isAuthenticated ? 'Go to profile' : 'Log in to view profile'}
                 >
-                  <UserCircle size={22} className="inline mr-1" />
+                  <UserCircle size={24} className="inline mr-1" />
                   <span className="relative inline-block after:absolute after:left-0 after:bottom-0 after:h-[1px] after:w-0 after:bg-rose-200 after:transition-all after:duration-300 hover:after:w-full">
                   </span>
                   {!isAuthenticated && (
@@ -109,6 +119,7 @@ const Header = () => {
                       ? 'text-rose-100 font-semibold'
                       : 'text-white relative inline-block after:absolute after:left-0 after:bottom-0 after:h-[1px] after:w-0 after:bg-rose-200 after:transition-all after:duration-300 hover:after:w-full'
                   }
+                  aria-label={`Go to ${link.name} page`}
                 >
                   {link.name}
                 </NavLink>
@@ -117,12 +128,13 @@ const Header = () => {
           </div>
         </nav>
 
-        {/* Mobile menu toggle button on the left */}
+        {/* Mobile menu toggle button */}
         <div className="md:hidden flex items-center gap-2">
           <button
             className="text-white"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={mobileMenuOpen}
           >
             {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
@@ -131,21 +143,18 @@ const Header = () => {
 
       {/* Mobile menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden px-6 pb-4 pt-4 bg-stone-700">
+        <div className="md:hidden px-6 pb-4 pt-4 bg-stone-700" role="navigation" aria-label="Mobile navigation">
           <nav className="space-y-4">
-            {/* Navigation links */}
             {navLinks.map((link) =>
               link.name === 'Profile' ? (
                 <button
                   key={link.name}
-                  onClick={() => {
-                    handleProfileClick();
-                    setMobileMenuOpen(false);
-                  }}
+                  onClick={handleProfileClick}
                   className={`text-white rounded font-semibold hover:text-rose-200 w-full text-left ${
                     !isAuthenticated ? 'cursor-pointer relative group' : ''
                   }`}
-                  title={!isAuthenticated ? 'Please log in to view your profile' : ''}
+                  title={!isAuthenticated ? 'Please log in to view your profile' : 'View your profile'}
+                  aria-label={isAuthenticated ? 'Go to profile' : 'Log in to view profile'}
                 >
                   <UserCircle size={18} className="inline mr-1" /> {link.name}
                   {!isAuthenticated && (
@@ -164,6 +173,7 @@ const Header = () => {
                       ? 'block text-orange-400 font-semibold'
                       : 'block text-white hover:text-orange-400'
                   }
+                  aria-label={`Go to ${link.name} page`}
                 >
                   {link.name}
                 </NavLink>
