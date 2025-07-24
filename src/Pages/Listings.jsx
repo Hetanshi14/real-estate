@@ -463,8 +463,6 @@ const Listings = () => {
     setPage(1); // Reset to first page when filters are applied
     if (currentFilters.wishlistCriteria && result.length === 0 && !error) {
       setError('No properties match your saved criteria.');
-    } else if (!error && result.length === 0) {
-      setError('No properties match the applied filters.');
     } else if (result.length > 0) {
       setError(null);
     }

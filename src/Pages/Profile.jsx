@@ -676,7 +676,7 @@ const Profile = () => {
 
   if (loading) {
     return (
-      <div className="col-span-full flex justify-center items-center h-64">
+      <div className="col-span-full min-h-screen flex justify-center items-center h-72 w-auto">
         <img
           src="https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/logo/zivaaslogo01.jpg"
           className="h-32 w-auto object-contain animate-pulse"
