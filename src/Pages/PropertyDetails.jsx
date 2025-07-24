@@ -2,6 +2,8 @@ import React, { useEffect, useState, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "../supabaseClient";
 import { motion } from "framer-motion";
+import Rating from "@mui/material/Rating";
+import Stack from "@mui/material/Stack";
 
 const PropertyDetails = () => {
   const { developerName } = useParams();
@@ -292,15 +294,18 @@ const PropertyDetails = () => {
                         <strong className="text-md font-medium text-gray-800">
                           Rating:
                         </strong>{" "}
-                        {Array.from({ length: 5 }, (_, index) => {
-                          const rating =
-                            Math.round(properties[0].agentRating * 2) / 2;
-                          const fullStars = Math.floor(rating);
-                          const hasHalfStar = rating % 1 !== 0;
-                          if (index < fullStars) return "★";
-                          if (index === fullStars && hasHalfStar) return "½";
-                          return "☆";
-                        }).join("")}
+                        <Stack spacing={1} direction="row" alignItems="center">
+                          <Rating
+                            name={`agent-rating-${properties[0].id}`}
+                            value={parseFloat(properties[0].agentRating) || 0}
+                            precision={0.5}
+                            readOnly
+                            size="small"
+                          />
+                          <span className="ml-2 text-sm text-stone-700">
+                            {properties[0].agentRating || 0}/5
+                          </span>
+                        </Stack>
                       </p>
                       <p className="text-gray-600 mb-2">
                         <strong className="text-md font-medium text-gray-800">
@@ -328,7 +333,7 @@ const PropertyDetails = () => {
           {/* Properties Section */}
           <section
             id="properties"
-            ref={(el) => (sectionRefs.current[2] = el)} // Updated index to 2 for the properties section
+            ref={(el) => (sectionRefs.current[2] = el)}
             className="max-w-6xl mx-auto p-6 md:p-8 lg:p-10 my-10 bg-white rounded-lg shadow-lg"
           >
             <motion.div
