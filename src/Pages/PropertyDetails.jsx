@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "../supabaseClient";
+import { motion } from "framer-motion"; // Ensure this import is added
 
 const PropertyDetails = () => {
   const { developerName } = useParams();
@@ -20,7 +21,7 @@ const PropertyDetails = () => {
     const section = sectionRefs.current.find((ref, index) => index === 0);
     return section
       ? section.getBoundingClientRect().top < window.innerHeight &&
-      section.getBoundingClientRect().bottom > 0
+        section.getBoundingClientRect().bottom > 0
       : false;
   };
 
@@ -131,24 +132,40 @@ const PropertyDetails = () => {
       {properties.length > 0 && (
         <div>
           {/* Hero Section with Developer Logo */}
-          <section
-            id="hero"
-            ref={(el) => (sectionRefs.current[0] = el)}
-            className={`relative bg-center text-white h-[80vh] bg-no-repeat bg-contain flex items-center justify-center transition-all duration-1000 ${isVisible("hero") ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
-              }`}
-            style={{
-              backgroundImage: `url(${developerLogo || defaultImage})`
-            }}
-          >
-            <div className="absolute inset-0 bg-black/50 z-0" />
-            <div className="relative z-10 text-center px-4 max-w-4xl">
-              <h1 className="text-4xl md:text-6xl font-bold text-white mb-4 drop-shadow-lg">
-                {properties[0].developer}
-              </h1>
-              <p className="text-xl md:text-2xl text-white max-w-2xl mx-auto drop-shadow-md">
-                {properties[0].tagline || "No tagline available"}
-              </p>
-            </div>
+          <section className="relative" ref={(el) => (sectionRefs.current[0] = el)}>
+            <motion.div
+              className="relative h-[80vh] overflow-hidden"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.6 }}
+            >
+              <img
+                src={developerLogo || defaultImage}
+                alt={`${properties[0].developer} Logo`}
+                className="w-full h-[80vh] object-center"
+                onError={(e) => {
+                  console.error("Failed to load hero image:", e.target.src);
+                  e.target.src = defaultImage;
+                }}
+              />
+              <div className="absolute inset-0 bg-black/60 z-0"></div>
+              <motion.div
+                className="absolute inset-0 flex flex-col items-center justify-center text-center text-white z-10"
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6 }}
+              >
+                <div className="px-4 max-w-4xl">
+                  <h1 className="text-3xl md:text-5xl font-bold mb-3">
+                    {properties[0].developer}
+                  </h1>
+                  <p className="text-xl md:text-2xl max-w-xl mx-auto">
+                    {properties[0].tagline || "Premium Living"}
+                  </p>
+                  <p className="text-lg opacity-90">{properties[0].location}</p>
+                </div>
+              </motion.div>
+            </motion.div>
           </section>
 
           {/* Developer Details Section */}
@@ -159,11 +176,13 @@ const PropertyDetails = () => {
           >
             <div className="flex items-center mb-6">
               {developerImage && (
-                <img
-                  src={developerImage.split(',')[0] || defaultImage}
-                  alt={`${properties[0].developer} Image`}
-                  className="w-30 h-30 rounded-full object-cover border-2 border-gray-200 mr-6"
-                />
+                <div className="flex-shrink-0 bg-gray-200 p-2 rounded-md mr-6">
+                  <img
+                    src={developerImage || defaultImage}
+                    alt={`${properties[0].developer} Image`}
+                    className="w-48 h-48 object-contain max-w-full max-h-full"
+                  />
+                </div>
               )}
               <div>
                 <h2 className="text-2xl md:text-3xl font-semibold text-gray-800">
@@ -199,7 +218,7 @@ const PropertyDetails = () => {
               </div>
             </div>
 
-            <p className="text-gray-600 mb-6 leading-relaxed">
+            <p className="text-gray-200 mb-6 leading-relaxed">
               <strong className="text-gray-800">Description:</strong>{" "}
               {properties[0].description}
             </p>
@@ -216,13 +235,13 @@ const PropertyDetails = () => {
             <h3 className="text-xl md:text-2xl font-semibold text-gray-800 mb-4">
               Agent Information
             </h3>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-0 mb-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-6 mb-6">
               {properties[0].agentsImage && (
                 <div className="mb-6">
                   <img
                     src={properties[0].agentsImage || defaultImage}
                     alt={`${properties[0].agentName} Image`}
-                    className="w-24 h-24 rounded-full object-cover border-2 border-gray-200"
+                    className="w-24 h-24 rounded-full object-contain border-2 border-gray-200"
                   />
                 </div>
               )}
