@@ -247,14 +247,14 @@ const Details = () => {
 
         const normalizedAmenities = Array.isArray(propertyData.amenities)
           ? propertyData.amenities
-              .map((amenity) => {
-                if (typeof amenity !== "string" || !amenity) return null;
-                const trimmed = amenity.trim();
-                return trimmed
-                  .toLowerCase()
-                  .replace(/(^|\s)\w/g, (char) => char.toUpperCase());
-              })
-              .filter((amenity) => amenity !== null)
+            .map((amenity) => {
+              if (typeof amenity !== "string" || !amenity) return null;
+              const trimmed = amenity.trim();
+              return trimmed
+                .toLowerCase()
+                .replace(/(^|\s)\w/g, (char) => char.toUpperCase());
+            })
+            .filter((amenity) => amenity !== null)
           : [];
 
         const users = Array.isArray(propertyData.users)
@@ -269,31 +269,31 @@ const Details = () => {
         const imageUrls =
           typeof propertyData.images === "string"
             ? propertyData.images.split(",").map((url, index) => ({
-                src: url.trim(),
-                alt: `${propertyData.name || "Property"} - Image ${index + 1}`,
-              }))
+              src: url.trim(),
+              alt: `${propertyData.name || "Property"} - Image ${index + 1}`,
+            }))
             : Array.isArray(propertyData.images) &&
               propertyData.images.length > 0
-            ? propertyData.images.map((url, index) => ({
+              ? propertyData.images.map((url, index) => ({
                 src: url,
                 alt: `${propertyData.name || "Property"} - Image ${index + 1}`,
               }))
-            : [];
+              : [];
 
         const landmarks =
           typeof propertyData.nearby_landmarks === "string"
             ? propertyData.nearby_landmarks.split(",").map((landmark) => {
-                const [name, distance] = landmark
-                  .split("(")
-                  .map((s) => s.replace(")", "").trim());
-                return { name, distance: distance || "N/A" };
-              })
+              const [name, distance] = landmark
+                .split("(")
+                .map((s) => s.replace(")", "").trim());
+              return { name, distance: distance || "N/A" };
+            })
             : Array.isArray(propertyData.nearby_landmarks)
-            ? propertyData.nearby_landmarks.map((l) => ({
+              ? propertyData.nearby_landmarks.map((l) => ({
                 name: l.name || l,
                 distance: l.distance || "N/A",
               }))
-            : [];
+              : [];
 
         const mappedProperty = {
           ...propertyData,
@@ -376,11 +376,11 @@ const Details = () => {
   if (loading)
     return (
       <div className="col-span-full flex justify-center items-center h-64">
-              <img
-                src="https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/logo/zivaaslogo01.jpg"
-                className="h-32 w-auto object-contain animate-pulse"
-              />
-            </div>
+        <img
+          src="https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/logo/zivaaslogo01.jpg"
+          className="h-32 w-auto object-contain animate-pulse"
+        />
+      </div>
     );
   if (error || !property)
     return (
@@ -609,8 +609,8 @@ const Details = () => {
                   images.length > 1
                     ? images[1].src
                     : images.length > 0
-                    ? images[0].src
-                    : "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80"
+                      ? images[0].src
+                      : "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80"
                 }
                 alt={property.name}
                 className="w-full h-full rounded-lg shadow-md object-center"
@@ -626,45 +626,47 @@ const Details = () => {
       </motion.section>
 
       <motion.section
-        className="py-16 bg-white"
+        className="py-8 bg-white"
         initial={{ opacity: 0, y: 30 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, amount: 0.3 }}
         transition={{ duration: 0.6 }}
       >
         <div className="max-w-6xl mx-auto px-4">
-          <h2 className="text-4xl font-bold text-stone-700 mb-8 text-center">
+          <h2 className="text-3xl font-bold text-stone-700 mb-4 text-center">
             World-Class Amenities
           </h2>
-          <p className="text-lg text-stone-600 mb-10 text-center max-w-2xl mx-auto">
-            Explore the premium facilities available at {property.name}
+          <p className="text-base text-stone-600 mb-6 text-center max-w-xl mx-auto">
+            Explore the premium facilities at {property.name}
           </p>
-          {Array.isArray(property.amenities) &&
-          property.amenities.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 lg:grid-cols-4">
+          {Array.isArray(property.amenities) && property.amenities.length > 0 ? (
+            // UPDATED CODE START
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 justify-items-center">
               {property.amenities.map((amenity, index) => (
                 <div
                   key={index}
-                  className="bg-stone-100 p-3 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 hover:bg-stone-200 flex items-center gap-2 w-full max-w-[180px]"
+                  className="bg-stone-100 p-2 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100 hover:bg-stone-200 flex flex-col items-center gap-1 w-full"
+                  style={{ maxWidth: '120px' }} // Optional: ensures consistent card width in grid
                 >
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0">
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mb-1">
                     <img
                       src={
                         amenityImages[amenity] ||
                         "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=48&h=48"
                       }
                       alt={`${amenity} icon`}
-                      className="w-8 h-8 object-contain"
+                      className="w-6 h-6 object-contain"
                     />
                   </div>
-                  <h3 className="font-semibold text-stone-700 text-sm text-left flex-1">
+                  <h3 className="font-semibold text-stone-700 text-sm text-center truncate w-full">
                     {amenity}
                   </h3>
                 </div>
               ))}
             </div>
+            // UPDATED CODE END
           ) : (
-            <p className="text-center text-stone-500 text-lg py-8">
+            <p className="text-center text-stone-500 text-base py-4">
               No amenities available for this property.
             </p>
           )}
@@ -737,8 +739,8 @@ const Details = () => {
                     images.length > 2
                       ? images[2].src
                       : images.length > 0
-                      ? images[0].src
-                      : "https://images.unsplash.com/photo-1568605114967-8130f3a36994?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80"
+                        ? images[0].src
+                        : "https://images.unsplash.com/photo-1568605114967-8130f3a36994?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80"
                   }
                   alt={property.name || "Property"}
                   className="w-full h-80 rounded"
