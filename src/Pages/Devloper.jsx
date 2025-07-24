@@ -16,7 +16,7 @@ const Developer = () => {
         const { data, error: fetchError } = await supabase
           .from("properties")
           .select(`
-            id, name, images, developer_name, developer_description, developer_image
+            id, name, images, developer_name, developer_description, developer_image, developer_logo
           `);
 
         if (fetchError) {
@@ -38,14 +38,16 @@ const Developer = () => {
         data.forEach((property) => {
           const developerName = property.developer_name;
           if (!developerMap.has(developerName)) {
+            const developerLogo =
+              property.developer_logo && property.developer_logo.trim() !== ""
+                ? property.developer_logo.split(',')[0].trim()
+                : null;
+            console.log(`Developer ${developerName} logo:`, developerLogo); // Debug logo URL
             developerMap.set(developerName, {
               name: developerName,
               description:
                 property.developer_description || "No description available.",
-              image:
-                property.developer_image && property.developer_image.trim() !== ""
-                  ? property.developer_image
-                  : null,
+              logo: developerLogo, // Use logo instead of image
               properties: [],
             });
           }
@@ -54,7 +56,7 @@ const Developer = () => {
             name: property.name || "Unnamed Property",
             image:
               property.images && property.images.length > 0
-                ? property.images[0] || null
+                ? property.images.split(',')[0].trim()
                 : null,
           });
         });
@@ -162,20 +164,21 @@ const Developer = () => {
             {developers.map((developer) => (
               <div
                 key={developer.name}
-                className="bg-white border border-gray-100 p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 flex flex-col"
+                className="bg-white border border-gray-100 rounded shadow-md hover:shadow-lg transition-shadow duration-300 flex flex-col"
               >
-                {/* Developer Image */}
+                {/* Developer Logo */}
                 <div className="mb-4">
                   <img
-                    src={developer.image || defaultImage}
-                    alt={`${developer.name} logo`}
-                    className="w-full h-48 object-cover rounded-md opacity-80"
+                    src={developer.logo || defaultImage} // Use developer.logo
+                    alt={`${developer.name} Logo`}
+                    className="w-full h-60 rounded-t opacity-80"
                     onError={(e) => {
                       e.target.src = defaultImage;
+                      console.error(`Failed to load logo for ${developer.name}:`, developer.logo);
                     }}
                   />
                 </div>
-                <div className="flex-1">
+                <div className="flex-1 p-4">
                   <div className="flex items-center mb-4">
                     <h3 className="text-xl font-semibold text-gray-900">
                       {developer.name}

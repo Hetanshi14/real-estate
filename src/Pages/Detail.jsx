@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../supabaseClient";
 import { motion } from "framer-motion";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
 const EMICalculator = ({ property }) => {
   const [loanAmount, setLoanAmount] = useState(
@@ -178,6 +180,7 @@ const Details = () => {
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const contentRef = useRef(null); // Reference to the content to be converted to PDF
 
   useEffect(() => {
     const fetchProperty = async () => {
@@ -254,7 +257,6 @@ const Details = () => {
               .filter((amenity) => amenity !== null)
           : [];
 
-        // Ensure users is always an array
         const users = Array.isArray(propertyData.users)
           ? propertyData.users
           : [];
@@ -264,7 +266,6 @@ const Details = () => {
               user.role === "developer" && user.id === propertyData.developer_id
           ) || null;
 
-        // Handle images as comma-separated string or array
         const imageUrls =
           typeof propertyData.images === "string"
             ? propertyData.images.split(",").map((url, index) => ({
@@ -279,7 +280,6 @@ const Details = () => {
               }))
             : [];
 
-        // Handle nearby_landmarks as a string (e.g., "Park (1km), School (2km)") or array
         const landmarks =
           typeof propertyData.nearby_landmarks === "string"
             ? propertyData.nearby_landmarks.split(",").map((landmark) => {
@@ -329,6 +329,50 @@ const Details = () => {
     fetchProperty();
   }, [id]);
 
+  // Optimized function to generate and download PDF
+  const handleDownloadPDF = async () => {
+    const doc = new jsPDF({
+      orientation: "portrait",
+      unit: "mm",
+      format: "a4",
+    });
+
+    const content = contentRef.current;
+    if (!content) return;
+
+    // Generate PDF with optimized settings
+    const canvas = await html2canvas(content, {
+      scale: 1, // Reduced scale for faster rendering and smaller file size
+      useCORS: true,
+      logging: false, // Disable logging to improve performance
+      quality: 0.5, // Lower quality for smaller image size (0 to 1, default is 1)
+    });
+
+    const imgData = canvas.toDataURL("image/jpeg", 0.5); // Use JPEG with 50% quality for compression
+    const imgWidth = 210; // A4 width in mm
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+    let position = 0;
+    const pageHeight = 297; // A4 height in mm
+    const imgHeightScaled = (imgHeight * 210) / imgWidth;
+
+    // Handle multi-page PDF if content exceeds one page
+    if (imgHeightScaled > pageHeight) {
+      const totalPages = Math.ceil(imgHeightScaled / pageHeight);
+      for (let i = 0; i < totalPages; i++) {
+        if (i > 0) doc.addPage();
+        const srcY = (i * pageHeight) / (imgHeight / canvas.height);
+        const pageImgHeight = Math.min(imgHeightScaled - i * pageHeight, pageHeight);
+        doc.addImage(imgData, "JPEG", 0, -srcY, imgWidth, pageImgHeight, undefined, "FAST");
+        position = (i + 1) * pageHeight;
+      }
+    } else {
+      doc.addImage(imgData, "JPEG", 0, 0, imgWidth, imgHeight, undefined, "FAST");
+    }
+
+    doc.save(`${property.name}_Details.pdf`);
+  };
+
   if (loading)
     return (
       <div className="min-h-screen flex items-center justify-center text-stone-700">
@@ -349,75 +393,44 @@ const Details = () => {
     );
 
   const amenityImages = {
-    "24/7 Security":
-      "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/24-7%20security.png",
-    Lift: "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/lift.png",
-    Parking:
-      "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/parking.png",
-    Garden:
-      "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/garden.jpeg",
-    "Swimming Pool":
-      "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/swimming%20pool.jpeg",
-    Gym: "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/gym.png",
-    Clubhouse:
-      "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/clubhouse.png",
-    "Cctv Surveillance":
-      "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/cctv%20survelliance.png",
-    "Childrens Play Area":
-      "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/children%20play%20area.png",
-    "Mini Theater Room":
-      "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/mini%20theator.png",
-    "Power Backup":
-      "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/power%20backup.png",
-    "Motion Sensor Lighting":
-      "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/motion%20sensor.png",
-    "Indoor Games Room":
-      "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/indoor%20games%20room.png",
-    "Fire Safety Systems":
-      "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/fire%20safety%20systems.png",
-    "Smart Lock Access":
-      "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/smart%20lock%20access.png",
-    "Home Theater Room":
-      "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Home%20Theater%20Room.png",
-    "Private Garden Seating Area":
-      "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Private%20Garden%20Seating%20Area.jpeg",
-    "Rooftop Garden":
-      "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Rooftop%20Garden.png",
-    "Air Conditioning In All Rooms":
-      "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Air%20Conditioning%20In%20All%20Rooms.jpeg",
-    Cctv: "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/cctv.png",
-    "Gated Entry":
-      "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Gated%20Entry.png",
-    "Park Area":
-      "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Park%20Area.png",
-    Security:
-      "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Security%20Guard.png",
-    "Rainwater Harvesting":
-      "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Rainwater%20Harvesting.jpeg",
-    "Terrace/balcony Sit-out":
-      "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Terrace-Balcony%20Sit-Out.png",
-    "Video Door Phone":
-      "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Video%20Door%20Phone.png",
-    "Wi-fi":
-      "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Wi-Fi.png",
-    "Backup Generator":
-      "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Backup%20Generator.png",
-    "Basement Parking":
-      "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Basement%20Parking.png",
-    "Main Road Facing":
-      "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Main%20Road%20Facing.png",
-    "Outdoor Seating Space":
-      "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Outdoor%20Seating%20Space.png",
-    "Double Height Ceiling":
-      "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Double%20Height%20Ceiling.png",
-    "Visitor Parking":
-      "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Visitor%20Parking.png",
-    "Multiple Showroom Floors":
-      "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Multiple%20Showroom%20Floors.png",
+    '24/7 Security': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/24-7%20security.png',
+    'Lift': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/lift.png',
+    'Parking': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/parking.png',
+    'Garden': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/garden.jpeg',
+    'Swimming Pool': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/swimming%20pool.jpeg',
+    'Gym': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/gym.png',
+    'Clubhouse': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/clubhouse.png',
+    'Cctv Surveillance': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/cctv%20survelliance.png',
+    'Childrens Play Area': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/children%20play%20area.png',
+    'Mini Theater Room': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/mini%20theator.png',
+    'Power Backup': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/power%20backup.png',
+    'Motion Sensor Lighting': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/motion%20sensor.png',
+    'Indoor Games Room': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/indoor%20games%20room.png',
+    'Fire Safety Systems': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/fire%20safety%20systems.png',
+    'Smart Lock Access': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/smart%20lock%20access.png',
+    'Home Theater Room': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Home%20Theater%20Room.png',
+    'Private Garden Seating Area': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Private%20Garden%20Seating%20Area.jpeg',
+    'Rooftop Garden': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Rooftop%20Garden.png',
+    'Air Conditioning In All Rooms': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Air%20Conditioning%20In%20All%20Rooms.jpeg',
+    'Cctv': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/cctv.png',
+    'Gated Entry': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Gated%20Entry.png',
+    'Park Area': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Park%20Area.png',
+    'Security': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Security%20Guard.png',
+    'Rainwater Harvesting': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Rainwater%20Harvesting.jpeg',
+    'Terrace/balcony Sit-out': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Terrace-Balcony%20Sit-Out.png',
+    'Video Door Phone': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Video%20Door%20Phone.png',
+    'Wi-fi': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Wi-Fi.png',
+    'Backup Generator': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Backup%20Generator.png',
+    'Basement Parking': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Basement%20Parking.png',
+    'Main Road Facing': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Main%20Road%20Facing.png',
+    'Outdoor Seating Space': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Outdoor%20Seating%20Space.png',
+    'Double Height Ceiling': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Double%20Height%20Ceiling.png',
+    'Visitor Parking': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Visitor%20Parking.png',
+    'Multiple Showroom Floors': 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Multiple%20Showroom%20Floors.png',
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen" ref={contentRef}>
       <section className="relative">
         <motion.div
           className="relative h-[80vh] overflow-hidden"
@@ -517,6 +530,14 @@ const Details = () => {
               <div className="text-sm text-stone-600">RERA Number</div>
             </div>
           </div>
+          <div className="mt-4 text-right">
+            <button
+              onClick={handleDownloadPDF}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            >
+              Download PDF
+            </button>
+          </div>
         </div>
       </motion.section>
 
@@ -579,7 +600,6 @@ const Details = () => {
                 </li>
               </ul>
             </div>
-
             <div className="h-96 w-full">
               <img
                 src={

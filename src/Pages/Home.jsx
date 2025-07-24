@@ -394,54 +394,47 @@ const Home = () => {
                   ref={(el) => (featuredRefs.current[i] = el)}
                   className="opacity-100 translate-y-0 transition-all duration-700"
                 >
-                  {loading && (
-                    <p className="text-center text-stone-600 text-lg col-span-full">
-                      Loading properties...
-                    </p>
-                  )}
                   <div className="rounded shadow hover:shadow-lg transition text-white">
                     <div className="relative group h-80 w-full overflow-hidden rounded">
-                      <Link
-                            to={`/listings/${property.id}`}
-                          >
-                      <img
-                        src={property.image}
-                        alt={property.name || "Property"}
-                        className="w-full h-80 transition-transform duration-300 group-hover:scale-105 rounded"
-                        onError={(e) => {
-                          console.error(
-                            "Failed to load property image:",
-                            e.target.src
-                          );
-                          e.target.src =
-                            "https://images.unsplash.com/photo-1568605114967-8130f3a36994?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80";
-                        }}
-                      />
-                      <div className="absolute inset-0 bg-black opacity-40 md:opacity-0 md:group-hover:opacity-40 transition-opacity duration-300 z-0"></div>
-                      <div className="absolute inset-0 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity duration-400">
-                        <div className="absolute bottom-4 left-4 text-left">
-                          <h3 className="text-lg font-semibold">
-                            {property.name || "Unnamed Property"}
-                          </h3>
-                          <p className="text-sm">
-                            {property.location || "Unknown Location"}
-                          </p>
-                          <p className="text-sm">
-                            {property.bhk} BHK • ₹
-                            {(property.price || 0).toLocaleString()}
-                          </p>
-                          <p className="text-sm">
-                            {property.type || "Unknown Type"} •{" "}
-                            {property.status || "Unknown Status"}
-                          </p>
-                          <Link
-                            to={`/listings/${property.id}`}
-                            className="inline-block text-rose-100 hover:underline mt-1"
-                          >
-                            View Details
-                          </Link>
+                      <Link to={`/listings/${property.id}`}>
+                        <img
+                          src={property.image}
+                          alt={property.name || "Property"}
+                          className="w-full h-80 transition-transform duration-300 group-hover:scale-105 rounded"
+                          onError={(e) => {
+                            console.error(
+                              "Failed to load property image:",
+                              e.target.src
+                            );
+                            e.target.src =
+                              "https://images.unsplash.com/photo-1568605114967-8130f3a36994?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80";
+                          }}
+                        />
+                        <div className="absolute inset-0 bg-black opacity-40 md:opacity-0 md:group-hover:opacity-40 transition-opacity duration-300 z-0"></div>
+                        <div className="absolute inset-0 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity duration-400">
+                          <div className="absolute bottom-4 left-4 text-left">
+                            <h3 className="text-lg font-semibold">
+                              {property.name || "Unnamed Property"}
+                            </h3>
+                            <p className="text-sm">
+                              {property.location || "Unknown Location"}
+                            </p>
+                            <p className="text-sm">
+                              {property.bhk} BHK • ₹
+                              {(property.price || 0).toLocaleString()}
+                            </p>
+                            <p className="text-sm">
+                              {property.type || "Unknown Type"} •{" "}
+                              {property.status || "Unknown Status"}
+                            </p>
+                            <Link
+                              to={`/listings/${property.id}`}
+                              className="inline-block text-rose-100 hover:underline mt-1"
+                            >
+                              View Details
+                            </Link>
+                          </div>
                         </div>
-                      </div>
                       </Link>
                     </div>
                   </div>
@@ -452,6 +445,14 @@ const Home = () => {
                   No properties found for the selected filter.
                 </p>
               )}
+          {loading && (
+            <div className="col-span-full flex justify-center items-center h-64">
+              <img
+                src="https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images//zivaaslogo.png"
+                className="h-32 w-auto object-contain animate-pulse"
+              />
+            </div>
+          )}
         </div>
 
         <div className="flex justify-center mt-8 mb-8">
@@ -767,49 +768,48 @@ const Home = () => {
       </section>
 
       {/* Reach Out – Your Trusted Real Estate Allies Section */}
-<section className="bg-stone-100 text-stone-800 py-10 px-6">
-  <div className="max-w-5xl mx-auto text-center">
-    <h2 className="text-3xl font-bold mb-4">
-      Reach Out – Your Trusted Real Estate Allies
-    </h2>
-    <p className="text-lg text-stone-600 mb-8 max-w-3xl mx-auto">
-      At Zivaas Properties, we support developers in managing properties and
-      users in curating wishlists with expert guidance. With over 15 years
-      of experience in India, our team ensures top-notch service from
-      listing to ownership.
-    </p>
+      <section className="bg-stone-100 text-stone-800 py-10 px-6">
+        <div className="max-w-5xl mx-auto text-center">
+          <h2 className="text-3xl font-bold mb-4">
+            Reach Out – Your Trusted Real Estate Allies
+          </h2>
+          <p className="text-lg text-stone-600 mb-8 max-w-3xl mx-auto">
+            At Zivaas Properties, we support developers in managing properties and
+            users in curating wishlists with expert guidance. With over 15 years
+            of experience in India, our team ensures top-notch service from
+            listing to ownership.
+          </p>
 
-    <h3 className="text-2xl font-semibold mb-6">Frequently Asked Questions</h3>
-    <div className="grid md:grid-cols-3 gap-6 mb-12">
-      <div className="bg-white rounded-lg shadow p-6 text-left">
-        <h4 className="font-semibold text-base mb-2">
-          How do I add a property as a developer?
-        </h4>
-        <p className="text-sm text-stone-600">
-          Log in to your profile, fill out the property details, and upload
-          images to list it.
-        </p>
-      </div>
-      <div className="bg-white rounded-lg shadow p-6 text-left">
-        <h4 className="font-semibold text-base mb-2">
-          What details are required for a property?
-        </h4>
-        <p className="text-sm text-stone-600">
-          Name, location, price, area, type, and status are mandatory fields.
-        </p>
-      </div>
-      <div className="bg-white rounded-lg shadow p-6 text-left">
-        <h4 className="font-semibold text-base mb-2">
-          How can I contact support?
-        </h4>
-        <p className="text-sm text-stone-600">
-          Reach us via phone or email with your query details.
-        </p>
-      </div>
-    </div>
-  </div>
-</section>
-
+          <h3 className="text-2xl font-semibold mb-6">Frequently Asked Questions</h3>
+          <div className="grid md:grid-cols-3 gap-6 mb-12">
+            <div className="bg-white rounded-lg shadow p-6 text-left">
+              <h4 className="font-semibold text-base mb-2">
+                How do I add a property as a developer?
+              </h4>
+              <p className="text-sm text-stone-600">
+                Log in to your profile, fill out the property details, and upload
+                images to list it.
+              </p>
+            </div>
+            <div className="bg-white rounded-lg shadow p-6 text-left">
+              <h4 className="font-semibold text-base mb-2">
+                What details are required for a property?
+              </h4>
+              <p className="text-sm text-stone-600">
+                Name, location, price, area, type, and status are mandatory fields.
+              </p>
+            </div>
+            <div className="bg-white rounded-lg shadow p-6 text-left">
+              <h4 className="font-semibold text-base mb-2">
+                How can I contact support?
+              </h4>
+              <p className="text-sm text-stone-600">
+                Reach us via phone or email with your query details.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 };

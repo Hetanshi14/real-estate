@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, UserCircle } from 'lucide-react';
 import { supabase } from '../supabaseClient';
+import { motion } from 'framer-motion';
 
-// Logo URL
-const LOGO_URL = 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images//zivaas%20logo.jpg';
+// ✅ Updated with a real transparent logo URL from Supabase
+const LOGO_URL = 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images//zivaaslogo.png';
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -35,7 +36,6 @@ const Header = () => {
           setIsAuthenticated(false);
           return;
         }
-        console.log('Header: Session check:', session);
         setIsAuthenticated(!!session);
       } catch (err) {
         console.error('Header: Error in checkAuth:', err);
@@ -45,8 +45,8 @@ const Header = () => {
 
     window.addEventListener('scroll', handleScroll);
     checkAuth();
+
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('Header: Auth state change:', event, session);
       setIsAuthenticated(!!session);
     });
 
@@ -57,78 +57,75 @@ const Header = () => {
   }, []);
 
   const handleProfileClick = () => {
-    console.log('Header: Profile clicked, isAuthenticated:', isAuthenticated);
     if (isAuthenticated) {
       navigate('/profile');
     } else {
-      console.log('Header: Not authenticated, redirecting to login from:', location.pathname);
       navigate('/login', { state: { from: location.pathname } });
     }
-    setMobileMenuOpen(false); // Close mobile menu after click
+    setMobileMenuOpen(false);
   };
 
   return (
     <header
-      className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${scrolled ? 'bg-stone-700 shadow-md' : 'bg-transparent'}`}
+      className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${
+        scrolled ? 'bg-stone-700 shadow-md' : 'bg-transparent'
+      }`}
     >
-      <div className="max-w-screen mx-auto px-6 py-4 flex items-center justify-between text-white">
-        {/* Left-aligned Logo */}
-        <div className="flex items-center gap-2">
-          <Link to="/" className="flex items-center gap-2">
-            <img
-              src={LOGO_URL}
-              alt="Zivaas Properties"
-              className="h-10 w-auto object-contain"
-              onError={(e) => {
-                console.error('Header: Logo image load failed:', LOGO_URL);
-                e.target.alt = 'Logo not available';
-              }}
-            />
-          </Link>
-        </div>
+      <div className="max-w-screen mx-auto px-6 py-2 flex items-center justify-between text-white">
+        {/* Logo */}
+        <Link to="/" className="flex items-center gap-2">
+          <motion.img
+            src={LOGO_URL}
+            alt="Zivaas Properties"
+            className="h-14 w-auto drop-shadow-lg"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.6 }}
+            onError={(e) => {
+              console.error('Header: Logo image load failed:', LOGO_URL);
+              e.target.alt = 'Zivaas Properties';
+            }}
+          />
+        </Link>
 
-        {/* Desktop navigation */}
+        {/* Desktop Nav */}
         <nav className="hidden md:flex items-center gap-6 text-md" role="navigation" aria-label="Main navigation">
-          <div className="flex justify-center gap-6 flex-grow">
-            {navLinks.map((link) =>
-              link.name === 'Profile' ? (
-                <button
-                  key={link.name}
-                  onClick={handleProfileClick}
-                  className={`text-white text-sm px-2 py-1 font-semibold relative inline-block ${
-                    !isAuthenticated ? 'cursor-pointer relative group' : ''
-                  }`}
-                  title={!isAuthenticated ? 'Please log in to view your profile' : 'View your profile'}
-                  aria-label={isAuthenticated ? 'Go to profile' : 'Log in to view profile'}
-                >
-                  <UserCircle size={24} className="inline mr-1" />
-                  <span className="relative inline-block after:absolute after:left-0 after:bottom-0 after:h-[1px] after:w-0 after:bg-rose-200 after:transition-all after:duration-300 hover:after:w-full">
+          {navLinks.map((link) =>
+            link.name === 'Profile' ? (
+              <button
+                key={link.name}
+                onClick={handleProfileClick}
+                className={`text-white text-sm px-2 py-1 font-semibold relative inline-block ${
+                  !isAuthenticated ? 'cursor-pointer relative group' : ''
+                }`}
+                title={!isAuthenticated ? 'Please log in to view your profile' : 'View your profile'}
+                aria-label={isAuthenticated ? 'Go to profile' : 'Log in to view profile'}
+              >
+                <UserCircle size={24} className="inline mr-1" />
+                {!isAuthenticated && (
+                  <span className="absolute top-full left-1/2 transform -translate-x-1/2 mt-1 hidden group-hover:block bg-stone-600 text-white text-xs rounded py-1 px-2">
+                    Log in required
                   </span>
-                  {!isAuthenticated && (
-                    <span className="absolute top-full left-1/2 transform -translate-x-1/2 mt-1 hidden group-hover:block bg-stone-600 text-white text-xs rounded py-1 px-2">
-                      Log in required
-                    </span>
-                  )}
-                </button>
-              ) : (
-                <NavLink
-                  key={link.name}
-                  to={link.path}
-                  className={({ isActive }) =>
-                    isActive
-                      ? 'text-rose-100 font-semibold'
-                      : 'text-white relative inline-block after:absolute after:left-0 after:bottom-0 after:h-[1px] after:w-0 after:bg-rose-200 after:transition-all after:duration-300 hover:after:w-full'
-                  }
-                  aria-label={`Go to ${link.name} page`}
-                >
-                  {link.name}
-                </NavLink>
-              )
-            )}
-          </div>
+                )}
+              </button>
+            ) : (
+              <NavLink
+                key={link.name}
+                to={link.path}
+                className={({ isActive }) =>
+                  isActive
+                    ? 'text-rose-100 font-semibold'
+                    : 'text-white relative inline-block after:absolute after:left-0 after:bottom-0 after:h-[1px] after:w-0 after:bg-rose-200 after:transition-all after:duration-300 hover:after:w-full'
+                }
+                aria-label={`Go to ${link.name} page`}
+              >
+                {link.name}
+              </NavLink>
+            )
+          )}
         </nav>
 
-        {/* Mobile menu toggle button */}
+        {/* Mobile Menu Toggle */}
         <div className="md:hidden flex items-center gap-2">
           <button
             className="text-white"
@@ -141,7 +138,7 @@ const Header = () => {
         </div>
       </div>
 
-      {/* Mobile menu */}
+      {/* Mobile Menu */}
       {mobileMenuOpen && (
         <div className="md:hidden px-6 pb-4 pt-4 bg-stone-700" role="navigation" aria-label="Mobile navigation">
           <nav className="space-y-4">
