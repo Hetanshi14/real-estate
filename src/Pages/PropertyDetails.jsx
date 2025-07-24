@@ -129,13 +129,11 @@ const PropertyDetails = () => {
           <section
             id="hero"
             ref={(el) => (sectionRefs.current[0] = el)}
-            className={`relative bg-cover bg-center text-white h-[80vh] flex items-center justify-center transition-all duration-1000 ${
+            className={`relative bg-center text-white h-[80vh] bg-no-repeat bg-contain flex items-center justify-center transition-all duration-1000 ${
               isVisible("hero") ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
             }`}
             style={{
-              backgroundImage: `url(${developerLogo || defaultImage})`,
-              backgroundSize: "cover",
-              backgroundPosition: "center",
+              backgroundImage: `url(${developerLogo || defaultImage})`
             }}
           >
             <div className="absolute inset-0 bg-black/50 z-0" />
