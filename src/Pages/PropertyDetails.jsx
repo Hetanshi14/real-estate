@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "../supabaseClient";
-import { motion } from "framer-motion"; // Ensure this import is added
+import { motion } from "framer-motion";
 
 const PropertyDetails = () => {
   const { developerName } = useParams();
@@ -12,16 +12,15 @@ const PropertyDetails = () => {
   const [loading, setLoading] = useState(true);
   const sectionRefs = useRef([]);
 
-  // Default image URL
   const defaultImage =
     "https://tse1.mm.bing.net/th?id=OIP.NVfmC91cXZclVmv4ML3-bAHaEK&pid=Api&P=0&h=180";
 
-  // Placeholder isVisible function
   const isVisible = (sectionId) => {
-    const section = sectionRefs.current.find((ref, index) => index === 0);
+    const sectionIndex = sectionRefs.current.findIndex((ref) => ref?.id === sectionId);
+    const section = sectionRefs.current[sectionIndex];
     return section
       ? section.getBoundingClientRect().top < window.innerHeight &&
-        section.getBoundingClientRect().bottom > 0
+          section.getBoundingClientRect().bottom > 0
       : false;
   };
 
@@ -33,13 +32,13 @@ const PropertyDetails = () => {
           .from("properties")
           .select(
             `
-            id, name, location, price, carpet_area, configuration, property_type, total_floors,
-            total_units, status, rera_number, amenities, developer_name, developer_tagline,
-            developer_experience, developer_projects_completed, developer_happy_families,
-            developer_awards, developer_certifications, developer_description,
-            images, developer_image, developer_logo, nearby_landmarks, agent_name, agent_role,
-            agent_phone, agent_email, agent_availability, agent_rating, agent_reviews, agents_image
-          `
+              id, name, location, price, carpet_area, configuration, property_type, total_floors,
+              total_units, status, rera_number, amenities, developer_name, developer_tagline,
+              developer_experience, developer_projects_completed, developer_happy_families,
+              developer_awards, developer_certifications, developer_description,
+              images, developer_image, developer_logo, nearby_landmarks, agent_name, agent_role,
+              agent_phone, agent_email, agent_availability, agent_rating, agent_reviews, agents_image
+            `
           )
           .eq("developer_name", decodeURIComponent(developerName));
 
@@ -55,14 +54,16 @@ const PropertyDetails = () => {
 
         const firstProperty = data[0];
         const devImg =
-          firstProperty.developer_image && firstProperty.developer_image.trim() !== ""
-            ? firstProperty.developer_image.split(',')[0].trim()
+          firstProperty.developer_image &&
+          firstProperty.developer_image.trim() !== ""
+            ? firstProperty.developer_image.split(",")[0].trim()
             : null;
         setDeveloperImage(devImg);
 
         const devLogo =
-          firstProperty.developer_logo && firstProperty.developer_logo.trim() !== ""
-            ? firstProperty.developer_logo.split(',')[0].trim()
+          firstProperty.developer_logo &&
+          firstProperty.developer_logo.trim() !== ""
+            ? firstProperty.developer_logo.split(",")[0].trim()
             : null;
         setDeveloperLogo(devLogo);
 
@@ -81,9 +82,10 @@ const PropertyDetails = () => {
           amenities: Array.isArray(p.amenities)
             ? p.amenities
             : p.amenities
-              ? p.amenities.split(",")
-              : [],
-          image: p.images && p.images.trim() !== "" ? p.images.split(",")[0] : null,
+            ? p.amenities.split(",")
+            : [],
+          image:
+            p.images && p.images.trim() !== "" ? p.images.split(",")[0] : null,
           developer: p.developer_name || "Unknown Developer",
           tagline: p.developer_tagline || "No tagline",
           experience: p.developer_experience || 0,
@@ -100,7 +102,10 @@ const PropertyDetails = () => {
           agentAvailability: p.agent_availability || "N/A",
           agentRating: p.agent_rating || 0,
           agentReviews: p.agent_reviews || 0,
-          agentsImage: p.agents_image && p.agents_image.trim() !== "" ? p.agents_image.split(',')[0] : null,
+          agentsImage:
+            p.agents_image && p.agents_image.trim() !== ""
+              ? p.agents_image.split(",")[0]
+              : null,
         }));
 
         setProperties(mappedProperties);
@@ -115,12 +120,15 @@ const PropertyDetails = () => {
     fetchDeveloperProperties();
   }, [developerName]);
 
-  if (loading) return <div className="col-span-full flex justify-center items-center min-h-screen h-72 w-auto">
-    <img
-      src="https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/logo/zivaaslogo01.jpg"
-      className="h-32 w-auto object-contain animate-pulse"
-    />
-  </div>;
+  if (loading)
+    return (
+      <div className="col-span-full flex justify-center items-center h-64">
+        <img
+          src="https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/logo/zivaaslogo01.jpg"
+          className="h-32 w-auto object-contain animate-pulse"
+        />
+      </div>
+    );
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
@@ -131,23 +139,16 @@ const PropertyDetails = () => {
       )}
       {properties.length > 0 && (
         <div>
-          {/* Hero Section with Developer Logo */}
-          <section className="relative" ref={(el) => (sectionRefs.current[0] = el)}>
+          <section
+            className="relative"
+            ref={(el) => (sectionRefs.current[0] = el)}
+          >
             <motion.div
-              className="relative h-[80vh] overflow-hidden"
+              className="relative h-[12vh] overflow-hidden"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.6 }}
             >
-              <img
-                src={developerLogo || defaultImage}
-                alt={`${properties[0].developer} Logo`}
-                className="w-full h-[80vh] object-center"
-                onError={(e) => {
-                  console.error("Failed to load hero image:", e.target.src);
-                  e.target.src = defaultImage;
-                }}
-              />
               <div className="absolute inset-0 bg-black/60 z-0"></div>
               <motion.div
                 className="absolute inset-0 flex flex-col items-center justify-center text-center text-white z-10"
@@ -156,126 +157,170 @@ const PropertyDetails = () => {
                 transition={{ duration: 0.6 }}
               >
                 <div className="px-4 max-w-4xl">
-                  <h1 className="text-3xl md:text-5xl font-bold mb-3">
+                  <h1 className="text-3xl md:text-4xl font-semibold mb-3">
                     {properties[0].developer}
                   </h1>
-                  <p className="text-xl md:text-2xl max-w-xl mx-auto">
-                    {properties[0].tagline || "Premium Living"}
-                  </p>
-                  <p className="text-lg opacity-90">{properties[0].location}</p>
                 </div>
               </motion.div>
             </motion.div>
           </section>
 
-          {/* Developer Details Section */}
           <section
             id="details"
             ref={(el) => (sectionRefs.current[1] = el)}
             className="max-w-6xl mx-auto p-6 md:p-8 lg:p-10 my-10 bg-white rounded-lg shadow-lg transition-all duration-1000"
           >
-            <div className="flex items-center mb-6">
-              {developerImage && (
-                <div className="flex-shrink-0 bg-gray-200 p-2 rounded-md mr-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Developer Logo Card */}
+              <div className="col-span-1 md:col-span-1">
+                <div className="bg-white rounded-lg shadow-md overflow-hidden mb-5 w-90 h-70 hover:shadow-lg/20 transition-shadow duration-300">
                   <img
-                    src={developerImage || defaultImage}
-                    alt={`${properties[0].developer} Image`}
-                    className="w-48 h-48 object-contain max-w-full max-h-full"
+                    src={developerLogo || defaultImage}
+                    alt={`${properties[0].developer} Logo`}
+                    className="w-90 h-70 object-cover"
                   />
+                  <div className="p-4 text-center">
+                    <h3 className="text-lg font-semibold text-gray-800">
+                      {properties[0].developer}
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      {properties[0].tagline}
+                    </p>
+                  </div>
                 </div>
-              )}
-              <div>
-                <h2 className="text-2xl md:text-3xl font-semibold text-gray-800">
-                  About {properties[0].developer}
-                </h2>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-              <div>
-                <p className="text-gray-600 mb-2">
-                  <strong className="text-gray-800">Experience:</strong>{" "}
-                  {properties[0].experience} years
-                </p>
-                <p className="text-gray-600 mb-2">
-                  <strong className="text-gray-800">Projects Completed:</strong>{" "}
-                  {properties[0].projectsCompleted}
-                </p>
-                <p className="text-gray-600 mb-2">
-                  <strong className="text-gray-800">Happy Families:</strong>{" "}
-                  {properties[0].happyFamilies}
-                </p>
-              </div>
-              <div>
-                <p className="text-gray-600 mb-2">
-                  <strong className="text-gray-800">Awards:</strong>{" "}
-                  {properties[0].awards}
-                </p>
-                <p className="text-gray-600 mb-2">
-                  <strong className="text-gray-800">Certifications:</strong>{" "}
-                  {properties[0].certifications}
-                </p>
-              </div>
-            </div>
-
-            <p className="text-gray-200 mb-6 leading-relaxed">
-              <strong className="text-gray-800">Description:</strong>{" "}
-              {properties[0].description}
-            </p>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-              <div>
-                <p className="text-gray-600 mb-2">
-                  <strong className="text-gray-800">Nearby Landmarks:</strong>{" "}
-                  {properties[0].nearbyLandmarks}
-                </p>
-              </div>
-            </div>
-
-            <h3 className="text-xl md:text-2xl font-semibold text-gray-800 mb-4">
-              Agent Information
-            </h3>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-6 mb-6">
-              {properties[0].agentsImage && (
-                <div className="mb-6">
-                  <img
-                    src={properties[0].agentsImage || defaultImage}
-                    alt={`${properties[0].agentName} Image`}
-                    className="w-24 h-24 rounded-full object-contain border-2 border-gray-200"
-                  />
+                {/* About Section */}
+                <div className="bg-gray-50 p-6 rounded-xl shadow-md">
+                  <div className="flex items-center mb-6">
+                    {developerImage && (
+                      <div className="flex-shrink-0 bg-gray-200 p-2 rounded-md mr-6">
+                        <img
+                          src={developerImage || defaultImage}
+                          alt={`${properties[0].developer} Image`}
+                          className="w-48 h-48 object-contain"
+                        />
+                      </div>
+                    )}
+                    <div>
+                      <h2 className="text-2xl md:text-2xl font-semibold text-gray-800">
+                        About {properties[0].developer}
+                      </h2>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-gray-600">
+                        <strong className="text-md font-medium text-gray-800">
+                          Experience:
+                        </strong>{" "}
+                        {properties[0].experience} years
+                      </p>
+                      <p className="text-gray-600">
+                        <strong className="text-md font-medium text-gray-800">
+                          Projects Completed:
+                        </strong>{" "}
+                        {properties[0].projectsCompleted}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-600">
+                        <strong className="text-md font-medium text-gray-800">
+                          Awards:
+                        </strong>{" "}
+                        {properties[0].awards}
+                      </p>
+                      <p className="text-gray-600">
+                        <strong className="text-md font-medium text-gray-800">
+                          Certifications:
+                        </strong>{" "}
+                        {properties[0].certifications}
+                      </p>
+                    </div>
+                  </div>
                 </div>
-              )}
-              <div>
-                <p className="text-gray-600 mb-2">
-                  <strong className="text-gray-800">Name:</strong>{" "}
-                  {properties[0].agentName}
-                </p>
-                <p className="text-gray-600 mb-2">
-                  <strong className="text-gray-800">Role:</strong>{" "}
-                  {properties[0].agentRole}
-                </p>
-                <p className="text-gray-600 mb-2">
-                  <strong className="text-gray-800">Phone:</strong>{" "}
-                  {properties[0].agentPhone}
-                </p>
               </div>
-              <div>
-                <p className="text-gray-600 mb-2">
-                  <strong className="text-gray-800">Email:</strong>{" "}
-                  {properties[0].agentEmail}
-                </p>
-                <p className="text-gray-600 mb-2">
-                  <strong className="text-gray-800">Availability:</strong>{" "}
-                  {properties[0].agentAvailability}
-                </p>
-                <p className="text-gray-600 mb-2">
-                  <strong className="text-gray-800">Rating:</strong>{" "}
-                  {properties[0].agentRating} / 5
-                </p>
-                <p className="text-gray-600 mb-2">
-                  <strong className="text-gray-800">Reviews:</strong>{" "}
-                  {properties[0].agentReviews}
-                </p>
+
+              {/* Description and Agent Information */}
+              <div className="col-span-1 md:col-span-1">
+                <div className="bg-white p-6 rounded-xl shadow-md">
+                  <h3 className="text-2xl font-semibold text-gray-800 mb-4">
+                    Agent Information
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      {properties[0].agentsImage && (
+                        <div className="mb-6">
+                          <img
+                            src={properties[0].agentsImage || defaultImage}
+                            alt={`${properties[0].agentName} Image`}
+                            className="w-26 h-26 rounded-full object-contain border-2 border-gray-200"
+                          />
+                        </div>
+                      )}
+                      <p className="text-gray-600">
+                        <strong className="text-md font-medium text-gray-800">
+                          Name:
+                        </strong>{" "}
+                        {properties[0].agentName}
+                      </p>
+                      <p className="text-gray-600">
+                        <strong className="text-md font-medium text-gray-800">
+                          Role:
+                        </strong>{" "}
+                        {properties[0].agentRole}
+                      </p>
+                      <p className="text-gray-600">
+                        <strong className="text-md font-medium text-gray-800">
+                          Phone:
+                        </strong>{" "}
+                        {properties[0].agentPhone}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-600 mb-2">
+                        <strong className="text-md font-medium text-gray-800">
+                          Email:
+                        </strong>{" "}
+                        {properties[0].agentEmail}
+                      </p>
+                      <p className="text-gray-600 mb-2">
+                        <strong className="text-md font-medium text-gray-800">
+                          Availability:
+                        </strong>{" "}
+                        {properties[0].agentAvailability}
+                      </p>
+                      <p className="text-gray-600 mb-2">
+                        <strong className="text-md font-medium text-gray-800">
+                          Rating:
+                        </strong>{" "}
+                        {Array.from({ length: 5 }, (_, index) => {
+                          const rating =
+                            Math.round(properties[0].agentRating * 2) / 2;
+                          const fullStars = Math.floor(rating);
+                          const hasHalfStar = rating % 1 !== 0;
+                          if (index < fullStars) return "★";
+                          if (index === fullStars && hasHalfStar) return "½";
+                          return "☆";
+                        }).join("")}
+                      </p>
+                      <p className="text-gray-600 mb-2">
+                        <strong className="text-md font-medium text-gray-800">
+                          Reviews:
+                        </strong>{" "}
+                        {properties[0].agentReviews}
+                      </p>
+                      <p className="text-gray-600 mb-2">
+                        <strong className="text-md font-medium text-gray-800">
+                          Nearby Landmarks:
+                        </strong>{" "}
+                        {properties[0].nearbyLandmarks}
+                      </p>
+                    </div>
+                  </div>
+                  <p className="text-gray-600 mt-6 leading-relaxed">
+                    <strong className="text-gray-800">Description:</strong>{" "}
+                    {properties[0].description}
+                  </p>
+                </div>
               </div>
             </div>
           </section>
@@ -283,61 +328,93 @@ const PropertyDetails = () => {
           {/* Properties Section */}
           <section
             id="properties"
+            ref={(el) => (sectionRefs.current[2] = el)} // Updated index to 2 for the properties section
             className="max-w-6xl mx-auto p-6 md:p-8 lg:p-10 my-10 bg-white rounded-lg shadow-lg"
           >
-            <h2 className="text-3xl md:text-4xl font-semibold text-gray-800 text-center mb-8">
-              Properties by {properties[0].developer}
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {properties.map((prop) => (
-                <div
-                  key={prop.id}
-                  className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300"
-                >
-                  <div className="p-4">
-                    <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-2">
-                      {prop.name}
-                    </h3>
-                    <p className="text-gray-600 text-sm mb-1">
-                      <strong>Location:</strong> {prop.location}
-                    </p>
-                    <p className="text-gray-600 text-sm mb-1">
-                      <strong>BHK:</strong> {prop.bhk ? `${prop.bhk} BHK` : "N/A"}
-                    </p>
-                    <p className="text-gray-600 text-sm mb-1">
-                      <strong>Price:</strong> ₹{prop.price.toLocaleString()}
-                    </p>
-                    <p className="text-gray-600 text-sm mb-1">
-                      <strong>Type:</strong> {prop.type}
-                    </p>
-                    <p className="text-gray-600 text-sm mb-1">
-                      <strong>Status:</strong> {prop.status}
-                    </p>
-                    <p className="text-gray-600 text-sm mb-1">
-                      <strong>Carpet Area:</strong> {prop.carpetArea} sq.ft.
-                    </p>
-                    <p className="text-gray-600 text-sm mb-1">
-                      <strong>Floors:</strong> {prop.floors}
-                    </p>
-                    <p className="text-gray-600 text-sm mb-1">
-                      <strong>Units:</strong> {prop.units}
-                    </p>
-                    <p className="text-gray-600 text-sm mb-1">
-                      <strong>RERA Number:</strong> {prop.reraNumber}
-                    </p>
-                    <p className="text-gray-600 text-sm mb-1">
-                      <strong>Amenities:</strong> {prop.amenities.join(", ") || "N/A"}
-                    </p>
-                    <Link
-                      to={`/listings/${prop.id}`}
-                      className="inline-block mt-4 py-2 text-stone-700 underline hover:font-semibold rounded-md transition-colors duration-300 text-sm"
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: isVisible("properties") ? 1 : 0, y: isVisible("properties") ? 0 : 30 }}
+              transition={{ duration: 0.6 }}
+              className="transition-all duration-1000 transform"
+            >
+              <h2 className="text-3xl md:text-4xl font-semibold text-gray-800 text-center mb-8">
+                Properties by {properties[0].developer}
+              </h2>
+              {error && (
+                <p className="text-stone-600 text-center mb-4">{error}</p>
+              )}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {properties.length > 0 ? (
+                  properties.map((prop) => (
+                    <div
+                      key={prop.id}
+                      className="rounded shadow hover:shadow-lg transition text-white"
                     >
-                      View Details
-                    </Link>
-                  </div>
-                </div>
-              ))}
-            </div>
+                      <div className="relative group h-[45vh] w-full overflow-hidden rounded">
+                        <Link to={`/listings/${prop.id}`}>
+                          {prop.image ? (
+                            <img
+                              src={prop.image}
+                              alt={prop.name}
+                              className="w-full h-full transition-transform duration-300 group-hover:scale-105 rounded"
+                              onError={(e) => {
+                                e.target.src = defaultImage;
+                                e.target.parentElement.classList.add(
+                                  "flex",
+                                  "items-center",
+                                  "justify-center",
+                                  "bg-gray-200"
+                                );
+                                console.error(
+                                  "PropertyDetails: Image load failed:",
+                                  prop.image
+                                );
+                              }}
+                            />
+                          ) : (
+                            <div className="flex items-center justify-center w-full h-full bg-gray-200 text-stone-700">
+                              Image not uploaded
+                            </div>
+                          )}
+                          <div className="absolute inset-0 bg-black opacity-40 md:opacity-0 md:group-hover:opacity-40 transition-opacity duration-300 z-0"></div>
+                          <div className="absolute inset-0 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity duration-400">
+                            <div className="absolute bottom-4 left-4 text-left">
+                              <h3 className="text-lg font-semibold">
+                                {prop.name}
+                              </h3>
+                              <p className="text-sm">{prop.location}</p>
+                              <p className="text-sm">
+                                {prop.bhk ? `${prop.bhk} BHK • ` : ""}₹
+                                {prop.price.toLocaleString()}
+                              </p>
+                              <p className="text-sm">
+                                {prop.type || "Unknown Type"} •{" "}
+                                {prop.status || "Unknown Status"}
+                              </p>
+                              <p className="text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                Built by: {prop.developer}
+                              </p>
+                              <div className="mt-1">
+                                <Link
+                                  to={`/listings/${prop.id}`}
+                                  className="underline text-white hover:font-semibold"
+                                >
+                                  View Details
+                                </Link>
+                              </div>
+                            </div>
+                          </div>
+                        </Link>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-center text-stone-600 text-lg col-span-full">
+                    {error || "No properties found for this developer."}
+                  </p>
+                )}
+              </div>
+            </motion.div>
           </section>
         </div>
       )}
