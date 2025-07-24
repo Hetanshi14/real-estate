@@ -20,7 +20,7 @@ const PropertyDetails = () => {
     const section = sectionRefs.current.find((ref, index) => index === 0);
     return section
       ? section.getBoundingClientRect().top < window.innerHeight &&
-          section.getBoundingClientRect().bottom > 0
+      section.getBoundingClientRect().bottom > 0
       : false;
   };
 
@@ -80,8 +80,8 @@ const PropertyDetails = () => {
           amenities: Array.isArray(p.amenities)
             ? p.amenities
             : p.amenities
-            ? p.amenities.split(",")
-            : [],
+              ? p.amenities.split(",")
+              : [],
           image: p.images && p.images.trim() !== "" ? p.images.split(",")[0] : null,
           developer: p.developer_name || "Unknown Developer",
           tagline: p.developer_tagline || "No tagline",
@@ -114,7 +114,12 @@ const PropertyDetails = () => {
     fetchDeveloperProperties();
   }, [developerName]);
 
-  if (loading) return <div className="text-center py-12 text-gray-600">Loading...</div>;
+  if (loading) return <div className="col-span-full flex justify-center items-center h-64">
+    <img
+      src="https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/logo/zivaaslogo01.jpg"
+      className="h-32 w-auto object-contain animate-pulse"
+    />
+  </div>;
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
@@ -129,9 +134,8 @@ const PropertyDetails = () => {
           <section
             id="hero"
             ref={(el) => (sectionRefs.current[0] = el)}
-            className={`relative bg-center text-white h-[80vh] bg-no-repeat bg-contain flex items-center justify-center transition-all duration-1000 ${
-              isVisible("hero") ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
-            }`}
+            className={`relative bg-center text-white h-[80vh] bg-no-repeat bg-contain flex items-center justify-center transition-all duration-1000 ${isVisible("hero") ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+              }`}
             style={{
               backgroundImage: `url(${developerLogo || defaultImage})`
             }}
@@ -214,14 +218,14 @@ const PropertyDetails = () => {
             </h3>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-0 mb-6">
               {properties[0].agentsImage && (
-              <div className="mb-6">
-                <img
-                  src={properties[0].agentsImage || defaultImage}
-                  alt={`${properties[0].agentName} Image`}
-                  className="w-24 h-24 rounded-full object-cover border-2 border-gray-200"
-                />
-              </div>
-            )}
+                <div className="mb-6">
+                  <img
+                    src={properties[0].agentsImage || defaultImage}
+                    alt={`${properties[0].agentName} Image`}
+                    className="w-24 h-24 rounded-full object-cover border-2 border-gray-200"
+                  />
+                </div>
+              )}
               <div>
                 <p className="text-gray-600 mb-2">
                   <strong className="text-gray-800">Name:</strong>{" "}

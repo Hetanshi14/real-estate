@@ -375,9 +375,12 @@ const Details = () => {
 
   if (loading)
     return (
-      <div className="min-h-screen flex items-center justify-center text-stone-700">
-        Loading...
-      </div>
+      <div className="col-span-full flex justify-center items-center h-64">
+              <img
+                src="https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/logo/zivaaslogo01.jpg"
+                className="h-32 w-auto object-contain animate-pulse"
+              />
+            </div>
     );
   if (error || !property)
     return (

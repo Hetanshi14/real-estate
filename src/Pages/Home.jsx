@@ -448,7 +448,7 @@ const Home = () => {
           {loading && (
             <div className="col-span-full flex justify-center items-center h-64">
               <img
-                src="https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images//zivaaslogo.png"
+                src="https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/logo/zivaaslogo01.jpg"
                 className="h-32 w-auto object-contain animate-pulse"
               />
             </div>
