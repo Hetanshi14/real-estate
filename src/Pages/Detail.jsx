@@ -791,13 +791,13 @@ const Details = () => {
                   <div className="absolute top-4 right-4 flex gap-2 z-10">
                     <button
                       onClick={() => setZoomLevel((prev) => Math.min(prev + 0.1, 2))}
-                      className="p-2 bg-white rounded-full shadow-md hover:bg-stone-100"
+                      className="bg-white w-8 h-8 items-center rounded-full shadow-md hover:bg-stone-100"
                     >
                       <span className="text-xl">+</span>
                     </button>
                     <button
                       onClick={() => setZoomLevel((prev) => Math.max(prev - 0.1, 1))}
-                      className="p-2 bg-white rounded-full shadow-md hover:bg-stone-100"
+                      className="bg-white w-8 h-8 rounded-full shadow-md hover:bg-stone-100"
                     >
                       <span className="text-xl">-</span>
                     </button>
@@ -805,13 +805,13 @@ const Details = () => {
                   <div className="flex justify-center mt-4 gap-4">
                     <button
                       onClick={() => setCurrentIndex((prev) => (prev > 0 ? prev - 1 : images.length - 1))}
-                      className="p-2 bg-stone-700 text-white rounded-full hover:bg-stone-800"
+                      className="bg-stone-700 w-10 h-8 text-white rounded-full hover:bg-stone-800"
                     >
                       ←
                     </button>
                     <button
                       onClick={() => setCurrentIndex((prev) => (prev + 1) % images.length)}
-                      className="p-2 bg-stone-700 text-white rounded-full hover:bg-stone-800"
+                      className="bg-stone-700 w-10 h-8 text-white rounded-full hover:bg-stone-800"
                     >
                       →
                     </button>
