@@ -232,9 +232,11 @@ const Developer = () => {
                 step="0.1"
               />
             </div>
-            <button
+           <button
               onClick={clearFilters}
-              className="px-4 py-2 rounded-lg font-medium text-white bg-blue-600 hover:bg-blue-700 shadow-md transition-colors duration-300"
+              className="relative inline-block px-3 py-2 rounded font-medium text-white bg-stone-700 z-10 overflow-hidden
+    before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600 
+    before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
             >
               Clear Filters
             </button>
