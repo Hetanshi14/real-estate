@@ -157,12 +157,12 @@ const Developer = () => {
     "https://tse1.mm.bing.net/th/id/OIP.NVfmC91cXZclVmv4ML3-bAHaEK?pid=Api&P=0&h=180";
 
   return (
-    <div className="min-h-screen bg-gray-100 font-sans">
+    <div className="min-h-screen bg-gray-50 font-sans text-gray-900">
       {/* Hero Section */}
       <section
         id="hero"
         ref={(el) => (sectionRefs.current[0] = el)}
-        className={`bg-cover bg-center text-white py-40 transition-all duration-1000 transform ${
+        className={`bg-cover bg-center text-white py-24 transition-all duration-1000 transform ${
           isVisible("hero")
             ? "opacity-100 translate-y-0"
             : "opacity-0 translate-y-8"
@@ -171,20 +171,18 @@ const Developer = () => {
           backgroundImage: `url(https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Bg%20img/bgdev.jpg)`,
         }}
       >
-        <div className="absolute inset-0 bg-black/60 z-0" />
-        <div className="container mx-auto px-4 text-center relative z-10">
-          <h2 className="text-3xl font-bold mb-3">
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-0" />
+        <div className="container mx-auto px-6 text-center relative z-10 max-w-2xl">
+          <h1 className="text-4xl font-bold mb-4 tracking-tight">
             Discover Premium Properties
-          </h2>
-          <p className="text-base mb-5 max-w-xl mx-auto">
+          </h1>
+          <p className="text-lg mb-6 text-gray-200">
             Explore a world of innovative and sustainable real estate solutions
             from our top developers.
           </p>
           <a
             href="#developers"
-            className="relative inline-block px-5 py-2 rounded-md font-medium text-stone-700 bg-white z-10 overflow-hidden
-    before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600 
-    before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
+            className="relative inline-block px-6 py-3 rounded-lg font-semibold text-gray-900 bg-white shadow-md hover:bg-gray-100 transition-colors duration-300"
           >
             Explore Now
           </a>
@@ -195,19 +193,19 @@ const Developer = () => {
       <section
         id="developers"
         ref={(el) => (sectionRefs.current[1] = el)}
-        className={`max-w-7xl mx-auto py-12 px-4 transition-all duration-1000 transform ${
+        className={`max-w-7xl mx-auto py-16 px-6 transition-all duration-1000 transform ${
           isVisible("developers")
             ? "opacity-100 translate-y-0"
             : "opacity-0 translate-y-8"
         }`}
       >
-        <div className="flex justify-between items-center mb-8">
-          <h2 className="text-3xl font-bold text-stone-700 tracking-tight flex items-center">
-            <RiBuildingLine className="mr-2 text-3xl" /> Our Developers
+        <div className="flex justify-between items-center mb-10">
+          <h2 className="text-4xl font-bold text-gray-900 tracking-tight flex items-center">
+            <RiBuildingLine className="mr-3 text-4xl" /> Our Developers
           </h2>
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <label className="text-sm text-stone-700 font-semibold mr-2 flex items-center">
+          <div className="flex items-center space-x-6">
+            <div className="flex items-center space-x-3">
+              <label className="text-base font-medium text-gray-700">
                 Min Experience:
               </label>
               <input
@@ -215,12 +213,12 @@ const Developer = () => {
                 value={minExperience}
                 onChange={(e) => setMinExperience(e.target.value)}
                 placeholder="e.g., 5"
-                className="p-2 border border-stone-300 rounded text-sm w-24"
+                className="p-2 border border-gray-300 rounded-lg text-sm w-28 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 min="0"
               />
             </div>
-            <div className="flex items-center space-x-2">
-              <label className="text-sm text-stone-700 font-semibold mr-2 flex items-center">
+            <div className="flex items-center space-x-3">
+              <label className="text-base font-medium text-gray-700">
                 Min Rating:
               </label>
               <input
@@ -228,7 +226,7 @@ const Developer = () => {
                 value={minRating}
                 onChange={(e) => setMinRating(e.target.value)}
                 placeholder="e.g., 3.0"
-                className="p-2 border border-stone-300 rounded text-sm w-24"
+                className="p-2 border border-gray-300 rounded-lg text-sm w-28 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 min="0"
                 max="5"
                 step="0.1"
@@ -236,9 +234,7 @@ const Developer = () => {
             </div>
             <button
               onClick={clearFilters}
-              className="relative inline-block px-3 py-2 rounded font-medium text-white bg-stone-700 z-10 overflow-hidden
-    before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600 
-    before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
+              className="px-4 py-2 rounded-lg font-medium text-white bg-blue-600 hover:bg-blue-700 shadow-md transition-colors duration-300"
             >
               Clear Filters
             </button>
@@ -247,18 +243,18 @@ const Developer = () => {
 
         {/* Selected Filters Section */}
         {(minExperience || minRating) && (
-          <div className="mb-6">
-            <h4 className="text-sm font-medium text-stone-600 mb-2">
+          <div className="mb-8">
+            <h4 className="text-sm font-medium text-gray-600 mb-3">
               Selected Filters:
             </h4>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-3">
               {minExperience && (
-                <span className="bg-stone-100 text-stone-700 px-2 py-1 rounded text-sm">
+                <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm">
                   Min Experience: {minExperience} years
                 </span>
               )}
               {minRating && (
-                <span className="bg-stone-100 text-stone-700 px-2 py-1 rounded text-sm">
+                <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm">
                   Min Rating: {minRating}
                 </span>
               )}
@@ -267,23 +263,23 @@ const Developer = () => {
         )}
 
         {error && (
-          <div className="bg-red-50 border border-red-300 text-red-700 px-4 py-3 rounded-lg max-w-2xl mx-auto mb-8 text-center shadow-sm">
+          <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-xl max-w-3xl mx-auto mb-10 text-center shadow-lg">
             {error}
           </div>
         )}
         {filteredDevelopers.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {filteredDevelopers.map((developer) => (
               <div
                 key={developer.name}
-                className="bg-white border border-gray-100 rounded shadow-md hover:shadow-lg transition-shadow duration-300 flex flex-col"
+                className="bg-gradient-to-br from-gray-50 to-white border border-gray-200 rounded-xl shadow-md hover:shadow-2xl transition-all duration-300 overflow-hidden"
               >
                 {/* Developer Logo */}
-                <div className="mb-4">
+                <div className="mb-2 overflow-hidden">
                   <img
                     src={developer.logo || defaultImage}
                     alt={`${developer.name} Logo`}
-                    className="w-full h-60 rounded-t opacity-80"
+                    className="w-full h-64 rounded-t-lg object-cover opacity-90 hover:opacity-100 transition-opacity duration-300"
                     onError={(e) => {
                       e.target.src = defaultImage;
                       console.error(
@@ -293,18 +289,18 @@ const Developer = () => {
                     }}
                   />
                 </div>
-                <div className="flex-1 p-4">
-                  <div className="flex items-center mb-4">
-                    <h3 className="text-xl font-semibold text-stone-700">
+                <div className="p-5">
+                  <div className="flex items-center mb-3">
+                    <h3 className="text-xl font-semibold text-gray-900">
                       {developer.name}
                     </h3>
                   </div>
-                  <p className="text-sm text-stone-700 mb-4 leading-relaxed">
-                    <strong className="text-stone-700">Experience:</strong>{" "}
+                  <p className="text-sm text-gray-600 mb-3 leading-relaxed">
+                    <strong className="text-gray-800">Experience:</strong>{" "}
                     {developer.experience || 0}+ years
                   </p>
-                  <div className="flex items-center mb-4">
-                    <strong className="text-stone-700 mr-2">Rating:</strong>
+                  <div className="flex items-center mb-3">
+                    <strong className="text-gray-800 mr-2">Rating:</strong>
                     <Stack spacing={1}>
                       <Rating
                         name={`rating-${developer.name}`}
@@ -314,7 +310,7 @@ const Developer = () => {
                         size="small"
                       />
                     </Stack>
-                    <span className="ml-2 text-sm text-stone-700">
+                    <span className="ml-2 text-sm text-gray-600">
                       {developer.rating || 0}/5
                     </span>
                   </div>
@@ -332,7 +328,7 @@ const Developer = () => {
           </div>
         )}
         {filteredDevelopers.length === 0 && !error && (
-          <p className="text-center text-stone-700">
+          <p className="text-center text-gray-700 text-lg">
             No developers match the filters.
           </p>
         )}

@@ -342,7 +342,7 @@ const PropertyDetails = () => {
               transition={{ duration: 0.6 }}
               className="transition-all duration-1000 transform"
             >
-              <h2 className="text-3xl md:text-4xl font-semibold text-gray-800 text-center mb-8">
+              <h2 className="text-2xl md:text-3xl font-semibold text-gray-800 text-center mb-8">
                 Properties by {properties[0].developer}
               </h2>
               {error && (
