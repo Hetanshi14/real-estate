@@ -124,7 +124,7 @@ const PropertyDetails = () => {
 
   if (loading)
     return (
-      <div className="col-span-full flex justify-center items-center h-64">
+      <div className="col-span-full flex justify-center items-center min-h-screen w-auto h-72">
         <img
           src="https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/logo/zivaaslogo01.jpg"
           className="h-32 w-auto object-contain animate-pulse"
@@ -424,7 +424,7 @@ const PropertyDetails = () => {
         </div>
       )}
     </div>
-  );
+  )
 };
 
 export default PropertyDetails;

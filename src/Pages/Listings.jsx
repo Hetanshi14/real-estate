@@ -186,7 +186,9 @@ const FilterBar = ({ filters, setFilters, clearFilters, userRole, wishlistCriter
         )}
         <button
           onClick={clearFilters}
-          className="w-full bg-stone-700 text-white py-2 rounded-md hover:bg-stone-600 transition duration-300 mt-2"
+          className="relative w-full py-2 rounded-md font-medium text-white bg-stone-700 z-10 overflow-hidden mt-2
+    before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
+    before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
         >
           Clear Filters
         </button>

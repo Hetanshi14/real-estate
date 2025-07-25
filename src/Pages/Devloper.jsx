@@ -19,8 +19,7 @@ const Developer = () => {
     const fetchDevelopersAndProperties = async () => {
       try {
         console.log("Fetching developers and properties...");
-        const { data, error: fetchError } = await supabase
-          .from("properties")
+        const { data, error: fetchError } = await supabase.from("properties")
           .select(`
             id,
             name,
@@ -163,10 +162,11 @@ const Developer = () => {
       <section
         id="hero"
         ref={(el) => (sectionRefs.current[0] = el)}
-        className={`bg-cover bg-center text-white py-48 transition-all duration-1000 transform ${isVisible("hero")
-          ? "opacity-100 translate-y-0"
-          : "opacity-0 translate-y-8"
-          }`}
+        className={`bg-cover bg-center text-white py-40 transition-all duration-1000 transform ${
+          isVisible("hero")
+            ? "opacity-100 translate-y-0"
+            : "opacity-0 translate-y-8"
+        }`}
         style={{
           backgroundImage: `url(https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Bg%20img/bgdev.jpg)`,
         }}
@@ -195,17 +195,18 @@ const Developer = () => {
       <section
         id="developers"
         ref={(el) => (sectionRefs.current[1] = el)}
-        className={`max-w-7xl mx-auto py-12 px-4 transition-all duration-1000 transform ${isVisible("developers")
-          ? "opacity-100 translate-y-0"
-          : "opacity-0 translate-y-8"
-          }`}
+        className={`max-w-7xl mx-auto py-12 px-4 transition-all duration-1000 transform ${
+          isVisible("developers")
+            ? "opacity-100 translate-y-0"
+            : "opacity-0 translate-y-8"
+        }`}
       >
         <div className="flex justify-between items-center mb-8">
-          <h2 className="text-4xl font-extrabold text-gray-900 tracking-tight flex items-center">
+          <h2 className="text-3xl font-bold text-stone-700 tracking-tight flex items-center">
             <RiBuildingLine className="mr-2 text-3xl" /> Our Developers
           </h2>
           <div className="flex items-center space-x-4">
-            <div>
+            <div className="flex items-center space-x-2">
               <label className="text-sm text-stone-700 font-semibold mr-2 flex items-center">
                 Min Experience:
               </label>
@@ -218,7 +219,7 @@ const Developer = () => {
                 min="0"
               />
             </div>
-            <div>
+            <div className="flex items-center space-x-2">
               <label className="text-sm text-stone-700 font-semibold mr-2 flex items-center">
                 Min Rating:
               </label>
@@ -235,7 +236,9 @@ const Developer = () => {
             </div>
             <button
               onClick={clearFilters}
-              className="px-4 py-2 bg-stone-600 text-white rounded hover:bg-stone-700 transition-colors"
+              className="relative inline-block px-3 py-2 rounded font-medium text-white bg-stone-700 z-10 overflow-hidden
+    before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600 
+    before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
             >
               Clear Filters
             </button>
@@ -316,7 +319,9 @@ const Developer = () => {
                     </span>
                   </div>
                   <Link
-                    to={`/properties/developer/${encodeURIComponent(developer.name)}`}
+                    to={`/properties/developer/${encodeURIComponent(
+                      developer.name
+                    )}`}
                     className="relative inline-block font-medium text-stone-700 text-sm after:absolute after:left-0 after:bottom-0 after:h-[1.5px] after:w-full after:bg-stone-700 hover:font-bold"
                   >
                     View All
@@ -327,7 +332,9 @@ const Developer = () => {
           </div>
         )}
         {filteredDevelopers.length === 0 && !error && (
-          <p className="text-center text-stone-700">No developers match the filters.</p>
+          <p className="text-center text-stone-700">
+            No developers match the filters.
+          </p>
         )}
       </section>
     </div>
