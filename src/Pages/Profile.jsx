@@ -761,17 +761,6 @@ const Profile = () => {
               </button>
             </div>
           )}
-          {successMessage && (
-            <div className="mb-6 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg text-center">
-              {successMessage}
-              <button
-                onClick={() => setSuccessMessage(null)}
-                className="ml-2 text-green-700 hover:text-green-900"
-              >
-                ×
-              </button>
-            </div>
-          )}
           <div className="bg-white rounded-lg shadow-md p-6 mb-8">
             <div className="flex items-center mb-4">
               {user.role === "developer" && user.developer_image && (
@@ -2017,9 +2006,9 @@ const Profile = () => {
                         developer_logo: [],
                       }));
                     }}
-                    className="relative md:col-span-2 mt-2 h-9 w-40 rounded-lg font-semibold text-white bg-red-500 z-10 overflow-hidden
-                      before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-red-600
-                      before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
+                    className="relative inline-block px-6 py-2 rounded font-medium text-stone-700 border border-stone-700 z-10 overflow-hidden
+                  before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-700
+                  before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:border-none hover:text-white"
                     aria-label="Cancel property edit"
                   >
                     Cancel
@@ -2144,8 +2133,8 @@ const Profile = () => {
                                 onClick={() =>
                                   handleDeleteProperty(property.id)
                                 }
-                                className="relative inline-block px-2 py-1 rounded-full font-medium text-white bg-red-500 z-10 overflow-hidden
-                                  before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-red-600
+                                className="relative inline-block px-2 py-1 rounded-full font-medium text-white bg-stone-700 z-10 overflow-hidden
+                                  before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
                                   before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
                               >
                                 <FaTrash className="inline mr-2" /> Delete
@@ -2334,8 +2323,8 @@ const Profile = () => {
                                   onClick={() =>
                                     handleRemoveWishlistItem(property.id)
                                   }
-                                  className="relative inline-block px-2 py-1 rounded-full font-medium text-white bg-red-500 z-10 overflow-hidden
-                                    before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-red-600
+                                  className="relative inline-block px-2 py-1 rounded-full font-medium text-white bg-stone-700 z-10 overflow-hidden
+                                    before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
                                     before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
                                 >
                                   <FaTrash className="inline mr-2" /> Remove
