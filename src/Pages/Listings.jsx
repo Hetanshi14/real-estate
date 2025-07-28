@@ -1,14 +1,14 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
-import { FaMapMarkerAlt, FaMoneyBill, FaBuilding, FaHome, FaRulerCombined } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaMoneyBill, FaBuilding, FaHome, FaRulerCombined, FaFilter } from 'react-icons/fa';
 import { Heart } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 // Default image URL
 const DEFAULT_IMAGE = 'https://via.placeholder.com/300x300?text=No+Image';
 
-const FilterBar = ({ filters, setFilters, clearFilters, userRole, wishlistCriteria }) => {
+const FilterBar = ({ filters, setFilters, clearFilters, userRole, wishlistCriteria, isFilterOpen, setIsFilterOpen }) => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFilters((prev) => {
@@ -39,13 +39,20 @@ const FilterBar = ({ filters, setFilters, clearFilters, userRole, wishlistCriter
     setFilters(savedFilters);
     localStorage.setItem('zivaasFilters', JSON.stringify(savedFilters));
     applyFilters(savedFilters); // Apply filters immediately
+    setIsFilterOpen(false); // Hide filter bar after applying
+  };
+
+  const applyFilters = (currentFilters) => {
+    setFilters(currentFilters);
+    setIsFilterOpen(false); // Hide filter bar after applying
   };
 
   const activeFilters = Object.entries(filters).filter(([key, value]) => value && key !== 'sort');
 
   return (
     <motion.div
-      className="w-full md:w-64 bg-white p-6 h-fit rounded-lg shadow-lg border border-stone-200 sticky top-20 z-20"
+      className={`w-full bg-white p-6 rounded-lg shadow-lg border border-stone-200 z-20 ${isFilterOpen ? 'block' : 'hidden md:block'
+        } md:w-64 md:sticky md:top-20 h-fit`}
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.4 }}
@@ -73,10 +80,10 @@ const FilterBar = ({ filters, setFilters, clearFilters, userRole, wishlistCriter
                   {key === 'price'
                     ? value.replace('-', ' - ').replace('15000000+', '₹1.5cr+')
                     : key === 'area'
-                    ? `${value} sq.ft`
-                    : key === 'wishlistCriteria'
-                    ? 'Saved Criteria'
-                    : value}
+                      ? `${value} sq.ft`
+                      : key === 'wishlistCriteria'
+                        ? 'Saved Criteria'
+                        : value}
                 </span>
                 <button
                   onClick={() => removeFilter(key)}
@@ -213,20 +220,21 @@ const Listings = () => {
     return stored
       ? JSON.parse(stored)
       : {
-          location: '',
-          price: '',
-          area: '',
-          property_type: '',
-          status: '',
-          sort: '',
-          wishlistCriteria: false,
-        };
+        location: '',
+        price: '',
+        area: '',
+        property_type: '',
+        status: '',
+        sort: '',
+        wishlistCriteria: false,
+      };
   });
 
   const [userRole, setUserRole] = useState(null);
   const [wishlistCriteria, setWishlistCriteria] = useState({});
   const sectionRefs = useRef([]);
   const [visibleSections, setVisibleSections] = useState([]);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -513,6 +521,7 @@ const Listings = () => {
     localStorage.setItem('zivaasFilters', JSON.stringify(clearedFilters));
     applyFilters(clearedFilters); // Apply cleared filters
     setPage(1);
+    setIsFilterOpen(false); // Hide filter bar after clearing
   };
 
   const isVisible = (id) => visibleSections.includes(id);
@@ -589,31 +598,47 @@ const Listings = () => {
         </div>
       </section>
 
+      <h2 className="text-4xl font-bold text-stone-700 p-4 text-center">Available Properties</h2>
+
       {/* Properties Section */}
       <section
         id="section2"
         ref={(el) => (sectionRefs.current[1] = el)}
-        className={`max-w-7xl mx-auto py-12 transition-all duration-1000 transform grid grid-cols-[auto_1fr] gap-6 ${isVisible('section2') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-30'}`}
+        className={`max-w-7xl mx-auto p-4 transition-all duration-1000 transform grid grid-cols-1 md:grid-cols-[auto_1fr] gap-6 ${isVisible('section2') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-30'}`}
       >
-        {/* FilterBar */}
-        <FilterBar
-          filters={filters}
-          setFilters={setFilters}
-          applyFilters={applyFilters}
-          clearFilters={clearFilters}
-          userRole={userRole}
-          wishlistCriteria={wishlistCriteria}
-        />
+        {/* Mobile Filter Toggle Button */}
+            <div className="md:hidden flex justify-end">
+              <button
+                onClick={() => setIsFilterOpen(!isFilterOpen)}
+                className="bg-stone-700 flex gap-2 text-white px-4 py-2 items-center rounded-full hover:bg-stone-600 transition duration-300"
+                aria-label="Toggle filter"
+              >
+                <FaFilter size={22} />
+                Filter
+              </button>
+            </div>
+            {/* FilterBar */}
+            <FilterBar
+              filters={filters}
+              setFilters={setFilters}
+              applyFilters={applyFilters}
+              clearFilters={clearFilters}
+              userRole={userRole}
+              wishlistCriteria={wishlistCriteria}
+              isFilterOpen={isFilterOpen}
+              setIsFilterOpen={setIsFilterOpen}
+            />
+
         <div>
           {/* Properties Grid on the right */}
           <div className="w-full">
-            <h2 className="text-4xl font-bold text-stone-700 mb-6 text-center md:text-left">Available Properties</h2>
+
             {error && (
               <p className="text-stone-600 text-center mb-4">
                 {error}
               </p>
             )}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mt-10 mr-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
               {paginatedProperties.length > 0 ? (
                 paginatedProperties.map((property, index) => (
                   <div key={property.id} className="rounded shadow hover:shadow-lg transition text-white">

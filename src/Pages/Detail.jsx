@@ -185,6 +185,11 @@ const Details = () => {
   const [currentIndex, setCurrentIndex] = useState(0); // For slideshow
   const [zoomLevel, setZoomLevel] = useState(1); // For zoom control
 
+  // State for Floor Plans
+  const [activeTab, setActiveTab] = useState("unit-plans");
+  const [activePlan, setActivePlan] = useState(null);
+  const [floorPlans, setFloorPlans] = useState([]);
+
   useEffect(() => {
     const fetchProperty = async () => {
       try {
@@ -228,7 +233,9 @@ const Details = () => {
             developer_description,
             developer_image,
             developer_logo,
-            developer_rating
+            developer_rating,
+            site_plan,
+            tower_layout
           `
           )
           .eq("id", id)
@@ -273,12 +280,23 @@ const Details = () => {
               }))
               : [];
 
+        const { data: floorPlansData, error: floorPlansError } = await supabase
+          .from("floor_plans")
+          .select("*")
+          .eq("property_id", id);
+
+        if (floorPlansError) {
+          console.error("Floor plans fetch error:", floorPlansError.message);
+          throw new Error("Failed to fetch floor plans: " + floorPlansError.message);
+        }
+
         const mappedProperty = {
           ...propertyData,
           amenities: normalizedAmenities,
           nearby_landmarks: landmarks,
         };
         setProperty(mappedProperty);
+        setFloorPlans(floorPlansData || []);
         setImages(
           typeof propertyData.images === "string"
             ? propertyData.images.split(",").map((url, index) => ({
@@ -291,6 +309,17 @@ const Details = () => {
                 alt: `${propertyData.name || "Property"} - Image ${index + 1}`,
               }))
               : []
+        );
+
+        // Set initial active plan based on tabs
+        setActivePlan(
+          activeTab === "unit-plans"
+            ? (floorPlansData.find((plan) => plan.type === "residential")?.image ||
+              floorPlansData.find((plan) => plan.type === "commercial")?.image ||
+              "https://via.placeholder.com/800x600?text=No+Unit+Plan+Available")
+            : activeTab === "site-plan"
+              ? propertyData.site_plan || "https://via.placeholder.com/800x600?text=No+Site+Plan+Available"
+              : propertyData.tower_layout || "https://via.placeholder.com/800x600?text=No+Tower+Layout+Available"
         );
 
         setLoading(false);
@@ -325,6 +354,19 @@ const Details = () => {
       console.error("Error submitting rating:", error.message);
       setRatingError("Failed to submit rating. Please try again.");
     }
+  };
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    setActivePlan(
+      tab === "unit-plans"
+        ? (floorPlans.find((plan) => plan.type === "residential")?.image ||
+          floorPlans.find((plan) => plan.type === "commercial")?.image ||
+          "https://via.placeholder.com/800x600?text=No+Unit+Plan+Available")
+        : tab === "site-plan"
+          ? (property?.site_plan || "https://via.placeholder.com/800x600?text=No+Site+Plan+Available")
+          : (property?.tower_layout || "https://via.placeholder.com/800x600?text=No+Tower+Layout+Available")
+    );
   };
 
   if (loading)
@@ -438,7 +480,7 @@ const Details = () => {
         viewport={{ once: true, amount: 0.3 }}
         transition={{ duration: 0.6 }}
       >
-        <div className="max-w-6xl mx-auto px-4 py-2">
+        <div className="max-w-6xl mx-auto px-4">
           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-8 md:gap-4 text-center">
             <div className="p-3">
               <div className="text-lg font-bold text-stone-700">
@@ -788,32 +830,40 @@ const Details = () => {
                       />
                     </div>
                   </div>
-                  <div className="absolute top-4 right-4 flex gap-2 z-10">
+                  <div className="absolute top-4 right-4 flex z-10">
                     <button
                       onClick={() => setZoomLevel((prev) => Math.min(prev + 0.1, 2))}
-                      className="bg-white w-8 h-8 items-center rounded-full shadow-md hover:bg-stone-100"
+                      className="bg-transparent rounded-full w-10 h-10 focus:outline-none"
                     >
-                      <span className="text-xl">+</span>
+                      <span className="text-4xl transition-colors duration-300">
+                        +
+                      </span>
                     </button>
                     <button
                       onClick={() => setZoomLevel((prev) => Math.max(prev - 0.1, 1))}
-                      className="bg-white w-8 h-8 rounded-full shadow-md hover:bg-stone-100"
+                      className="bg-transparent rounded-full w-10 h-10 focus:outline-none"
                     >
-                      <span className="text-xl">-</span>
+                      <span className="text-4xl transition-colors duration-300">
+                        -
+                      </span>
                     </button>
                   </div>
                   <div className="flex justify-center mt-4 gap-4">
                     <button
                       onClick={() => setCurrentIndex((prev) => (prev > 0 ? prev - 1 : images.length - 1))}
-                      className="bg-stone-700 w-10 h-8 text-white rounded-full hover:bg-stone-800"
+                      className="bg-transparent rounded-full w-10 h-10 focus:outline-none"
                     >
+                      <span className="text-4xl transition-colors duration-300">
                       ←
+                      </span>
                     </button>
                     <button
                       onClick={() => setCurrentIndex((prev) => (prev + 1) % images.length)}
-                      className="bg-stone-700 w-10 h-8 text-white rounded-full hover:bg-stone-800"
+                      className="bg-transparent rounded-full w-10 h-10 focus:outline-none"
                     >
+                      <span className="text-4xl transition-colors duration-300">
                       →
+                      </span>
                     </button>
                   </div>
                 </div>
@@ -826,6 +876,7 @@ const Details = () => {
           )}
         </div>
       </motion.section>
+
       <motion.section
         className="py-12 bg-white"
         initial={{ opacity: 0, y: 30 }}
@@ -880,6 +931,148 @@ const Details = () => {
                   property.location
                 )}&output=embed`}
               />
+            </div>
+          </div>
+        </div>
+      </motion.section>
+
+      <motion.section
+        className="py-12 bg-stone-50"
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.3 }}
+        transition={{ duration: 0.6 }}
+      >
+        <div className="max-w-6xl mx-auto px-4">
+          <h2 className="text-4xl font-bold text-stone-700 mb-6 text-center">Floor Plans</h2>
+          <p className="text-lg text-stone-600 mb-6 text-center max-w-xl mx-auto">
+            Explore the detailed layouts of {property.name}
+          </p>
+          <div className="mb-8">
+            <div className="flex flex-wrap justify-center gap-4">
+              {["unit-plans", "site-plan", "tower-layout"].map((tab) => (
+                <button
+                  key={tab}
+                  className={`px-6 py-3 rounded-lg font-medium transition-all duration-300 whitespace-nowrap ${activeTab === tab ? "bg-stone-700 text-white" : "bg-white text-stone-700 border border-stone-300 hover:bg-stone-50"
+                    }`}
+                  onClick={() => handleTabChange(tab)}
+                >
+                  {tab === "unit-plans" && "Unit Plans"}
+                  {tab === "site-plan" && "Site Plan"}
+                  {tab === "tower-layout" && "Tower Layout"}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2">
+              <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+                <div className="relative">
+                  <div
+                    className="w-full h-full object-cover overflow-auto rounded-lg shadow-md border border-stone-200"
+                    style={{ minHeight: "34rem", maxHeight: "34rem" }}
+                  >
+                    <div
+                      className="w-full h-full flex"
+                      style={{
+                        transformOrigin: "0 0",
+                        transform: `scale(${zoomLevel})`,
+                        transition: "transform 0.3s",
+                      }}
+                    >
+                      <img
+                        src={activePlan || "https://via.placeholder.com/800x600?text=No+Plan+Available"}
+                        alt={`${property.name} ${activeTab} Floor Plan`}
+                        className="w-full h-full object-contain"
+                        onError={(e) => {
+                          e.target.src = "https://via.placeholder.com/800x600?text=No+Plan+Available";
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <div className="absolute top-4 right-4 flex gap-2 z-10">
+                    <button
+                      onClick={() => setZoomLevel((prev) => Math.min(prev + 0.1, 2))}
+                      className="bg-transparent rounded-full w-10 h-10 focus:outline-none"
+                    >
+                      <span className="text-4xl transition-colors duration-300">
+                        +
+                      </span>
+                    </button>
+                    <button
+                      onClick={() => setZoomLevel((prev) => Math.max(prev - 0.1, 1))}
+                      className="bg-transparent rounded-full w-10 h-10 focus:outline-none"
+                    >
+                      <span className="text-4xl transition-colors duration-300">
+                        -
+                      </span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="lg:col-span-1">
+              <div className="bg-white rounded-xl shadow-lg p-6">
+                <h3 className="text-xl font-semibold text-stone-800 mb-6">Available Plans</h3>
+                <div className="space-y-4 mb-8">
+                  {activeTab === "unit-plans" && (
+                    <>
+                      {floorPlans
+                        .filter((plan) => plan.type === "residential")
+                        .map((plan) => (
+                          <div
+                            key={plan.id}
+                            className={`plan-item flex items-center gap-4 p-3 rounded-lg cursor-pointer transition-all duration-300 ${activePlan === plan.image ? "bg-stone-50 border-2 border-stone-700" : "hover:bg-stone-50"
+                              }`}
+                            onClick={() => setActivePlan(plan.image)}
+                          >
+                            <img
+                              src={plan.thumbnail}
+                              alt={plan.bhk}
+                              className="w-16 h-16 rounded-lg object-cover object-top"
+                              onError={(e) => {
+                                e.target.src = "https://via.placeholder.com/64x64?text=No+Thumbnail";
+                              }}
+                            />
+                            <div>
+                              <h4 className="font-medium text-stone-800">{plan.bhk}</h4>
+                              <p className="text-sm text-stone-600">{plan.size}</p>
+                            </div>
+                          </div>
+                        ))}
+                      {floorPlans
+                        .filter((plan) => plan.type === "commercial")
+                        .map((plan) => (
+                          <div
+                            key={plan.id}
+                            className={`plan-item flex items-center gap-4 p-3 rounded-lg cursor-pointer transition-all duration-300 ${activePlan === plan.image ? "bg-stone-50 border-2 border-stone-700" : "hover:bg-stone-50"
+                              }`}
+                            onClick={() => setActivePlan(plan.image)}
+                          >
+                            <img
+                              src={plan.thumbnail}
+                              alt={plan.bhk}
+                              className="w-16 h-16 rounded-lg object-cover object-top"
+                              onError={(e) => {
+                                e.target.src = "https://via.placeholder.com/64x64?text=No+Thumbnail";
+                              }}
+                            />
+                            <div>
+                              <h4 className="font-medium text-stone-800">{plan.bhk}</h4>
+                              <p className="text-sm text-stone-600">{plan.size}</p>
+                            </div>
+                          </div>
+                        ))}
+                      {floorPlans.length === 0 && (
+                        <p className="text-stone-600 text-center">No unit plans available.</p>
+                      )}
+                    </>
+                  )}
+                  {activeTab !== "unit-plans" && (
+                    <p className="text-stone-600 text-center">Select Unit Plans to view uploaded plans.</p>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>
