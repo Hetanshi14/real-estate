@@ -1,22 +1,28 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
+import { motion } from 'framer-motion';
+
+// Logo URL
+const LOGO_URL = "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/logo/zivaaslogo01.jpg";
 
 const AboutUs = () => {
   const sectionRefs = useRef([]);
-  const [visibleSections, setVisibleSections] = useState([]);
+  const [visibleSections, setVisibleSections] = useState(['section1', 'section2', 'section3', 'core-values']); // Initialize with all sections visible
   const bannerRef = useRef(null);
-  const [bannerInView, setBannerInView] = useState(false);
-  const [developers, setDevelopers] = useState([]); // Now represents users with role 'developer'
+  const [bannerInView, setBannerInView] = useState(true); // Initialize banner as visible
+  const [developers, setDevelopers] = useState([]);
   const [properties, setProperties] = useState([]);
   const [error, setError] = useState(null);
+  const [isLoading, setIsLoading] = useState(true); // New loading state
 
   useEffect(() => {
     document.title = 'About Us - Zivaas Properties';
 
     const fetchData = async () => {
       try {
-        // Fetch users with role 'developer' to replace the old developers table
+        setIsLoading(true); // Start loading
+        // Fetch users with role 'developer'
         const { data: developersData, error: developersError } = await supabase
           .from('users')
           .select('id, username, email, created_at, updated_at')
@@ -81,54 +87,44 @@ const AboutUs = () => {
             image_url: p.images && p.images.length > 0 ? p.images[0] : '',
           }))
         );
-        setDevelopers(developersData); // Set developers from users with role 'developer'
+        setDevelopers(developersData);
         setError(null);
       } catch (err) {
         console.error('Error fetching data:', err.message);
         setError(err.message);
         setDevelopers([]);
         setProperties([]);
+      } finally {
+        setIsLoading(false); // Stop loading
       }
     };
 
     fetchData();
+  }, []);
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.target === bannerRef.current && entry.isIntersecting) {
-            setBannerInView(true);
-          }
-
-          if (entry.isIntersecting && !visibleSections.includes(entry.target.id)) {
-            setVisibleSections((prev) => [...prev, entry.target.id]);
-          }
-        });
-      },
-      { threshold: 0.2 }
+  // Render loading screen if isLoading is true
+  if (isLoading) {
+    return (
+      <div className="col-span-full flex justify-center items-center min-h-screen w-auto h-72">
+        <motion.img
+          src={LOGO_URL}
+          alt="Zivaas Properties Logo"
+          className="h-32 w-auto object-contain animate-pulse"
+        />
+      </div>
     );
-
-    if (bannerRef.current) observer.observe(bannerRef.current);
-    sectionRefs.current.forEach((ref) => {
-      if (ref) observer.observe(ref);
-    });
-
-    return () => {
-      if (bannerRef.current) observer.unobserve(bannerRef.current);
-      sectionRefs.current.forEach((ref) => {
-        if (ref) observer.unobserve(ref);
-      });
-    };
-  }, [visibleSections]);
-
-  const isVisible = (id) => visibleSections.includes(id);
+  }
 
   return (
     <div className="min-h-screen">
       <section
         ref={bannerRef}
-        className={`relative bg-cover bg-center text-white h-[80vh] flex items-center pt-20 px-6 pb-20 transition-all duration-1000 transform ${bannerInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+        className="relative bg-cover bg-center text-white h-[80vh] flex items-center pt-20 px-6 pb-20 transition-all duration-1000"
         style={{ backgroundImage: `url(https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Bg%20img/bgabout.jpg)` }}
+        onError={(e) => {
+          console.error('Banner background image load failed');
+          e.target.style.backgroundImage = 'url(https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80)';
+        }}
       >
         <div className="absolute inset-0 bg-black/60 z-0" />
         <div className="relative z-10 max-w-3xl mx-auto">
@@ -160,7 +156,7 @@ const AboutUs = () => {
       <section
         id="section1"
         ref={(el) => (sectionRefs.current[0] = el)}
-        className={`py-16 px-6 max-w-6xl mx-auto grid md:grid-cols-2 gap-10 items-center transition-all duration-1000 transform ${isVisible('section1') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+        className="py-16 px-6 max-w-6xl mx-auto grid md:grid-cols-2 gap-10 items-center transition-all duration-1000"
       >
         <div>
           <h2 className="text-4xl font-bold mb-4">
@@ -212,7 +208,7 @@ const AboutUs = () => {
       <section
         id="section2"
         ref={(el) => (sectionRefs.current[1] = el)}
-        className={`bg-stone-100 py-16 px-6 transition-all duration-1000 transform ${isVisible('section2') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+        className="bg-stone-100 py-16 px-6 transition-all duration-1000"
       >
         <h2 className="text-4xl font-bold text-center text-stone-700 mb-4">Our Purpose & Promise</h2>
         <p className="text-center text-stone-500 mb-12 max-w-3xl mx-auto">
@@ -239,7 +235,7 @@ const AboutUs = () => {
               To be the leading real estate platform where developers thrive and customers find their dream homes, creating lasting value for communities.
             </p>
             <p className="text-stone-600 mt-3">
-              We envision a future where every project on Zivaas Properties inspires trust, innovation, and connection, transforming the way people buy and `build` homes.
+              We envision a future where every project on Zivaas Properties inspires trust, innovation, and connection, transforming the way people buy and build homes.
             </p>
           </div>
         </div>
@@ -248,7 +244,7 @@ const AboutUs = () => {
       <section
         id="section3"
         ref={(el) => (sectionRefs.current[2] = el)}
-        className={`py-16 px-6 bg-white transition-all duration-1000 transform ${isVisible('section3') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+        className="py-16 px-6 bg-white transition-all duration-1000"
       >
         <h2 className="text-4xl font-bold text-center text-stone-800 mb-4">Our Expertise</h2>
         <p className="text-center text-stone-500 mb-12 max-w-3xl mx-auto">
@@ -306,60 +302,58 @@ const AboutUs = () => {
         </div>
       </section>
 
-  <section className="bg-stone-100 text-stone-700 py-16 px-4">
-  <div className="max-w-6xl mx-auto bg-white rounded-xl shadow-lg p-10">
-    <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-stone-800">
-      Our Core Values
-    </h2>
+      <section
+        id="core-values"
+        className="bg-stone-100 text-stone-700 py-16 px-4"
+      >
+        <div className="max-w-6xl mx-auto bg-white rounded-xl shadow-lg p-10">
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-stone-800">
+            Our Core Values
+          </h2>
 
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-10 text-center">
-      {/* Integrity */}
-      <div>
-        <div className="bg-stone-200 rounded-full h-20 w-20 mx-auto mb-4 flex items-center justify-center">
-          <span className="text-stone-700 text-3xl">👥</span>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-10 text-center">
+            <div>
+              <div className="bg-stone-200 rounded-full h-20 w-20 mx-auto mb-4 flex items-center justify-center">
+                <span className="text-stone-700 text-3xl">👥</span>
+              </div>
+              <h3 className="text-xl font-semibold mb-2 text-stone-800">Integrity</h3>
+              <p className="text-sm text-stone-600">
+                We uphold the highest standards of honesty, ensuring trust and accountability in all our actions.
+              </p>
+            </div>
+
+            <div>
+              <div className="bg-stone-200 rounded-full h-20 w-20 mx-auto mb-4 flex items-center justify-center">
+                <span className="text-stone-700 text-3xl">🏢</span>
+              </div>
+              <h3 className="text-xl font-semibold mb-2 text-stone-800">Excellence</h3>
+              <p className="text-sm text-stone-600">
+                We relentlessly pursue superior quality, delivering exceptional results that inspire confidence.
+              </p>
+            </div>
+
+            <div>
+              <div className="bg-stone-200 rounded-full h-20 w-20 mx-auto mb-4 flex items-center justify-center">
+                <span className="text-stone-700 text-3xl">📚</span>
+              </div>
+              <h3 className="text-xl font-semibold mb-2 text-stone-800">Innovation</h3>
+              <p className="text-sm text-stone-600">
+                We drive progress by embracing bold ideas and pioneering solutions for a better future.
+              </p>
+            </div>
+
+            <div>
+              <div className="bg-stone-200 rounded-full h-20 w-20 mx-auto mb-4 flex items-center justify-center">
+                <span className="text-stone-700 text-3xl">🤝</span>
+              </div>
+              <h3 className="text-xl font-semibold mb-2 text-stone-800">Collaboration</h3>
+              <p className="text-sm text-stone-600">
+                We foster meaningful partnerships, uniting diverse perspectives to achieve collective success.
+              </p>
+            </div>
+          </div>
         </div>
-        <h3 className="text-xl font-semibold mb-2 text-stone-800">Integrity</h3>
-        <p className="text-sm text-stone-600">
-          We uphold the highest standards of honesty, ensuring trust and accountability in all our actions.
-        </p>
-      </div>
-
-      {/* Excellence */}
-      <div>
-        <div className="bg-stone-200 rounded-full h-20 w-20 mx-auto mb-4 flex items-center justify-center">
-          <span className="text-stone-700 text-3xl">🏢</span>
-        </div>
-        <h3 className="text-xl font-semibold mb-2 text-stone-800">Excellence</h3>
-        <p className="text-sm text-stone-600">
-          We relentlessly pursue superior quality, delivering exceptional results that inspire confidence.
-        </p>
-      </div>
-
-      {/* Innovation */}
-      <div>
-        <div className="bg-stone-200 rounded-full h-20 w-20 mx-auto mb-4 flex items-center justify-center">
-          <span className="text-stone-700 text-3xl">📚</span>
-        </div>
-        <h3 className="text-xl font-semibold mb-2 text-stone-800">Innovation</h3>
-        <p className="text-sm text-stone-600">
-          We drive progress by embracing bold ideas and pioneering solutions for a better future.
-        </p>
-      </div>
-
-      {/* Collaboration */}
-      <div>
-        <div className="bg-stone-200 rounded-full h-20 w-20 mx-auto mb-4 flex items-center justify-center">
-          <span className="text-stone-700 text-3xl">🤝</span>
-        </div>
-        <h3 className="text-xl font-semibold mb-2 text-stone-800">Collaboration</h3>
-        <p className="text-sm text-stone-600">
-          We foster meaningful partnerships, uniting diverse perspectives to achieve collective success.
-        </p>
-      </div>
-    </div>
-  </div>
-</section>
-
+      </section>
     </div>
   );
 };

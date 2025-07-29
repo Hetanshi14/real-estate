@@ -1,5 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { FaPhoneAlt, FaEnvelope, FaMapMarkerAlt, FaPaperPlane } from 'react-icons/fa';
+import { motion } from 'framer-motion';
+
+// Logo URL
+const LOGO_URL = "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/logo/zivaaslogo01.jpg";
 
 const ContactUs = () => {
     const [formData, setFormData] = useState({
@@ -9,35 +13,20 @@ const ContactUs = () => {
         message: ''
     });
 
-    const [visibleSections, setVisibleSections] = useState([]);
+    const [visibleSections, setVisibleSections] = useState(['contactBanner', 'contactInfo', 'contactForm']); // Initialize with all sections visible
+    const [isLoading, setIsLoading] = useState(true); // New loading state
     const bannerRef = useRef(null);
     const contactRef = useRef(null);
     const formRef = useRef(null);
 
     useEffect(() => {
-        const observer = new IntersectionObserver(
-            (entries) => {
-                entries.forEach((entry) => {
-                    if (entry.isIntersecting && !visibleSections.includes(entry.target.id)) {
-                        setVisibleSections(prev => [...prev, entry.target.id]);
-                    }
-                });
-            },
-            { threshold: 0.2 }
-        );
+        // Simulate a loading delay (e.g., 1 second) to mimic data fetching
+        const timer = setTimeout(() => {
+            setIsLoading(false);
+        }, 1000);
 
-        if (bannerRef.current) observer.observe(bannerRef.current);
-        if (contactRef.current) observer.observe(contactRef.current);
-        if (formRef.current) observer.observe(formRef.current);
-
-        return () => {
-            if (bannerRef.current) observer.unobserve(bannerRef.current);
-            if (contactRef.current) observer.unobserve(contactRef.current);
-            if (formRef.current) observer.unobserve(formRef.current);
-        };
-    }, [visibleSections]);
-
-    const isVisible = (id) => visibleSections.includes(id);
+        return () => clearTimeout(timer); // Cleanup timer on unmount
+    }, []);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -56,15 +45,30 @@ const ContactUs = () => {
         });
     };
 
+    // Render loading screen if isLoading is true
+    if (isLoading) {
+        return (
+            <div className="col-span-full flex justify-center items-center min-h-screen w-auto h-72">
+                <motion.img
+                    src={LOGO_URL}
+                    alt="Zivaas Properties Logo"
+                    className="h-32 w-auto object-contain animate-pulse"
+                    />
+            </div>
+        );
+    }
+
     return (
         <div className="bg-white">
             <section
                 id="contactBanner"
                 ref={bannerRef}
-                className={`relative h-[80vh] bg-cover bg-center flex p-20 items-center transition-all duration-1000 transform ${
-                    isVisible('contactBanner') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-                }`}
+                className="relative h-[80vh] bg-cover bg-center flex p-20 items-center transition-all duration-1000"
                 style={{ backgroundImage: `url(https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Bg%20img/bgcontact.jpg)` }}
+                onError={(e) => {
+                    console.error('Contact banner background image load failed');
+                    e.target.style.backgroundImage = 'url(https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80)';
+                }}
             >
                 <div className="absolute inset-0 bg-black/60" />
                 <div className="relative z-10 text-white px-4">
@@ -79,9 +83,7 @@ const ContactUs = () => {
                 <div
                     id="contactInfo"
                     ref={contactRef}
-                    className={`transition-all duration-1000 transform ${
-                        isVisible('contactInfo') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-                    }`}
+                    className="transition-all duration-1000"
                 >
                     <h2 className="text-3xl font-bold text-stone-700 mb-6">Contact Information</h2>
                     <div className="space-y-6">
@@ -115,9 +117,7 @@ const ContactUs = () => {
                     id="contactForm"
                     ref={formRef}
                     onSubmit={handleSubmit}
-                    className={`bg-white shadow-md p-6 rounded space-y-5 w-full transition-all duration-1000 transform ${
-                        isVisible('contactForm') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-                    }`}
+                    className="bg-white shadow-md p-6 rounded space-y-5 w-full transition-all duration-1000"
                 >
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>

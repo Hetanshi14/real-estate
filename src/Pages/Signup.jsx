@@ -131,7 +131,7 @@ const SignUp = () => {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label className="text-sm font-semibold text-stone-700 mb-2 flex items-center">
-              <FaUser className="mr-2" /> Username
+              <FaUser className="mr-2" /> Username *
             </label>
             <input
               type="text"
@@ -145,7 +145,7 @@ const SignUp = () => {
           </div>
           <div>
             <label className="text-sm font-semibold text-stone-700 mb-2 flex items-center">
-              <FaEnvelope className="mr-2" /> Email Address
+              <FaEnvelope className="mr-2" /> Email Address *
             </label>
             <input
               type="email"
@@ -159,7 +159,7 @@ const SignUp = () => {
           </div>
           <div>
             <label className="text-sm font-semibold text-stone-700 mb-2 flex items-center">
-              <FaLock className="mr-2" /> Password
+              <FaLock className="mr-2" /> Password *
             </label>
             <input
               type="password"

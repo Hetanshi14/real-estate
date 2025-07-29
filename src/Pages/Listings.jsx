@@ -15,6 +15,9 @@ import { motion } from "framer-motion";
 // Default image URL
 const DEFAULT_IMAGE = "https://via.placeholder.com/300x300?text=No+Image";
 
+// Logo URL
+const LOGO_URL = "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/logo/zivaaslogo01.jpg";
+
 const FilterBar = ({
   filters,
   setFilters,
@@ -240,6 +243,7 @@ const Listings = () => {
   const [allProps, setAllProps] = useState([]);
   const [error, setError] = useState(null);
   const [page, setPage] = useState(1);
+  const [isLoading, setIsLoading] = useState(true); // New loading state
   const perPage = 9;
 
   const [filters, setFilters] = useState(() => {
@@ -314,6 +318,8 @@ const Listings = () => {
         console.error("Listings: Error fetching user data:", error);
         setError(`Error fetching user data: ${error.message}`);
         setWishlistCriteria({});
+      } finally {
+        setIsLoading(false); // Stop loading after user data fetch
       }
     };
     fetchUserData();
@@ -322,6 +328,7 @@ const Listings = () => {
   useEffect(() => {
     const fetchProperties = async () => {
       try {
+        setIsLoading(true); // Start loading
         console.log("Listings: Fetching properties from Supabase");
         const { data: propertiesData, error: propertiesError } =
           await supabase.from("properties").select(`
@@ -387,6 +394,8 @@ const Listings = () => {
           `Error loading properties: ${error.message}. Check console for details.`
         );
         setAllProps([]);
+      } finally {
+        setIsLoading(false); // Stop loading after properties fetch
       }
     };
 
@@ -673,14 +682,25 @@ const Listings = () => {
     }
   };
 
+  // Render loading screen if isLoading is true
+  if (isLoading) {
+    return (
+      <div className="col-span-full flex justify-center items-center min-h-screen w-auto h-72r">
+        <motion.img
+          src={LOGO_URL}
+          className="h-32 w-auto object-contain animate-pulse"
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-stone-50">
       {/* Hero Section */}
       <section
         id="section1"
         ref={(el) => (sectionRefs.current[0] = el)}
-        className={`relative bg-cover bg-center text-white h-[80vh] flex items-center p-20 transition-all duration-1000 transform ${
-          isVisible("section1")
+        className={`relative bg-cover bg-center text-white h-[80vh] flex items-center p-20 transition-all duration-1000 transform
             ? "opacity-100 translate-y-0"
             : "opacity-0 translate-y-8"
         }`}
@@ -718,8 +738,7 @@ const Listings = () => {
       <section
         id="section2"
         ref={(el) => (sectionRefs.current[1] = el)}
-        className={`max-w-7xl mx-auto p-4 transition-all duration-1000 transform grid grid-cols-1 md:grid-cols-[auto_1fr] gap-6 ${
-          isVisible("section2")
+        className={`max-w-7xl mx-auto p-4 transition-all duration-1000 transform grid grid-cols-1 md:grid-cols-[auto_1fr] gap-6 
             ? "opacity-100 translate-y-0"
             : "opacity-0 translate-y-30"
         }`}

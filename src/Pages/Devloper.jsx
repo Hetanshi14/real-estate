@@ -4,6 +4,13 @@ import { supabase } from "../supabaseClient";
 import { RiFilter2Line, RiBuildingLine } from "react-icons/ri";
 import Rating from "@mui/material/Rating";
 import Stack from "@mui/material/Stack";
+import { motion } from "framer-motion";
+
+// Default image URL
+const DEFAULT_IMAGE = "https://tse1.mm.bing.net/th/id/OIP.NVfmC91cXZclVmv4ML3-bAHaEK?pid=Api&P=0&h=180";
+
+// Logo URL
+const LOGO_URL = "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/logo/zivaaslogo01.jpg";
 
 const Developer = () => {
   const [developers, setDevelopers] = useState([]);
@@ -11,13 +18,15 @@ const Developer = () => {
   const [minExperience, setMinExperience] = useState("");
   const [minRating, setMinRating] = useState("");
   const [filteredDevelopers, setFilteredDevelopers] = useState([]);
+  const [isLoading, setIsLoading] = useState(true); // New loading state
 
   const sectionRefs = useRef([]);
-  const [visibleSections, setVisibleSections] = useState([]);
+  const [visibleSections, setVisibleSections] = useState(["hero", "developers"]); // Initialize with sections visible
 
   useEffect(() => {
     const fetchDevelopersAndProperties = async () => {
       try {
+        setIsLoading(true); // Start loading
         console.log("Fetching developers and properties...");
         const { data, error: fetchError } = await supabase.from("properties")
           .select(`
@@ -61,8 +70,8 @@ const Developer = () => {
               description:
                 property.developer_description || "No description available.",
               logo: developerLogo,
-              experience: property.developer_experience || 0, // Default to 0 if null
-              rating: property.developer_rating || 0.0, // Default to 0.0 if null
+              experience: property.developer_experience || 0,
+              rating: property.developer_rating || 0.0,
               properties: [],
             });
           }
@@ -76,7 +85,7 @@ const Developer = () => {
             (currentDeveloper.rating * currentDeveloper.properties.length +
               (property.developer_rating || 0.0)) /
             (currentDeveloper.properties.length + 1)
-          ).toFixed(1); // Simple average
+          ).toFixed(1);
           currentDeveloper.properties.push({
             id: property.id,
             name: property.name || "Unnamed Property",
@@ -90,44 +99,20 @@ const Developer = () => {
         const developersArray = Array.from(developerMap.values());
         console.log("Mapped developers:", developersArray);
         setDevelopers(developersArray);
-        setFilteredDevelopers(developersArray); // Initialize filtered list
+        setFilteredDevelopers(developersArray);
         setError(null);
       } catch (error) {
         console.error("Error in fetchDevelopersAndProperties:", error);
         setError(`Failed to load developers and properties: ${error.message}`);
         setDevelopers([]);
         setFilteredDevelopers([]);
+      } finally {
+        setIsLoading(false); // Stop loading
       }
     };
 
     fetchDevelopersAndProperties();
   }, []);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (
-            entry.isIntersecting &&
-            !visibleSections.includes(entry.target.id)
-          ) {
-            setVisibleSections((prev) => [...prev, entry.target.id]);
-          }
-        });
-      },
-      { threshold: 0.2 }
-    );
-
-    sectionRefs.current.forEach((ref) => {
-      if (ref) observer.observe(ref);
-    });
-
-    return () => {
-      sectionRefs.current.forEach((ref) => {
-        if (ref) observer.unobserve(ref);
-      });
-    };
-  }, [visibleSections]);
 
   useEffect(() => {
     // Filter developers based on minExperience and minRating
@@ -145,33 +130,36 @@ const Developer = () => {
     setFilteredDevelopers(updatedDevelopers);
   }, [minExperience, minRating, developers]);
 
-  const isVisible = (id) => visibleSections.includes(id);
-
   const clearFilters = () => {
     setMinExperience("");
     setMinRating("");
   };
 
-  // Default image URL
-  const defaultImage =
-    "https://tse1.mm.bing.net/th/id/OIP.NVfmC91cXZclVmv4ML3-bAHaEK?pid=Api&P=0&h=180";
+  // Render loading screen if isLoading is true
+  if (isLoading) {
+    return (
+      <div className="col-span-full flex justify-center items-center min-h-screen w-auto h-72">
+        <motion.img
+          src={LOGO_URL}
+          alt="Zivaas Properties Logo"
+          className="h-32 w-auto object-contain animate-pulse"
+          />
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans text-gray-900">
+    <div className="min-h-screen">
       {/* Hero Section */}
       <section
         id="hero"
         ref={(el) => (sectionRefs.current[0] = el)}
-        className={`bg-cover bg-center text-white py-24 transition-all duration-1000 transform ${
-          isVisible("hero")
-            ? "opacity-100 translate-y-0"
-            : "opacity-0 translate-y-8"
-        }`}
+        className="relative bg-cover bg-center text-white py-24 transition-all duration-1000"
         style={{
           backgroundImage: `url(https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Bg%20img/bgdev.jpg)`,
         }}
       >
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-0" />
+        <div className="absolute inset-0 bg-black/60 z-0" />
         <div className="container mx-auto px-6 text-center relative z-10 max-w-2xl">
           <h1 className="text-4xl font-bold mb-4 tracking-tight">
             Discover Premium Properties
@@ -193,11 +181,7 @@ const Developer = () => {
       <section
         id="developers"
         ref={(el) => (sectionRefs.current[1] = el)}
-        className={`max-w-7xl mx-auto py-16 px-6 transition-all duration-1000 transform ${
-          isVisible("developers")
-            ? "opacity-100 translate-y-0"
-            : "opacity-0 translate-y-8"
-        }`}
+        className="max-w-7xl mx-auto py-16 px-6 transition-all duration-1000"
       >
         <div className="flex justify-between items-center mb-10">
           <h2 className="text-4xl font-bold text-gray-900 tracking-tight flex items-center">
@@ -232,11 +216,11 @@ const Developer = () => {
                 step="0.1"
               />
             </div>
-           <button
+            <button
               onClick={clearFilters}
               className="relative inline-block px-3 py-2 rounded font-medium text-white bg-stone-700 z-10 overflow-hidden
-    before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600 
-    before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
+              before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600 
+              before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
             >
               Clear Filters
             </button>
@@ -279,11 +263,11 @@ const Developer = () => {
                 {/* Developer Logo */}
                 <div className="mb-2 overflow-hidden">
                   <img
-                    src={developer.logo || defaultImage}
+                    src={developer.logo || DEFAULT_IMAGE}
                     alt={`${developer.name} Logo`}
                     className="w-full h-64 rounded-t-lg object-cover opacity-90 hover:opacity-100 transition-opacity duration-300"
                     onError={(e) => {
-                      e.target.src = defaultImage;
+                      e.target.src = DEFAULT_IMAGE;
                       console.error(
                         `Failed to load logo for ${developer.name}:`,
                         developer.logo

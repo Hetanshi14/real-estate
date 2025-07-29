@@ -108,7 +108,7 @@ const Login = () => {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label className="text-sm font-semibold text-stone-700 mb-2 flex items-center">
-              <FaUser className="mr-2" /> Username or Email
+              <FaUser className="mr-2" /> Username or Email *
             </label>
             <input
               type="text"
@@ -122,7 +122,7 @@ const Login = () => {
           </div>
           <div>
             <label className="text-sm font-semibold text-stone-700 mb-2 flex items-center">
-              <FaLock className="mr-2" /> Password
+              <FaLock className="mr-2" /> Password *
             </label>
             <input
               type="password"

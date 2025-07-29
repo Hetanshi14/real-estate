@@ -860,7 +860,7 @@ const Profile = () => {
                   </h3>
                   <div>
                     <label className="block text-sm font-semibold text-stone-700 mb-2">
-                      Username
+                      Username *
                     </label>
                     <input
                       type="text"
@@ -877,7 +877,7 @@ const Profile = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-stone-700 mb-2">
-                      Email
+                      Email *
                     </label>
                     <input
                       type="email"
@@ -1042,11 +1042,11 @@ const Profile = () => {
                   className="grid md:grid-cols-2 gap-6"
                 >
                   <h3 className="text-2xl font-bold text-stone-700 mb-4 md:col-span-2">
-                    Add New Property
+                    Add Property
                   </h3>
                   <div>
                     <label className="block text-sm font-semibold text-stone-700 mb-2">
-                      Property Name
+                      Property Name *
                     </label>
                     <input
                       type="text"
@@ -1062,7 +1062,7 @@ const Profile = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-stone-700 mb-2">
-                      Location
+                      Location *
                     </label>
                     <input
                       type="text"
@@ -1078,7 +1078,7 @@ const Profile = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-stone-700 mb-2">
-                      Price (₹)
+                      Price (₹) *
                     </label>
                     <input
                       type="number"
@@ -1094,7 +1094,7 @@ const Profile = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-stone-700 mb-2">
-                      Carpet Area (sq.ft)
+                      Carpet Area (sq.ft) *
                     </label>
                     <input
                       type="number"
@@ -1110,7 +1110,7 @@ const Profile = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-stone-700 mb-2">
-                      Configuration
+                      Configuration *
                     </label>
                     <input
                       type="text"
@@ -1126,7 +1126,7 @@ const Profile = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-stone-700 mb-2">
-                      Property Type
+                      Property Type *
                     </label>
                     <select
                       name="property_type"
@@ -1146,7 +1146,7 @@ const Profile = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-stone-700 mb-2">
-                      Total Floors
+                      Total Floors *
                     </label>
                     <input
                       type="number"
@@ -1162,7 +1162,7 @@ const Profile = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-stone-700 mb-2">
-                      Total Units
+                      Total Units *
                     </label>
                     <input
                       type="number"
@@ -1178,7 +1178,7 @@ const Profile = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-stone-700 mb-2">
-                      Status
+                      Status *
                     </label>
                     <select
                       name="status"
@@ -1199,7 +1199,7 @@ const Profile = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-stone-700 mb-2">
-                      RERA Number
+                      RERA Number *
                     </label>
                     <input
                       type="text"
@@ -1242,7 +1242,7 @@ const Profile = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-stone-700 mb-2">
-                      Developer Name
+                      Developer Name *
                     </label>
                     <input
                       type="text"
@@ -1324,7 +1324,7 @@ const Profile = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-stone-700 mb-2">
-                      Nearby Landmarks
+                      Nearby Landmarks *
                     </label>
                     <input
                       type="text"
@@ -1689,7 +1689,7 @@ const Profile = () => {
                     </h3>
                     <div>
                       <label className="block text-sm font-semibold text-stone-700 mb-2">
-                        Property Name
+                        Property Name *
                       </label>
                       <input
                         type="text"
@@ -1705,7 +1705,7 @@ const Profile = () => {
                     </div>
                     <div>
                       <label className="block text-sm font-semibold text-stone-700 mb-2">
-                        Location
+                        Location *
                       </label>
                       <input
                         type="text"
@@ -1721,7 +1721,7 @@ const Profile = () => {
                     </div>
                     <div>
                       <label className="block text-sm font-semibold text-stone-700 mb-2">
-                        Price (₹)
+                        Price (₹) *
                       </label>
                       <input
                         type="number"
@@ -1737,7 +1737,7 @@ const Profile = () => {
                     </div>
                     <div>
                       <label className="block text-sm font-semibold text-stone-700 mb-2">
-                        Carpet Area (sq.ft)
+                        Carpet Area (sq.ft) *
                       </label>
                       <input
                         type="number"
@@ -1753,7 +1753,7 @@ const Profile = () => {
                     </div>
                     <div>
                       <label className="block text-sm font-semibold text-stone-700 mb-2">
-                        Configuration
+                        Configuration *
                       </label>
                       <input
                         type="text"
@@ -1769,7 +1769,7 @@ const Profile = () => {
                     </div>
                     <div>
                       <label className="block text-sm font-semibold text-stone-700 mb-2">
-                        Property Type
+                        Property Type *
                       </label>
                       <select
                         name="property_type"
@@ -1789,7 +1789,7 @@ const Profile = () => {
                     </div>
                     <div>
                       <label className="block text-sm font-semibold text-stone-700 mb-2">
-                        Total Floors
+                        Total Floors *
                       </label>
                       <input
                         type="number"
@@ -1805,7 +1805,7 @@ const Profile = () => {
                     </div>
                     <div>
                       <label className="block text-sm font-semibold text-stone-700 mb-2">
-                        Total Units
+                        Total Units *
                       </label>
                       <input
                         type="number"
@@ -1821,7 +1821,7 @@ const Profile = () => {
                     </div>
                     <div>
                       <label className="block text-sm font-semibold text-stone-700 mb-2">
-                        Status
+                        Status *
                       </label>
                       <select
                         name="status"
@@ -1840,7 +1840,7 @@ const Profile = () => {
                     </div>
                     <div>
                       <label className="block text-sm font-semibold text-stone-700 mb-2">
-                        RERA Number
+                        RERA Number *
                       </label>
                       <input
                         type="text"
@@ -1883,7 +1883,7 @@ const Profile = () => {
                     </div>
                     <div>
                       <label className="block text-sm font-semibold text-stone-700 mb-2">
-                        Developer Name
+                        Developer Name *
                       </label>
                       <input
                         type="text"
@@ -1959,7 +1959,7 @@ const Profile = () => {
                     </div>
                     <div>
                       <label className="block text-sm font-semibold text-stone-700 mb-2">
-                        Nearby Landmarks
+                        Nearby Landmarks *
                       </label>
                       <input
                         type="text"
