@@ -255,30 +255,30 @@ const Details = () => {
 
         const normalizedAmenities = Array.isArray(propertyData.amenities)
           ? propertyData.amenities
-            .map((amenity) => {
-              if (typeof amenity !== "string" || !amenity) return null;
-              const trimmed = amenity.trim();
-              return trimmed
-                .toLowerCase()
-                .replace(/(^|\s)\w/g, (char) => char.toUpperCase());
-            })
-            .filter((amenity) => amenity !== null)
+              .map((amenity) => {
+                if (typeof amenity !== "string" || !amenity) return null;
+                const trimmed = amenity.trim();
+                return trimmed
+                  .toLowerCase()
+                  .replace(/(^|\s)\w/g, (char) => char.toUpperCase());
+              })
+              .filter((amenity) => amenity !== null)
           : [];
 
         const landmarks =
           typeof propertyData.nearby_landmarks === "string"
             ? propertyData.nearby_landmarks.split(",").map((landmark) => {
-              const [name, distance] = landmark
-                .split("(")
-                .map((s) => s.replace(")", "").trim());
-              return { name, distance: distance || "N/A" };
-            })
+                const [name, distance] = landmark
+                  .split("(")
+                  .map((s) => s.replace(")", "").trim());
+                return { name, distance: distance || "N/A" };
+              })
             : Array.isArray(propertyData.nearby_landmarks)
-              ? propertyData.nearby_landmarks.map((l) => ({
+            ? propertyData.nearby_landmarks.map((l) => ({
                 name: l.name || l,
                 distance: l.distance || "N/A",
               }))
-              : [];
+            : [];
 
         const { data: floorPlansData, error: floorPlansError } = await supabase
           .from("floor_plans")
@@ -287,7 +287,9 @@ const Details = () => {
 
         if (floorPlansError) {
           console.error("Floor plans fetch error:", floorPlansError.message);
-          throw new Error("Failed to fetch floor plans: " + floorPlansError.message);
+          throw new Error(
+            "Failed to fetch floor plans: " + floorPlansError.message
+          );
         }
 
         const mappedProperty = {
@@ -300,26 +302,31 @@ const Details = () => {
         setImages(
           typeof propertyData.images === "string"
             ? propertyData.images.split(",").map((url, index) => ({
-              src: url.trim(),
-              alt: `${propertyData.name || "Property"} - Image ${index + 1}`,
-            }))
-            : Array.isArray(propertyData.images) && propertyData.images.length > 0
-              ? propertyData.images.map((url, index) => ({
+                src: url.trim(),
+                alt: `${propertyData.name || "Property"} - Image ${index + 1}`,
+              }))
+            : Array.isArray(propertyData.images) &&
+              propertyData.images.length > 0
+            ? propertyData.images.map((url, index) => ({
                 src: url,
                 alt: `${propertyData.name || "Property"} - Image ${index + 1}`,
               }))
-              : []
+            : []
         );
 
         // Set initial active plan based on tabs
         setActivePlan(
           activeTab === "unit-plans"
-            ? (floorPlansData.find((plan) => plan.type === "residential")?.image ||
-              floorPlansData.find((plan) => plan.type === "commercial")?.image ||
-              "https://via.placeholder.com/800x600?text=No+Unit+Plan+Available")
+            ? floorPlansData.find((plan) => plan.type === "residential")
+                ?.image ||
+                floorPlansData.find((plan) => plan.type === "commercial")
+                  ?.image ||
+                "https://via.placeholder.com/800x600?text=No+Unit+Plan+Available"
             : activeTab === "site-plan"
-              ? propertyData.site_plan || "https://via.placeholder.com/800x600?text=No+Site+Plan+Available"
-              : propertyData.tower_layout || "https://via.placeholder.com/800x600?text=No+Tower+Layout+Available"
+            ? propertyData.site_plan ||
+              "https://via.placeholder.com/800x600?text=No+Site+Plan+Available"
+            : propertyData.tower_layout ||
+              "https://via.placeholder.com/800x600?text=No+Tower+Layout+Available"
         );
 
         setLoading(false);
@@ -331,6 +338,15 @@ const Details = () => {
     };
     fetchProperty();
   }, [id]);
+
+  useEffect(() => {
+    if (images.length > 0) {
+      const interval = setInterval(() => {
+        setCurrentIndex((prev) => (prev + 1) % images.length);
+      }, 3000); // Auto-slide every 3 seconds
+      return () => clearInterval(interval); // Cleanup interval on component unmount
+    }
+  }, [images]);
 
   const handleSubmitRating = async () => {
     if (!rating) {
@@ -360,12 +376,14 @@ const Details = () => {
     setActiveTab(tab);
     setActivePlan(
       tab === "unit-plans"
-        ? (floorPlans.find((plan) => plan.type === "residential")?.image ||
-          floorPlans.find((plan) => plan.type === "commercial")?.image ||
-          "https://via.placeholder.com/800x600?text=No+Unit+Plan+Available")
+        ? floorPlans.find((plan) => plan.type === "residential")?.image ||
+            floorPlans.find((plan) => plan.type === "commercial")?.image ||
+            "https://via.placeholder.com/800x600?text=No+Unit+Plan+Available"
         : tab === "site-plan"
-          ? (property?.site_plan || "https://via.placeholder.com/800x600?text=No+Site+Plan+Available")
-          : (property?.tower_layout || "https://via.placeholder.com/800x600?text=No+Tower+Layout+Available")
+        ? property?.site_plan ||
+          "https://via.placeholder.com/800x600?text=No+Site+Plan+Available"
+        : property?.tower_layout ||
+          "https://via.placeholder.com/800x600?text=No+Tower+Layout+Available"
     );
   };
 
@@ -392,42 +410,74 @@ const Details = () => {
     );
 
   const amenityImages = {
-    "24/7 Security": "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/24-7%20security.png",
-    "Lift": "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/lift.png",
-    "Parking": "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/parking.png",
-    "Garden": "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/garden.jpeg",
-    "Park": "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/garden.jpeg",
-    "Swimming Pool": "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/swimming%20pool.jpeg",
-    "Gym": "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/gym.png",
-    "Clubhouse": "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/clubhouse.png",
-    "Cctv Surveillance": "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/cctv%20survelliance.png",
-    "Childrens Play Area": "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/children%20play%20area.png",
-    "Mini Theater Room": "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/mini%20theator.png",
-    "Power Backup": "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/power%20backup.png",
-    "Motion Sensor Lighting": "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/motion%20sensor.png",
-    "Indoor Games Room": "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/indoor%20games%20room.png",
-    "Fire Safety Systems": "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/fire%20safety%20systems.png",
-    "Smart Lock Access": "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/smart%20lock%20access.png",
-    "Home Theater Room": "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Home%20Theater%20Room.png",
-    "Private Garden Seating Area": "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Private%20Garden%20Seating%20Area.jpeg",
-    "Rooftop Garden": "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Rooftop%20Garden.png",
-    "Air Conditioning In All Rooms": "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Air%20Conditioning%20In%20All%20Rooms.jpeg",
-    "Cctv": "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/cctv.png",
-    "Gated Entry": "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Gated%20Entry.png",
-    "Park Area": "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Park%20Area.png",
-    "Security": "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Security%20Guard.png",
-    "Security Guard": "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Security%20Guard.png",
-    "Rainwater Harvesting": "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Rainwater%20Harvesting.jpeg",
-    "Terrace/balcony Sit-out": "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Terrace-Balcony%20Sit-Out.png",
-    "Video Door Phone": "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Video%20Door%20Phone.png",
-    "Wi-fi": "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Wi-Fi.png",
-    "Backup Generator": "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Backup%20Generator.png",
-    "Basement Parking": "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Basement%20Parking.png",
-    "Main Road Facing": "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Main%20Road%20Facing.png",
-    "Outdoor Seating Space": "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Outdoor%20Seating%20Space.png",
-    "Double Height Ceiling": "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Double%20Height%20Ceiling.png",
-    "Visitor Parking": "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Visitor%20Parking.png",
-    "Multiple Showroom Floors": "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Multiple%20Showroom%20Floors.png",
+    "24/7 Security":
+      "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/24-7%20security.png",
+    Lift: "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/lift.png",
+    Parking:
+      "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/parking.png",
+    Garden:
+      "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/garden.jpeg",
+    Park: "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/garden.jpeg",
+    "Swimming Pool":
+      "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/swimming%20pool.jpeg",
+    Gym: "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/gym.png",
+    Clubhouse:
+      "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/clubhouse.png",
+    "Cctv Surveillance":
+      "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/cctv%20survelliance.png",
+    "Childrens Play Area":
+      "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/children%20play%20area.png",
+    "Mini Theater Room":
+      "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/mini%20theator.png",
+    "Power Backup":
+      "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/power%20backup.png",
+    "Motion Sensor Lighting":
+      "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/motion%20sensor.png",
+    "Indoor Games Room":
+      "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/indoor%20games%20room.png",
+    "Fire Safety Systems":
+      "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/fire%20safety%20systems.png",
+    "Smart Lock Access":
+      "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/smart%20lock%20access.png",
+    "Home Theater Room":
+      "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Home%20Theater%20Room.png",
+    "Private Garden Seating Area":
+      "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Private%20Garden%20Seating%20Area.jpeg",
+    "Rooftop Garden":
+      "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Rooftop%20Garden.png",
+    "Air Conditioning In All Rooms":
+      "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Air%20Conditioning%20In%20All%20Rooms.jpeg",
+    Cctv: "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/cctv.png",
+    "Gated Entry":
+      "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Gated%20Entry.png",
+    "Park Area":
+      "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Park%20Area.png",
+    Security:
+      "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Security%20Guard.png",
+    "Security Guard":
+      "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Security%20Guard.png",
+    "Rainwater Harvesting":
+      "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Rainwater%20Harvesting.jpeg",
+    "Terrace/balcony Sit-out":
+      "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Terrace-Balcony%20Sit-Out.png",
+    "Video Door Phone":
+      "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Video%20Door%20Phone.png",
+    "Wi-fi":
+      "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Wi-Fi.png",
+    "Backup Generator":
+      "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Backup%20Generator.png",
+    "Basement Parking":
+      "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Basement%20Parking.png",
+    "Main Road Facing":
+      "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Main%20Road%20Facing.png",
+    "Outdoor Seating Space":
+      "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Outdoor%20Seating%20Space.png",
+    "Double Height Ceiling":
+      "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Double%20Height%20Ceiling.png",
+    "Visitor Parking":
+      "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Visitor%20Parking.png",
+    "Multiple Showroom Floors":
+      "https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Amenities/Multiple%20Showroom%20Floors.png",
   };
 
   return (
@@ -599,8 +649,8 @@ const Details = () => {
                   images.length > 1
                     ? images[1].src
                     : images.length > 0
-                      ? images[0].src
-                      : "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80"
+                    ? images[0].src
+                    : "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80"
                 }
                 alt={property.name}
                 className="w-full h-full rounded-lg shadow-md object-center"
@@ -629,7 +679,8 @@ const Details = () => {
           <p className="text-base text-stone-600 mb-6 text-center max-w-xl mx-auto">
             Explore the premium facilities at {property.name}
           </p>
-          {Array.isArray(property.amenities) && property.amenities.length > 0 ? (
+          {Array.isArray(property.amenities) &&
+          property.amenities.length > 0 ? (
             <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-6 gap-5 justify-items-center max-w-3xl mx-auto">
               {property.amenities.map((amenity, index) => (
                 <div
@@ -661,7 +712,6 @@ const Details = () => {
         </div>
       </motion.section>
 
-      {/* Image Gallery Section */}
       <motion.section
         className="py-12 bg-white"
         initial={{ opacity: 0, y: 50 }}
@@ -678,115 +728,51 @@ const Details = () => {
           </p>
           <div className="text-center mb-4">
             <h3 className="text-xl font-semibold text-stone-700">
-              {images[currentIndex].alt}
+              {images.length > 0 && images[currentIndex]?.alt
+                ? images[currentIndex].alt
+                : "N/A"}
             </h3>
-            <p className="text-sm text-stone-600">
-              {currentIndex + 1} of {images.length}
-            </p>
+            {images.length > 0 ? (
+              <div className="flex justify-center gap-2 mt-2">
+                {images.map((_, index) => (
+                  <span
+                    key={index}
+                    className={`w-3 h-3 rounded-full cursor-pointer transition-all duration-300 ${
+                      index === currentIndex
+                        ? "bg-stone-700"
+                        : "border-2 border-stone-700 bg-transparent"
+                    }`}
+                    onClick={() => setCurrentIndex(index)}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="flex justify-center gap-2 mt-2">
+                <span className="w-3 h-3 rounded-full bg-stone-300 cursor-not-allowed" />
+              </div>
+            )}
           </div>
           {images.length > 0 ? (
-            <div className="grid md:grid-cols-4 gap-6">
-              {/* Image Selection Panel */}
-              <div className="md:col-span-1 space-y-4">
-                {images.map((image, index) => {
-                  const bhkMatch = image.alt.match(/(\d+)\s*BHK/);
-                  const bhk = bhkMatch ? `${bhkMatch[1]} BHK` : "N/A";
-                  return (
-                    <div
-                      key={index}
-                      className={`p-2 rounded-lg cursor-pointer ${currentIndex === index ? "bg-stone-200" : "bg-stone-100 hover:bg-stone-200"
-                        }`}
-                      onClick={() => setCurrentIndex(index)}
-                    >
-                      <div className="flex items-center gap-2">
-                        <img
-                          src={image.src}
-                          alt={image.alt}
-                          className="w-12 h-12 object-cover rounded"
-                          onError={(e) => {
-                            console.error("Failed to load thumbnail:", e.target.src);
-                            e.target.src = "https://images.unsplash.com/photo-1568605114967-8130f3a36994?auto=format&fit=crop&w=48&h=48";
-                          }}
-                        />
-                        <div>
-                          <p className="text-sm text-stone-700">Image {index + 1}</p>
-                          <p className="text-xs text-stone-600">{property.configuration}</p>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Slideshow and Controls */}
-              <div className="md:col-span-3 relative">
-                <div className="relative">
-                  <div
-                    className="w-full h-full object-cover overflow-auto rounded-lg shadow-md border border-stone-200"
-                    style={{ minHeight: "24rem", maxHeight: "24rem" }}
-                  >
-                    <div
-                      className="w-full h-full flex"
-                      style={{
-                        transformOrigin: "0 0",
-                        transform: `scale(${zoomLevel})`,
-                        transition: "transform 0.3s",
-                      }}
-                    >
-                      <img
-                        src={images[currentIndex].src}
-                        alt={images[currentIndex].alt}
-                        className="w-full h-full object-contain"
-                        onError={(e) => {
-                          console.error("Failed to load gallery image:", e.target.src);
-                          e.target.src = "https://images.unsplash.com/photo-1568605114967-8130f3a36994?auto=format&fit=crop&w=400&h=300&q=80";
-                        }}
-                      />
-                    </div>
-                  </div>
-                  <div className="absolute top-4 right-4 flex z-10">
-                    <button
-                      onClick={() => setZoomLevel((prev) => Math.min(prev + 0.1, 2))}
-                      className="bg-transparent rounded-full w-10 h-10 focus:outline-none"
-                    >
-                      <span className="text-4xl transition-colors duration-300">
-                        +
-                      </span>
-                    </button>
-                    <button
-                      onClick={() => setZoomLevel((prev) => Math.max(prev - 0.1, 1))}
-                      className="bg-transparent rounded-full w-10 h-10 focus:outline-none"
-                    >
-                      <span className="text-4xl transition-colors duration-300">
-                        -
-                      </span>
-                    </button>
-                  </div>
-                  <div className="flex justify-center mt-4 gap-4">
-                    <button
-                      onClick={() => setCurrentIndex((prev) => (prev > 0 ? prev - 1 : images.length - 1))}
-                      className="bg-transparent rounded-full w-10 h-10 focus:outline-none"
-                    >
-                      <span className="text-4xl transition-colors duration-300">
-                      ←
-                      </span>
-                    </button>
-                    <button
-                      onClick={() => setCurrentIndex((prev) => (prev + 1) % images.length)}
-                      className="bg-transparent rounded-full w-10 h-10 focus:outline-none"
-                    >
-                      <span className="text-4xl transition-colors duration-300">
-                      →
-                      </span>
-                    </button>
-                  </div>
-                </div>
+            <div className="relative">
+              <div className="w-[110vh] h-[32rem] rounded-lg overflow-hidden shadow-md border border-stone-200 mx-auto">
+                <img
+                  src={images[currentIndex].src}
+                  alt={images[currentIndex].alt}
+                  className="w-full h-full object-fill"
+                  onError={(e) => {
+                    e.target.src =
+                      "https://images.unsplash.com/photo-1568605114967-8130f3a36994?auto=format&fit=crop&w=400&h=300&q=80";
+                  }}
+                />
               </div>
             </div>
           ) : (
-            <p className="text-center text-stone-500 text-base py-4">
-              No additional images available for this property.
-            </p>
+            <div className="w-full h-[24rem] rounded-lg shadow-md border border-stone-200 bg-stone-50 flex items-center justify-center">
+              <p className="text-center text-stone-500 text-lg py-4 max-w-md mx-auto">
+                No additional images available for this property. Please check
+                back later or contact support.
+              </p>
+            </div>
           )}
         </div>
       </motion.section>
@@ -799,7 +785,9 @@ const Details = () => {
         transition={{ duration: 0.6 }}
       >
         <div className="max-w-6xl mx-auto px-4">
-          <h2 className="text-4xl font-bold text-stone-700 mb-6 text-center">Floor Plans</h2>
+          <h2 className="text-4xl font-bold text-stone-700 mb-6 text-center">
+            Floor Plans
+          </h2>
           <p className="text-lg text-stone-600 mb-6 text-center max-w-xl mx-auto">
             Explore the detailed layouts of {property.name}
           </p>
@@ -808,8 +796,11 @@ const Details = () => {
               {["unit-plans", "site-plan", "tower-layout"].map((tab) => (
                 <button
                   key={tab}
-                  className={`px-6 py-3 rounded-lg font-medium transition-all duration-300 whitespace-nowrap ${activeTab === tab ? "bg-stone-700 text-white" : "bg-white text-stone-700 border border-stone-300 hover:bg-stone-50"
-                    }`}
+                  className={`px-6 py-3 rounded-lg font-medium transition-all duration-300 whitespace-nowrap ${
+                    activeTab === tab
+                      ? "bg-stone-700 text-white"
+                      : "bg-white text-stone-700 border border-stone-300 hover:bg-stone-50"
+                  }`}
                   onClick={() => handleTabChange(tab)}
                 >
                   {tab === "unit-plans" && "Unit Plans"}
@@ -836,18 +827,24 @@ const Details = () => {
                       }}
                     >
                       <img
-                        src={activePlan || "https://via.placeholder.com/800x600?text=No+Plan+Available"}
+                        src={
+                          activePlan ||
+                          "https://via.placeholder.com/800x600?text=No+Plan+Available"
+                        }
                         alt={`${property.name} ${activeTab} Floor Plan`}
                         className="w-full h-full object-contain"
                         onError={(e) => {
-                          e.target.src = "https://via.placeholder.com/800x600?text=No+Plan+Available";
+                          e.target.src =
+                            "https://via.placeholder.com/800x600?text=No+Plan+Available";
                         }}
                       />
                     </div>
                   </div>
                   <div className="absolute top-4 right-4 flex gap-2 z-10">
                     <button
-                      onClick={() => setZoomLevel((prev) => Math.min(prev + 0.1, 2))}
+                      onClick={() =>
+                        setZoomLevel((prev) => Math.min(prev + 0.1, 2))
+                      }
                       className="bg-transparent rounded-full w-10 h-10 focus:outline-none"
                     >
                       <span className="text-4xl transition-colors duration-300">
@@ -855,7 +852,9 @@ const Details = () => {
                       </span>
                     </button>
                     <button
-                      onClick={() => setZoomLevel((prev) => Math.max(prev - 0.1, 1))}
+                      onClick={() =>
+                        setZoomLevel((prev) => Math.max(prev - 0.1, 1))
+                      }
                       className="bg-transparent rounded-full w-10 h-10 focus:outline-none"
                     >
                       <span className="text-4xl transition-colors duration-300">
@@ -868,7 +867,9 @@ const Details = () => {
             </div>
             <div className="lg:col-span-1">
               <div className="bg-white rounded-xl shadow-lg p-6">
-                <h3 className="text-xl font-semibold text-stone-800 mb-6">Available Plans</h3>
+                <h3 className="text-xl font-semibold text-stone-800 mb-6">
+                  Available Plans
+                </h3>
                 <div className="space-y-4 mb-8">
                   {activeTab === "unit-plans" && (
                     <>
@@ -877,8 +878,11 @@ const Details = () => {
                         .map((plan) => (
                           <div
                             key={plan.id}
-                            className={`plan-item flex items-center gap-4 p-3 rounded-lg cursor-pointer transition-all duration-300 ${activePlan === plan.image ? "bg-stone-50 border-2 border-stone-700" : "hover:bg-stone-50"
-                              }`}
+                            className={`plan-item flex items-center gap-4 p-3 rounded-lg cursor-pointer transition-all duration-300 ${
+                              activePlan === plan.image
+                                ? "bg-stone-50 border-2 border-stone-700"
+                                : "hover:bg-stone-50"
+                            }`}
                             onClick={() => setActivePlan(plan.image)}
                           >
                             <img
@@ -886,12 +890,17 @@ const Details = () => {
                               alt={plan.bhk}
                               className="w-16 h-16 rounded-lg object-cover object-top"
                               onError={(e) => {
-                                e.target.src = "https://via.placeholder.com/64x64?text=No+Thumbnail";
+                                e.target.src =
+                                  "https://via.placeholder.com/64x64?text=No+Thumbnail";
                               }}
                             />
                             <div>
-                              <h4 className="font-medium text-stone-800">{plan.bhk}</h4>
-                              <p className="text-sm text-stone-600">{plan.size}</p>
+                              <h4 className="font-medium text-stone-800">
+                                {plan.bhk}
+                              </h4>
+                              <p className="text-sm text-stone-600">
+                                {plan.size}
+                              </p>
                             </div>
                           </div>
                         ))}
@@ -900,8 +909,11 @@ const Details = () => {
                         .map((plan) => (
                           <div
                             key={plan.id}
-                            className={`plan-item flex items-center gap-4 p-3 rounded-lg cursor-pointer transition-all duration-300 ${activePlan === plan.image ? "bg-stone-50 border-2 border-stone-700" : "hover:bg-stone-50"
-                              }`}
+                            className={`plan-item flex items-center gap-4 p-3 rounded-lg cursor-pointer transition-all duration-300 ${
+                              activePlan === plan.image
+                                ? "bg-stone-50 border-2 border-stone-700"
+                                : "hover:bg-stone-50"
+                            }`}
                             onClick={() => setActivePlan(plan.image)}
                           >
                             <img
@@ -909,22 +921,31 @@ const Details = () => {
                               alt={plan.bhk}
                               className="w-16 h-16 rounded-lg object-cover object-top"
                               onError={(e) => {
-                                e.target.src = "https://via.placeholder.com/64x64?text=No+Thumbnail";
+                                e.target.src =
+                                  "https://via.placeholder.com/64x64?text=No+Thumbnail";
                               }}
                             />
                             <div>
-                              <h4 className="font-medium text-stone-800">{plan.bhk}</h4>
-                              <p className="text-sm text-stone-600">{plan.size}</p>
+                              <h4 className="font-medium text-stone-800">
+                                {plan.bhk}
+                              </h4>
+                              <p className="text-sm text-stone-600">
+                                {plan.size}
+                              </p>
                             </div>
                           </div>
                         ))}
                       {floorPlans.length === 0 && (
-                        <p className="text-stone-600 text-center">No unit plans available.</p>
+                        <p className="text-stone-600 text-center">
+                          No unit plans available.
+                        </p>
                       )}
                     </>
                   )}
                   {activeTab !== "unit-plans" && (
-                    <p className="text-stone-600 text-center">Select Unit Plans to view uploaded plans.</p>
+                    <p className="text-stone-600 text-center">
+                      Select Unit Plans to view uploaded plans.
+                    </p>
                   )}
                 </div>
               </div>
@@ -999,8 +1020,8 @@ const Details = () => {
                     images.length > 2
                       ? images[2].src
                       : images.length > 0
-                        ? images[0].src
-                        : "https://images.unsplash.com/photo-1568605114967-8130f3a36994?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80"
+                      ? images[0].src
+                      : "https://images.unsplash.com/photo-1568605114967-8130f3a36994?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80"
                   }
                   alt={property.name || "Property"}
                   className="w-full h-80 rounded"
