@@ -4,21 +4,30 @@ import { supabase } from "../supabaseClient";
 import { motion } from "framer-motion";
 import Rating from "@mui/material/Rating";
 import Stack from "@mui/material/Stack";
+import {
+  RiPhoneLine,
+  RiMailLine,
+  RiTimeLine,
+  RiStarFill,
+} from "react-icons/ri";
+import { Heart } from "lucide-react";
 
 const PropertyDetails = () => {
-  const { developerName } = useParams();
+  const sectionRefs = useRef([]);
   const [properties, setProperties] = useState([]);
   const [error, setError] = useState(null);
   const [developerImage, setDeveloperImage] = useState(null);
   const [developerLogo, setDeveloperLogo] = useState(null);
   const [loading, setLoading] = useState(true);
-  const sectionRefs = useRef([]);
+  const [userRole, setUserRole] = useState(null);
+  const { developerName } = useParams();
 
-  const defaultImage =
-    "https://tse1.mm.bing.net/th?id=OIP.NVfmC91cXZclVmv4ML3-bAHaEK&pid=Api&P=0&h=180";
+  const defaultImage = "https://via.placeholder.com/300x300?text=No+Image";
 
   const isVisible = (sectionId) => {
-    const sectionIndex = sectionRefs.current.findIndex((ref) => ref?.id === sectionId);
+    const sectionIndex = sectionRefs.current.findIndex(
+      (ref) => ref?.id === sectionId
+    );
     const section = sectionRefs.current[sectionIndex];
     return section
       ? section.getBoundingClientRect().top < window.innerHeight &&
@@ -55,18 +64,12 @@ const PropertyDetails = () => {
         }
 
         const firstProperty = data[0];
-        const devImg =
-          firstProperty.developer_image &&
-          firstProperty.developer_image.trim() !== ""
-            ? firstProperty.developer_image.split(",")[0].trim()
-            : null;
-        setDeveloperImage(devImg);
-
         const devLogo =
           firstProperty.developer_logo &&
           firstProperty.developer_logo.trim() !== ""
             ? firstProperty.developer_logo.split(",")[0].trim()
             : null;
+        setDeveloperImage(devLogo);
         setDeveloperLogo(devLogo);
 
         const mappedProperties = data.map((p) => ({
@@ -108,6 +111,7 @@ const PropertyDetails = () => {
             p.agents_image && p.agents_image.trim() !== ""
               ? p.agents_image.split(",")[0]
               : null,
+          isInWishlist: false,
         }));
 
         setProperties(mappedProperties);
@@ -119,8 +123,126 @@ const PropertyDetails = () => {
       }
     };
 
+    const fetchUserData = async () => {
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (user) {
+          const { data: userData, error: userError } = await supabase
+            .from("users")
+            .select("role")
+            .eq("id", user.id)
+            .single();
+          if (userError) {
+            console.error(
+              "PropertyDetails: Error fetching user data:",
+              userError
+            );
+            setError(`Error fetching user data: ${userError.message}`);
+            setUserRole(null);
+            return;
+          }
+          setUserRole(userData.role);
+        } else {
+          setUserRole(null);
+        }
+      } catch (error) {
+        console.error("PropertyDetails: Error fetching user data:", error);
+        setError(`Error fetching user data: ${error.message}`);
+      }
+    };
+
     fetchDeveloperProperties();
+    fetchUserData();
   }, [developerName]);
+
+  useEffect(() => {
+    const fetchWishlistStatus = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user || user.role === "developer" || userRole === "developer")
+        return;
+
+      const { data: wishlistData, error: wishlistError } = await supabase
+        .from("wishlist")
+        .select("property_id")
+        .eq("user_id", user.id);
+
+      if (wishlistError) {
+        console.error(
+          "PropertyDetails: Error fetching wishlist:",
+          wishlistError
+        );
+        setError(`Error fetching wishlist: ${wishlistError.message}`);
+        return;
+      }
+
+      const wishlistIds = wishlistData.map((item) => item.property_id);
+
+      setProperties((prev) =>
+        prev.map((prop) => ({
+          ...prop,
+          isInWishlist: wishlistIds.includes(prop.id),
+        }))
+      );
+    };
+
+    fetchWishlistStatus();
+  }, [properties.length, userRole]);
+
+  const toggleWishlist = async (propertyId) => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user || user.role === "developer" || userRole === "developer") {
+      setError("Developers cannot manage wishlist.");
+      return;
+    }
+
+    try {
+      const property = properties.find((p) => p.id === propertyId);
+      if (property.isInWishlist) {
+        const { error } = await supabase
+          .from("wishlist")
+          .delete()
+          .eq("user_id", user.id)
+          .eq("property_id", propertyId);
+
+        if (error)
+          throw new Error(`Failed to remove from wishlist: ${error.message}`);
+
+        setProperties((prev) =>
+          prev.map((prop) =>
+            prop.id === propertyId ? { ...prop, isInWishlist: false } : prop
+          )
+        );
+      } else {
+        const { error } = await supabase
+          .from("wishlist")
+          .insert({ user_id: user.id, property_id: propertyId });
+
+        if (error) {
+          if (error.code === "23505") {
+            setError("This property is already in your wishlist.");
+          } else {
+            throw new Error(`Failed to add to wishlist: ${error.message}`);
+          }
+        } else {
+          setProperties((prev) =>
+            prev.map((prop) =>
+              prop.id === propertyId ? { ...prop, isInWishlist: true } : prop
+            )
+          );
+        }
+      }
+      setError(null);
+    } catch (err) {
+      console.error("PropertyDetails: Error toggling wishlist:", err);
+      setError(err.message);
+    }
+  };
 
   if (loading)
     return (
@@ -133,298 +255,331 @@ const PropertyDetails = () => {
     );
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans">
-      {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-6 py-4 rounded-lg max-w-4xl mx-auto my-8 text-center shadow-md">
-          {error}
+    <div className="bg-gray-50 font-sans text-gray-900">
+      {/* Hero Section */}
+      <section
+        ref={(el) => (sectionRefs.current[0] = el)}
+        className="relative h-[400px] bg-cover bg-center transition-all duration-1000 transform"
+        style={{
+          backgroundImage: `url('https://images.unsplash.com/photo-1496888285926-9266f6d59ddd?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D')`,
+        }}
+      >
+        <div className="absolute inset-0 bg-black/50" />
+        <div className="relative z-10 h-full flex items-center justify-center">
+          <div className="text-center text-white animate-fade-in">
+            <h1 className="text-3xl md:text-5xl font-semibold mb-10 animate-slide-up">
+              {properties[0]?.developer || "Prestige Group"}
+            </h1>
+          </div>
         </div>
-      )}
-      {properties.length > 0 && (
-        <div>
-          <section
-            className="relative"
-            ref={(el) => (sectionRefs.current[0] = el)}
-          >
-            <motion.div
-              className="relative h-[12vh] overflow-hidden"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.6 }}
-            >
-              <div className="absolute inset-0 bg-black/60 z-0"></div>
-              <motion.div
-                className="absolute inset-0 flex flex-col items-center justify-center text-center text-white z-10"
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
-              >
-                <div className="px-4 max-w-4xl">
-                  <h1 className="text-3xl md:text-4xl font-semibold mb-3">
-                    {properties[0].developer}
-                  </h1>
-                </div>
-              </motion.div>
-            </motion.div>
-          </section>
+      </section>
 
-          <section
-            id="details"
-            ref={(el) => (sectionRefs.current[1] = el)}
-            className="max-w-6xl mx-auto p-6 md:p-8 lg:p-10 my-10 bg-white rounded-lg shadow-lg transition-all duration-1000"
-          >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Developer Logo Card */}
-              <div className="col-span-1 md:col-span-1">
-                <div className="bg-white rounded-lg shadow-md overflow-hidden mb-5 w-90 h-70 hover:shadow-lg/20 transition-shadow duration-300">
-                  <img
-                    src={developerLogo || defaultImage}
-                    alt={`${properties[0].developer} Logo`}
-                    className="w-90 h-70 object-cover"
-                  />
-                  <div className="p-4 text-center">
-                    <h3 className="text-lg font-semibold text-gray-800">
-                      {properties[0].developer}
-                    </h3>
-                    <p className="text-sm text-gray-600">
-                      {properties[0].tagline}
-                    </p>
-                  </div>
+      <div className="container mx-auto px-4 -mt-20 relative z-20">
+        {/* Developer Details */}
+        <div
+          ref={(el) => (sectionRefs.current[1] = el)}
+          className="bg-white rounded-xl shadow-lg p-8 mb-12 animate-slide-up"
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="space-y-6">
+              <div className="flex items-center space-x-4">
+                <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center">
+                  <span className="text-stone-700 text-2xl font-bold">
+                    {properties[0]?.developer
+                      ?.split(" ")
+                      ?.slice(0, 2)
+                      ?.map((word) => word[0])
+                      ?.join("") || "PG"}
+                  </span>
                 </div>
-                {/* About Section */}
-                <div className="bg-gray-50 p-6 rounded-xl shadow-md">
-                  <div className="flex items-center mb-6">
-                    {developerImage && (
-                      <div className="flex-shrink-0 bg-gray-200 p-2 rounded-md mr-6">
-                        <img
-                          src={developerImage || defaultImage}
-                          alt={`${properties[0].developer} Image`}
-                          className="w-48 h-48 object-contain"
-                        />
-                      </div>
-                    )}
-                    <div>
-                      <h2 className="text-2xl md:text-2xl font-semibold text-gray-800">
-                        About {properties[0].developer}
-                      </h2>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-gray-600">
-                        <strong className="text-md font-medium text-gray-800">
-                          Experience:
-                        </strong>{" "}
-                        {properties[0].experience} years
-                      </p>
-                      <p className="text-gray-600">
-                        <strong className="text-md font-medium text-gray-800">
-                          Projects Completed:
-                        </strong>{" "}
-                        {properties[0].projectsCompleted}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-gray-600">
-                        <strong className="text-md font-medium text-gray-800">
-                          Awards:
-                        </strong>{" "}
-                        {properties[0].awards}
-                      </p>
-                      <p className="text-gray-600">
-                        <strong className="text-md font-medium text-gray-800">
-                          Certifications:
-                        </strong>{" "}
-                        {properties[0].certifications}
-                      </p>
-                    </div>
-                  </div>
+                <div>
+                  <h2 className="text-3xl font-bold text-gray-800">
+                    {properties[0]?.developer || "Prestige Group"}
+                  </h2>
+                  <p className="text-gray-600 text-lg">
+                    {properties[0]?.tagline ||
+                      "Excellence in Real Estate Development"}
+                  </p>
                 </div>
               </div>
 
-              {/* Description and Agent Information */}
-              <div className="col-span-1 md:col-span-1">
-                <div className="bg-white p-6 rounded-xl shadow-md">
-                  <h3 className="text-2xl font-semibold text-gray-800 mb-4">
-                    Agent Information
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      {properties[0].agentsImage && (
-                        <div className="mb-6">
-                          <img
-                            src={properties[0].agentsImage || defaultImage}
-                            alt={`${properties[0].agentName} Image`}
-                            className="w-26 h-26 rounded-full object-contain border-2 border-gray-200"
-                          />
-                        </div>
-                      )}
-                      <p className="text-gray-600">
-                        <strong className="text-md font-medium text-gray-800">
-                          Name:
-                        </strong>{" "}
-                        {properties[0].agentName}
-                      </p>
-                      <p className="text-gray-600">
-                        <strong className="text-md font-medium text-gray-800">
-                          Role:
-                        </strong>{" "}
-                        {properties[0].agentRole}
-                      </p>
-                      <p className="text-gray-600">
-                        <strong className="text-md font-medium text-gray-800">
-                          Phone:
-                        </strong>{" "}
-                        {properties[0].agentPhone}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-gray-600 mb-2">
-                        <strong className="text-md font-medium text-gray-800">
-                          Email:
-                        </strong>{" "}
-                        {properties[0].agentEmail}
-                      </p>
-                      <p className="text-gray-600 mb-2">
-                        <strong className="text-md font-medium text-gray-800">
-                          Availability:
-                        </strong>{" "}
-                        {properties[0].agentAvailability}
-                      </p>
-                      <p className="text-gray-600 mb-2">
-                        <strong className="text-md font-medium text-gray-800">
-                          Rating:
-                        </strong>{" "}
-                        <Stack spacing={1} direction="row" alignItems="center">
-                          <Rating
-                            name={`agent-rating-${properties[0].id}`}
-                            value={parseFloat(properties[0].agentRating) || 0}
-                            precision={0.5}
-                            readOnly
-                            size="small"
-                          />
-                          <span className="ml-2 text-sm text-stone-700">
-                            {properties[0].agentRating || 0}/5
-                          </span>
-                        </Stack>
-                      </p>
-                      <p className="text-gray-600 mb-2">
-                        <strong className="text-md font-medium text-gray-800">
-                          Reviews:
-                        </strong>{" "}
-                        {properties[0].agentReviews}
-                      </p>
-                      <p className="text-gray-600 mb-2">
-                        <strong className="text-md font-medium text-gray-800">
-                          Nearby Landmarks:
-                        </strong>{" "}
-                        {properties[0].nearbyLandmarks}
-                      </p>
-                    </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-gray-50 p-4 rounded-lg text-center">
+                  <div className="text-3xl font-bold text-primary">
+                    {properties[0]?.experience || 38}+
                   </div>
-                  <p className="text-gray-600 mt-6 leading-relaxed">
-                    <strong className="text-gray-800">Description:</strong>{" "}
-                    {properties[0].description}
-                  </p>
+                  <div className="text-gray-600">Years Experience</div>
+                </div>
+                <div className="bg-gray-50 p-4 rounded-lg text-center">
+                  <div className="text-3xl font-bold text-primary">
+                    {properties[0]?.projectsCompleted || 280}+
+                  </div>
+                  <div className="text-gray-600">Projects Completed</div>
+                </div>
+                <div className="bg-gray-50 p-4 rounded-lg text-center">
+                  <div className="text-3xl font-bold text-primary">
+                    {properties[0]?.awards?.length || 45}+
+                  </div>
+                  <div className="text-gray-600">Awards Won</div>
+                </div>
+                <div className="bg-gray-50 p-4 rounded-lg text-center">
+                  <div className="text-2xl font-bold text-primary">
+                    {properties[0].certifications || "N/A"}
+                  </div>
+                  <div className="text-gray-600">Certified</div>
                 </div>
               </div>
             </div>
-          </section>
 
-          {/* Properties Section */}
-          <section
-            id="properties"
-            ref={(el) => (sectionRefs.current[2] = el)}
-            className="max-w-6xl mx-auto p-6 md:p-8 lg:p-10 my-10 bg-white rounded-lg shadow-lg"
-          >
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: isVisible("properties") ? 1 : 0, y: isVisible("properties") ? 0 : 30 }}
-              transition={{ duration: 0.6 }}
-              className="transition-all duration-1000 transform"
-            >
-              <h2 className="text-2xl md:text-3xl font-semibold text-gray-800 text-center mb-8">
-                Properties by {properties[0].developer}
-              </h2>
-              {error && (
-                <p className="text-stone-600 text-center mb-4">{error}</p>
-              )}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {properties.length > 0 ? (
-                  properties.map((prop) => (
-                    <div
-                      key={prop.id}
-                      className="rounded shadow hover:shadow-lg transition text-white"
+            <div className="flex justify-center">
+              <div className="w-80 h-80 rounded-xl overflow-hidden shadow-lg hover:scale-105 transition-transform duration-300">
+                <img
+                  src={
+                    developerImage ||
+                    "https://readdy.ai/api/search-image?query=professional%20corporate%20real%20estate%20developer%20portrait%2C%20modern%20office%20building%20background%2C%20confident%20business%20executive%20in%20formal%20attire%2C%20clean%20professional%20photography%2C%20natural%20lighting&width=400&height=400&seq=dev1&orientation=squarish"
+                  }
+                  alt={properties[0]?.developer || "Prestige Group"}
+                  className="w-full h-full object-cover object-top"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Agent Information */}
+        <div
+          ref={(el) => (sectionRefs.current[2] = el)}
+          className="bg-white rounded-xl shadow-lg p-8 mb-12 animate-fade-in"
+        >
+          <h3 className="text-2xl font-bold text-gray-800 mb-6">
+            Agent Information
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+            <div className="text-center">
+              <div className="w-32 h-32 mx-auto mb-4 rounded-full overflow-hidden">
+                <img
+                  src={
+                    properties[0]?.agentsImage ||
+                    "https://readdy.ai/api/search-image?query=professional%20real%20estate%20agent%20portrait%2C%20confident%20business%20woman%20in%20formal%20attire%2C%20modern%20office%20background%2C%20clean%20professional%20headshot%2C%20natural%20lighting&width=200&height=200&seq=agent1&orientation=squarish"
+                  }
+                  alt={properties[0]?.agentName || "Sarah Johnson"}
+                  className="w-full h-full object-cover object-top"
+                />
+              </div>
+              <h4 className="text-xl font-semibold text-gray-800">
+                {properties[0]?.agentName || "Sarah Johnson"}
+              </h4>
+              <p className="text-gray-600 mb-2">
+                {properties[0]?.agentRole || "Senior Sales Manager"}
+              </p>
+              <div className="flex justify-center items-center mb-2">
+                <div className="flex text-yellow-400">
+                  {[...Array(5)].map((_, i) => (
+                    <RiStarFill key={i} />
+                  ))}
+                </div>
+                <span className="ml-2 text-gray-600">
+                  ({properties[0]?.agentRating || 4.9})
+                </span>
+              </div>
+              <p className="text-sm text-gray-500 mb-2">
+                {properties[0]?.agentReviews || 142} Reviews
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 flex items-center justify-center text-primary">
+                  <RiPhoneLine />
+                </div>
+                <span className="text-gray-700">
+                  {properties[0]?.agentPhone || "+1 (555) 123-4567"}
+                </span>
+              </div>
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 flex items-center justify-center text-primary">
+                  <RiMailLine />
+                </div>
+                <span className="text-gray-700">
+                  {properties[0]?.agentEmail || "sarah.johnson@prestige.com"}
+                </span>
+              </div>
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 flex items-center justify-center text-primary">
+                  <RiTimeLine />
+                </div>
+                <span className="text-gray-700">
+                  {properties[0]?.agentAvailability || "Available 9 AM - 6 PM"}
+                </span>
+              </div>
+            </div>
+
+            <div>
+              <h5 className="font-semibold text-gray-800 mb-3">
+                Nearby Landmarks
+              </h5>
+              <div className="flex flex-wrap gap-2">
+                {properties[0]?.nearbyLandmarks
+                  ?.split(",")
+                  ?.map((landmark, index) => (
+                    <span
+                      key={index}
+                      className={`px-3 py-1 ${
+                        index === 0
+                          ? "bg-blue-100 text-stone-800"
+                          : index === 1
+                          ? "bg-green-100 text-stone-800"
+                          : index === 2
+                          ? "bg-purple-100 text-stone-800"
+                          : "bg-orange-100 text-stone-800"
+                      } rounded-full text-sm`}
                     >
-                      <div className="relative group h-[45vh] w-full overflow-hidden rounded">
-                        <Link to={`/listings/${prop.id}`}>
-                          {prop.image ? (
-                            <img
-                              src={prop.image}
-                              alt={prop.name}
-                              className="w-full h-full transition-transform duration-300 group-hover:scale-105 rounded"
-                              onError={(e) => {
-                                e.target.src = defaultImage;
-                                e.target.parentElement.classList.add(
-                                  "flex",
-                                  "items-center",
-                                  "justify-center",
-                                  "bg-gray-200"
-                                );
-                                console.error(
-                                  "PropertyDetails: Image load failed:",
-                                  prop.image
-                                );
-                              }}
-                            />
-                          ) : (
-                            <div className="flex items-center justify-center w-full h-full bg-gray-200 text-stone-700">
-                              Image not uploaded
-                            </div>
-                          )}
-                          <div className="absolute inset-0 bg-black opacity-40 md:opacity-0 md:group-hover:opacity-40 transition-opacity duration-300 z-0"></div>
-                          <div className="absolute inset-0 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity duration-400">
-                            <div className="absolute bottom-4 left-4 text-left">
-                              <h3 className="text-lg font-semibold">
-                                {prop.name}
-                              </h3>
-                              <p className="text-sm">{prop.location}</p>
-                              <p className="text-sm">
-                                {prop.bhk ? `${prop.bhk} BHK • ` : ""}₹
-                                {prop.price.toLocaleString()}
-                              </p>
-                              <p className="text-sm">
-                                {prop.type || "Unknown Type"} •{" "}
-                                {prop.status || "Unknown Status"}
-                              </p>
-                              <p className="text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                Built by: {prop.developer}
-                              </p>
-                              <div className="mt-1">
-                                <Link
-                                  to={`/listings/${prop.id}`}
-                                  className="underline text-white hover:font-semibold"
-                                >
-                                  View Details
-                                </Link>
-                              </div>
-                            </div>
-                          </div>
-                        </Link>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-center text-stone-600 text-lg col-span-full">
-                    {error || "No properties found for this developer."}
-                  </p>
+                      {landmark.trim()}
+                    </span>
+                  )) || (
+                  <>
+                    <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+                      Metro Station
+                    </span>
+                    <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
+                      Shopping Mall
+                    </span>
+                    <span className="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm">
+                      Hospital
+                    </span>
+                    <span className="px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-sm">
+                      School
+                    </span>
+                  </>
                 )}
               </div>
-            </motion.div>
-          </section>
+            </div>
+          </div>
         </div>
-      )}
+
+        {/* About Section */}
+        <div
+          ref={(el) => (sectionRefs.current[3] = el)}
+          className="bg-white rounded-xl shadow-lg p-8 mb-12 animate-fade-in"
+        >
+          <h3 className="text-2xl font-bold text-gray-800 mb-4">
+            About {properties[0]?.developer || "Prestige Group"}
+          </h3>
+          <p className="text-gray-600 leading-relaxed">
+            {properties[0]?.description ||
+              "Prestige Group is one of South India's leading real estate developers with over three decades of experience in creating exceptional residential and commercial spaces. Founded in 1986, we have consistently delivered projects that combine innovative design, superior quality, and timely completion. Our portfolio spans across luxury apartments, premium villas, commercial complexes, and integrated townships. With a commitment to excellence and customer satisfaction, we have built a reputation for trust and reliability in the real estate industry. Our developments are strategically located in prime areas, offering residents and businesses access to world-class amenities and infrastructure."}
+          </p>
+        </div>
+
+        {/* Properties Section */}
+        <div ref={(el) => (sectionRefs.current[4] = el)} className="mb-16">
+          <h3 className="text-3xl font-bold text-gray-800 mb-12 text-center">
+            Properties by {properties[0]?.developer || "Prestige Group"}
+          </h3>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+            {properties.length > 0 ? (
+              properties.map((property, index) => (
+                <div
+                  key={property.id}
+                  className="rounded shadow hover:shadow-lg transition text-white"
+                >
+                  <div className="relative group h-[300px] w-full overflow-hidden rounded">
+                    <Link to={`/listings/${property.id}`}>
+                      {property.image ? (
+                        <img
+                          src={property.image}
+                          alt={property.name}
+                          className="w-full h-full transition-transform duration-300 group-hover:scale-105 rounded"
+                          onError={(e) => {
+                            e.target.src = defaultImage;
+                            e.target.parentElement.classList.add(
+                              "flex",
+                              "items-center",
+                              "justify-center",
+                              "bg-gray-200"
+                            );
+                            console.error(
+                              "PropertyDetails: Image load failed:",
+                              property.image
+                            );
+                          }}
+                        />
+                      ) : (
+                        <div className="flex items-center justify-center w-full h-full bg-gray-200 text-stone-700">
+                          Image not uploaded
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-black opacity-40 md:opacity-0 md:group-hover:opacity-40 transition-opacity duration-300 z-0"></div>
+                      <div className="absolute inset-0 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity duration-400">
+                        <div className="absolute bottom-4 left-4 text-left">
+                          <h3 className="text-lg font-semibold">
+                            {property.name}
+                          </h3>
+                          <p className="text-sm">{property.location}</p>
+                          <p className="text-sm">
+                            {property.bhk ? `${property.bhk} BHK • ` : ""}₹
+                            {property.price.toLocaleString()}
+                          </p>
+                          <p className="text-sm">
+                            {property.type || "Unknown Type"} •{" "}
+                            {property.status || "Unknown Status"}
+                          </p>
+                          <p className="text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                            Built by: {property.developer}
+                          </p>
+                          <div className="mt-1">
+                            <Link
+                              to={`/listings/${property.id}`}
+                              className="underline text-white hover:font-semibold"
+                            >
+                              View Details
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+                    {userRole === "customer" &&
+                      property.isInWishlist !== undefined && (
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            toggleWishlist(property.id);
+                          }}
+                          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-white hover:text-red-500"
+                          aria-label={
+                            property.isInWishlist
+                              ? "Remove from wishlist"
+                              : "Add to wishlist"
+                          }
+                        >
+                          <Heart
+                            className={
+                              property.isInWishlist
+                                ? "fill-red-500 text-red-500"
+                                : ""
+                            }
+                          />
+                        </button>
+                      )}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="text-center text-stone-600 text-lg col-span-full">
+                {error || "No properties found for this developer."}
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
-  )
+  );
+};
+
+// Placeholder function (to be implemented with react-router-dom's useNavigate if needed)
+const handleCardClick = (propertyName) => {
+  console.log(`Navigating to property: ${propertyName}`);
 };
 
 export default PropertyDetails;

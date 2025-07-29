@@ -630,21 +630,21 @@ const Details = () => {
             Explore the premium facilities at {property.name}
           </p>
           {Array.isArray(property.amenities) && property.amenities.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 justify-items-center max-w-3xl mx-auto">
+            <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-6 gap-5 justify-items-center max-w-3xl mx-auto">
               {property.amenities.map((amenity, index) => (
                 <div
                   key={index}
                   className="bg-stone-100 p-2 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100 hover:bg-stone-200 flex flex-col items-center gap-1 w-full"
                   style={{ maxWidth: "120px" }}
                 >
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mb-1">
+                  <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 mb-1">
                     <img
                       src={
                         amenityImages[amenity] ||
                         "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=48&h=48"
                       }
                       alt={`${amenity} icon`}
-                      className="w-6 h-6 object-contain"
+                      className="w-8 h-8 object-contain"
                     />
                   </div>
                   <h3 className="font-semibold text-stone-700 text-sm text-center truncate w-full">
@@ -658,92 +658,6 @@ const Details = () => {
               No amenities available for this property.
             </p>
           )}
-        </div>
-      </motion.section>
-
-      <motion.section
-        className="py-12 bg-stone-50"
-        initial={{ opacity: 0, y: 50 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.3 }}
-        transition={{ duration: 0.6 }}
-      >
-        <div className="max-w-6xl mx-auto px-4">
-          <h2 className="text-4xl font-bold text-stone-700 mb-6">
-            About the Developer
-          </h2>
-          <div className="bg-white rounded-lg shadow-md p-6 md:p-8">
-            <div className="grid md:grid-cols-2 gap-6 items-center">
-              <div>
-                <div className="flex items-center mb-3">
-                  <div className="w-12 h-12 bg-blue-500/10 rounded-full flex items-center justify-center mr-4">
-                    <i className="ri-building-line text-black text-xl"></i>
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-stone-700">
-                      {property.developer_name}
-                    </h3>
-                    <p className="text-stone-600">
-                      {property.developer_tagline || "Building Quality Homes"}
-                    </p>
-                  </div>
-                </div>
-                <div className="grid grid-cols-3 gap-4 mb-6">
-                  <div className="text-center">
-                    <div className="text-xl font-bold text-stone-700">
-                      {property.developer_experience || 0}+
-                    </div>
-                    <div className="text-sm text-stone-600">
-                      Years Experience
-                    </div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-xl font-bold text-stone-700">
-                      {property.developer_projects_completed || 0}+
-                    </div>
-                    <div className="text-sm text-stone-600">Projects</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-xl font-bold text-stone-700">
-                      {(property.developer_happy_families || 0).toLocaleString(
-                        "en-IN"
-                      )}
-                      +
-                    </div>
-                    <div className="text-sm text-stone-600">Happy Families</div>
-                  </div>
-                </div>
-                <p className="text-stone-700 leading-relaxed">
-                  {property.developer_name} has been a trusted name in real
-                  estate for over {property.developer_experience || 0} years.
-                  With a commitment to quality construction, timely delivery,
-                  and customer satisfaction, we have successfully delivered
-                  premium residential and commercial projects.
-                </p>
-              </div>
-              <div>
-                <img
-                  src={
-                    images.length > 2
-                      ? images[2].src
-                      : images.length > 0
-                        ? images[0].src
-                        : "https://images.unsplash.com/photo-1568605114967-8130f3a36994?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80"
-                  }
-                  alt={property.name || "Property"}
-                  className="w-full h-80 rounded"
-                  onError={(e) => {
-                    console.error(
-                      "Failed to load developer image:",
-                      e.target.src
-                    );
-                    e.target.src =
-                      "https://images.unsplash.com/photo-1568605114967-8130f3a36994?auto=format&fit=crop&w=400&h=300&q=80";
-                  }}
-                />
-              </div>
-            </div>
-          </div>
         </div>
       </motion.section>
 
@@ -874,65 +788,6 @@ const Details = () => {
               No additional images available for this property.
             </p>
           )}
-        </div>
-      </motion.section>
-
-      <motion.section
-        className="py-12 bg-white"
-        initial={{ opacity: 0, y: 30 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.3 }}
-        transition={{ duration: 0.6 }}
-      >
-        <div className="max-w-6xl mx-auto px-4">
-          <h2 className="text-4xl font-bold text-stone-700 mb-6 text-center">
-            Prime Location
-          </h2>
-          <p className="text-lg text-stone-600 mb-6 text-center">
-            Strategically located in {property.location} with excellent
-            connectivity
-          </p>
-          <div className="grid md:grid-cols-2 gap-6">
-            <div>
-              <div className="bg-stone-50 rounded-lg p-6">
-                <h3 className="text-xl font-bold text-stone-700 mb-4">
-                  Nearby Landmarks
-                </h3>
-                <div className="space-y-3">
-                  {property.nearby_landmarks.length > 0 ? (
-                    property.nearby_landmarks.map((landmark, index) => (
-                      <div key={index} className="flex items-center">
-                        <i className="ri-map-pin-line text-stone-700 mr-2"></i>
-                        <span className="text-stone-700">
-                          {landmark.name} ({landmark.distance})
-                        </span>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-stone-600">
-                      No nearby landmarks available.
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-            <div className="p-1 rounded shadow">
-              <h3 className="text-xl font-bold mb-2 flex justify-center text-stone-700">
-                Location on Map
-              </h3>
-              <iframe
-                title="Google Map"
-                width="100%"
-                height="300"
-                style={{ border: 0 }}
-                loading="lazy"
-                allowFullScreen
-                src={`https://www.google.com/maps?q=${encodeURIComponent(
-                  property.location
-                )}&output=embed`}
-              />
-            </div>
-          </div>
         </div>
       </motion.section>
 
@@ -1073,6 +928,151 @@ const Details = () => {
                   )}
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      </motion.section>
+
+      <motion.section
+        className="py-12 bg-stone-50"
+        initial={{ opacity: 0, y: 50 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.3 }}
+        transition={{ duration: 0.6 }}
+      >
+        <div className="max-w-6xl mx-auto px-4">
+          <h2 className="text-4xl font-bold text-stone-700 mb-6">
+            About the Developer
+          </h2>
+          <div className="bg-white rounded-lg shadow-md p-6 md:p-8">
+            <div className="grid md:grid-cols-2 gap-6 items-center">
+              <div>
+                <div className="flex items-center mb-3">
+                  <div className="w-12 h-12 bg-blue-500/10 rounded-full flex items-center justify-center mr-4">
+                    <i className="ri-building-line text-black text-xl"></i>
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-stone-700">
+                      {property.developer_name}
+                    </h3>
+                    <p className="text-stone-600">
+                      {property.developer_tagline || "Building Quality Homes"}
+                    </p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-4 mb-6">
+                  <div className="text-center">
+                    <div className="text-xl font-bold text-stone-700">
+                      {property.developer_experience || 0}+
+                    </div>
+                    <div className="text-sm text-stone-600">
+                      Years Experience
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-xl font-bold text-stone-700">
+                      {property.developer_projects_completed || 0}+
+                    </div>
+                    <div className="text-sm text-stone-600">Projects</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-xl font-bold text-stone-700">
+                      {(property.developer_happy_families || 0).toLocaleString(
+                        "en-IN"
+                      )}
+                      +
+                    </div>
+                    <div className="text-sm text-stone-600">Happy Families</div>
+                  </div>
+                </div>
+                <p className="text-stone-700 leading-relaxed">
+                  {property.developer_name} has been a trusted name in real
+                  estate for over {property.developer_experience || 0} years.
+                  With a commitment to quality construction, timely delivery,
+                  and customer satisfaction, we have successfully delivered
+                  premium residential and commercial projects.
+                </p>
+              </div>
+              <div>
+                <img
+                  src={
+                    images.length > 2
+                      ? images[2].src
+                      : images.length > 0
+                        ? images[0].src
+                        : "https://images.unsplash.com/photo-1568605114967-8130f3a36994?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80"
+                  }
+                  alt={property.name || "Property"}
+                  className="w-full h-80 rounded"
+                  onError={(e) => {
+                    console.error(
+                      "Failed to load developer image:",
+                      e.target.src
+                    );
+                    e.target.src =
+                      "https://images.unsplash.com/photo-1568605114967-8130f3a36994?auto=format&fit=crop&w=400&h=300&q=80";
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </motion.section>
+
+      <motion.section
+        className="py-12 bg-white"
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.3 }}
+        transition={{ duration: 0.6 }}
+      >
+        <div className="max-w-6xl mx-auto px-4">
+          <h2 className="text-4xl font-bold text-stone-700 mb-6 text-center">
+            Prime Location
+          </h2>
+          <p className="text-lg text-stone-600 mb-6 text-center">
+            Strategically located in {property.location} with excellent
+            connectivity
+          </p>
+          <div className="grid md:grid-cols-2 gap-6">
+            <div>
+              <div className="bg-stone-50 rounded-lg p-6">
+                <h3 className="text-xl font-bold text-stone-700 mb-4">
+                  Nearby Landmarks
+                </h3>
+                <div className="space-y-3">
+                  {property.nearby_landmarks.length > 0 ? (
+                    property.nearby_landmarks.map((landmark, index) => (
+                      <div key={index} className="flex items-center">
+                        <i className="ri-map-pin-line text-stone-700 mr-2"></i>
+                        <span className="text-stone-700">
+                          {landmark.name} ({landmark.distance})
+                        </span>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-stone-600">
+                      No nearby landmarks available.
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="p-1 rounded shadow">
+              <h3 className="text-xl font-bold mb-2 flex justify-center text-stone-700">
+                Location on Map
+              </h3>
+              <iframe
+                title="Google Map"
+                width="100%"
+                height="300"
+                style={{ border: 0 }}
+                loading="lazy"
+                allowFullScreen
+                src={`https://www.google.com/maps?q=${encodeURIComponent(
+                  property.location
+                )}&output=embed`}
+              />
             </div>
           </div>
         </div>
