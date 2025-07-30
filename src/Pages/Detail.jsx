@@ -719,21 +719,75 @@ const Details = () => {
         viewport={{ once: true, amount: 0.3 }}
         transition={{ duration: 0.6 }}
       >
-        <div className="max-w-6xl mx-auto px-4">
-          <h2 className="text-4xl font-bold text-stone-700 mb-6 text-center">
+        <div className="max-w-7xl mx-auto px-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-stone-700 mb-2 text-center">
             Image Gallery
           </h2>
-          <p className="text-lg text-stone-600 mb-6 text-center max-w-xl mx-auto">
+          <p className="text-base md:text-lg text-stone-600 mb-4 text-center max-w-xl mx-auto">
             Explore more visuals of {property.name}
           </p>
+
+          {images.length > 0 ? (
+            <div className="relative flex flex-col md:flex-row items-center justify-center">
+              {/* Previous Image (Faded Preview - Hidden on small screens) */}
+              {images.length > 1 && (
+                <div className="hidden md:block absolute left-0 w-1/3 h-[30rem] opacity-50 scale-90 transition-all duration-500">
+                  <img
+                    src={
+                      images[(currentIndex - 1 + images.length) % images.length]
+                        .src
+                    }
+                    alt="Previous"
+                    className="w-full h-full object-cover rounded-lg shadow"
+                    onError={(e) => {
+                      e.target.src =
+                        "https://images.unsplash.com/photo-1568605114967-8130f3a36994?auto=format&fit=crop&w=400&h=300&q=80";
+                    }}
+                  />
+                </div>
+              )}
+
+              {/* Main Image */}
+              <div className="w-full sm:w-[90%] md:w-[90vh] h-[20rem] sm:h-[25rem] md:h-[30rem] rounded-lg overflow-hidden shadow-md border border-stone-200 z-10">
+                <img
+                  src={images[currentIndex].src}
+                  alt={images[currentIndex].alt}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.target.src =
+                      "https://images.unsplash.com/photo-1568605114967-8130f3a36994?auto=format&fit=crop&w=400&h=300&q=80";
+                  }}
+                />
+              </div>
+
+              {/* Next Image (Faded Preview - Hidden on small screens) */}
+              {images.length > 1 && (
+                <div className="hidden md:block absolute right-0 w-1/3 h-[30rem] opacity-50 scale-90 transition-all duration-500">
+                  <img
+                    src={images[(currentIndex + 1) % images.length].src}
+                    alt="Next"
+                    className="w-full h-full object-cover rounded-lg shadow"
+                    onError={(e) => {
+                      e.target.src =
+                        "https://images.unsplash.com/photo-1568605114967-8130f3a36994?auto=format&fit=crop&w=400&h=300&q=80";
+                    }}
+                  />
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="w-full h-[20rem] sm:h-[24rem] rounded-lg shadow-md border border-stone-200 bg-stone-50 flex items-center justify-center">
+              <p className="text-center text-stone-500 text-base sm:text-lg py-4 max-w-md mx-auto">
+                No additional images available for this property. Please check
+                back later or contact support.
+              </p>
+            </div>
+          )}
+
+          {/* Pagination Dots */}
           <div className="text-center mb-4">
-            <h3 className="text-xl font-semibold text-stone-700">
-              {images.length > 0 && images[currentIndex]?.alt
-                ? images[currentIndex].alt
-                : "N/A"}
-            </h3>
             {images.length > 0 ? (
-              <div className="flex justify-center gap-2 mt-2">
+              <div className="flex justify-center gap-2 mt-3 flex-wrap">
                 {images.map((_, index) => (
                   <span
                     key={index}
@@ -752,28 +806,6 @@ const Details = () => {
               </div>
             )}
           </div>
-          {images.length > 0 ? (
-            <div className="relative">
-              <div className="w-[110vh] h-[32rem] rounded-lg overflow-hidden shadow-md border border-stone-200 mx-auto">
-                <img
-                  src={images[currentIndex].src}
-                  alt={images[currentIndex].alt}
-                  className="w-full h-full object-fill"
-                  onError={(e) => {
-                    e.target.src =
-                      "https://images.unsplash.com/photo-1568605114967-8130f3a36994?auto=format&fit=crop&w=400&h=300&q=80";
-                  }}
-                />
-              </div>
-            </div>
-          ) : (
-            <div className="w-full h-[24rem] rounded-lg shadow-md border border-stone-200 bg-stone-50 flex items-center justify-center">
-              <p className="text-center text-stone-500 text-lg py-4 max-w-md mx-auto">
-                No additional images available for this property. Please check
-                back later or contact support.
-              </p>
-            </div>
-          )}
         </div>
       </motion.section>
 

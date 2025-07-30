@@ -25,10 +25,12 @@
     "react-dom": "^19.1.0",
     "react-icons": "^5.5.0",
     "react-router-dom": "^7.7.1",
+    "react-toastify": "^11.0.5",
     "remixicon": "^4.6.0",
     "supabase": "^2.31.8",
     "swiper": "^11.2.10",
-    "tailwindcss": "^4.1.11"
+    "tailwindcss": "^4.1.11",
+    "validator": "^13.15.15"
   },
   "devDependencies": {
     "@eslint/js": "^9.25.0",

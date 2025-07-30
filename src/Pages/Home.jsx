@@ -27,6 +27,29 @@ const Home = () => {
   const featuredRefs = useRef([]);
   const navigate = useNavigate();
 
+  const scrollRef = useRef(null);
+
+  useEffect(() => {
+    const scrollContainer = scrollRef.current;
+    let scrollAmount = 0;
+    const scrollSpeed = 1;
+
+    const interval = setInterval(() => {
+      if (scrollContainer) {
+        scrollAmount += scrollSpeed;
+        scrollContainer.scrollLeft = scrollAmount;
+        if (
+          scrollAmount >=
+          scrollContainer.scrollWidth - scrollContainer.clientWidth
+        ) {
+          scrollAmount = 0;
+        }
+      }
+    }, 20);
+
+    return () => clearInterval(interval);
+  }, []);
+
   const zivaasRef = useRef(null);
   const [zivaasInView, setZivaasInView] = useState(false);
   const [zivaasCounts, setZivaasCounts] = useState([0, 0, 0]);
@@ -83,8 +106,8 @@ const Home = () => {
               p.progress !== undefined
                 ? p.progress
                 : p.status === "Upcoming"
-                  ? 0
-                  : 1,
+                ? 0
+                : 1,
             image: imageUrl,
           };
         });
@@ -375,10 +398,11 @@ const Home = () => {
             <button
               key={filter}
               onClick={() => setSelectedFilter(filter)}
-              className={`px-4 py-2 rounded-full border ${selectedFilter === filter
+              className={`px-4 py-2 rounded-full border ${
+                selectedFilter === filter
                   ? "bg-stone-700 text-white"
                   : "bg-white text-stone-700"
-                }`}
+              }`}
             >
               {filter}
             </button>
@@ -388,62 +412,62 @@ const Home = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           {filteredProperties.length > 0 && !loading
             ? filteredProperties.slice(0, 6).map((property, i) => (
-              <div
-                key={property.id}
-                ref={(el) => (featuredRefs.current[i] = el)}
-                className="opacity-100 translate-y-0 transition-all duration-700"
-              >
-                <div className="rounded shadow hover:shadow-lg transition text-white">
-                  <div className="relative group h-80 w-full overflow-hidden rounded">
-                    <Link to={`/listings/${property.id}`}>
-                      <img
-                        src={property.image}
-                        alt={property.name || "Property"}
-                        className="w-full h-80 transition-transform duration-300 group-hover:scale-105 rounded"
-                        onError={(e) => {
-                          console.error(
-                            "Failed to load property image:",
-                            e.target.src
-                          );
-                          e.target.src =
-                            "https://images.unsplash.com/photo-1568605114967-8130f3a36994?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80";
-                        }}
-                      />
-                      <div className="absolute inset-0 bg-black opacity-40 md:opacity-0 md:group-hover:opacity-40 transition-opacity duration-300 z-0"></div>
-                      <div className="absolute inset-0 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity duration-400">
-                        <div className="absolute bottom-4 left-4 text-left">
-                          <h3 className="text-lg font-semibold">
-                            {property.name || "Unnamed Property"}
-                          </h3>
-                          <p className="text-sm">
-                            {property.location || "Unknown Location"}
-                          </p>
-                          <p className="text-sm">
-                            {property.bhk} BHK • ₹
-                            {(property.price || 0).toLocaleString()}
-                          </p>
-                          <p className="text-sm">
-                            {property.type || "Unknown Type"} •{" "}
-                            {property.status || "Unknown Status"}
-                          </p>
-                          <Link
-                            to={`/listings/${property.id}`}
-                            className="inline-block text-rose-100 hover:underline mt-1"
-                          >
-                            View Details
-                          </Link>
+                <div
+                  key={property.id}
+                  ref={(el) => (featuredRefs.current[i] = el)}
+                  className="opacity-100 translate-y-0 transition-all duration-700"
+                >
+                  <div className="rounded shadow hover:shadow-lg transition text-white">
+                    <div className="relative group h-80 w-full overflow-hidden rounded">
+                      <Link to={`/listings/${property.id}`}>
+                        <img
+                          src={property.image}
+                          alt={property.name || "Property"}
+                          className="w-full h-80 transition-transform duration-300 group-hover:scale-105 rounded"
+                          onError={(e) => {
+                            console.error(
+                              "Failed to load property image:",
+                              e.target.src
+                            );
+                            e.target.src =
+                              "https://images.unsplash.com/photo-1568605114967-8130f3a36994?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80";
+                          }}
+                        />
+                        <div className="absolute inset-0 bg-black opacity-40 md:opacity-0 md:group-hover:opacity-40 transition-opacity duration-300 z-0"></div>
+                        <div className="absolute inset-0 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity duration-400">
+                          <div className="absolute bottom-4 left-4 text-left">
+                            <h3 className="text-lg font-semibold">
+                              {property.name || "Unnamed Property"}
+                            </h3>
+                            <p className="text-sm">
+                              {property.location || "Unknown Location"}
+                            </p>
+                            <p className="text-sm">
+                              {property.bhk} BHK • ₹
+                              {(property.price || 0).toLocaleString()}
+                            </p>
+                            <p className="text-sm">
+                              {property.type || "Unknown Type"} •{" "}
+                              {property.status || "Unknown Status"}
+                            </p>
+                            <Link
+                              to={`/listings/${property.id}`}
+                              className="inline-block text-rose-100 hover:underline mt-1"
+                            >
+                              View Details
+                            </Link>
+                          </div>
                         </div>
-                      </div>
-                    </Link>
+                      </Link>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))
+              ))
             : !loading && (
-              <p className="text-center text-stone-600 text-lg col-span-full">
-                No properties found for the selected filter.
-              </p>
-            )}
+                <p className="text-center text-stone-600 text-lg col-span-full">
+                  No properties found for the selected filter.
+                </p>
+              )}
           {loading && (
             <div className="col-span-full flex justify-center items-center min-h-screen h-72 w-auto">
               <img
@@ -487,8 +511,8 @@ const Home = () => {
                 Explore Properties
               </h3>
               <p className="text-sm text-stone-600">
-                Browse verified listings tailored to your preferences and
-                add them to your profile.
+                Browse verified listings tailored to your preferences and add
+                them to your profile.
               </p>
             </div>
             <div className="bg-white p-6 rounded shadow text-center flex flex-col items-center">
@@ -751,72 +775,128 @@ const Home = () => {
       </section>
 
       {/* Testimonials Section */}
-      <section className="py-12 px-4 text-center">
-        <h2 className="text-2xl text-stone-700 font-bold mb-6">
-          What Our Clients Say
-        </h2>
-        <p className="text-lg text-stone-600 mb-8 max-w-3xl mx-auto">
-          Hear from our satisfied clients who have experienced our commitment to
-          excellence across India.
-        </p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-          {[
-            {
-              quote:
-                "Zivaas helped me find the perfect flat in my budget. Great service!",
-              author: "— Ramesh Patel",
-            },
-            {
-              quote:
-                "Very professional team and quick response. Highly recommended!",
-              author: "— Riya Shah",
-            },
-          ].map(({ quote, author }, i) => (
-            <div key={i} className="bg-stone-600 p-6 rounded shadow">
-              <p className="italic text-white mb-3">"{quote}"</p>
-              <h4 className="font-semibold text-rose-200">{author}</h4>
-            </div>
-          ))}
+      <section className="py-16 px-4 bg-stone-50">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold text-stone-800">
+            What our Clients say!
+          </h2>
+        </div>
+
+        <div
+          ref={scrollRef}
+          className="overflow-x-auto [&::-webkit-scrollbar]:hidden scrollbar-hide"
+        >
+          <div className="flex gap-6 px-4 sm:px-8 lg:px-20 pb-4 w-max">
+            {[
+              {
+                name: "John Doe",
+                image: "https://i.pravatar.cc/100?img=10",
+                feedback:
+                  "I knew I was going to get great service, but Zivaas went above and beyond my expectations.",
+              },
+              {
+                name: "Asa Walter",
+                image: "https://i.pravatar.cc/100?img=12",
+                feedback:
+                  "This is the best thing that happened to my small business. They rebranded and revamped my company in no time.",
+              },
+              {
+                name: "Zahid Miles",
+                image: "https://i.pravatar.cc/100?img=14",
+                feedback:
+                  "They are great. They did exactly what I needed. The friendly chaps are real problem solvers. Loved working with them.",
+              },
+              {
+                name: "Casper Leigh",
+                image: "https://i.pravatar.cc/100?img=16",
+                feedback:
+                  "Awesome services. I'm really happy to be here because of their services. I will continue to use them in the future.",
+              },
+              {
+                name: "Cian Roy",
+                image: "https://i.pravatar.cc/100?img=18",
+                feedback:
+                  "By far the best experience I've had. The team is efficient, kind, and very knowledgeable!",
+              },
+            ].map(({ name, image, feedback }, i) => (
+              <div
+                key={i}
+                className="min-w-[300px] max-w-sm bg-white rounded-2xl shadow-md px-6 py-8 flex flex-col items-center text-center hover:shadow-xl transition duration-300"
+              >
+                <img
+                  src={image}
+                  alt={name}
+                  className="w-16 h-16 rounded-full object-cover mb-4"
+                />
+                <h4 className="text-stone-800 font-semibold mb-3">{name}</h4>
+                <p className="text-sm text-stone-600 italic leading-relaxed">
+                  “{feedback}”
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
       {/* Reach Out – Your Trusted Real Estate Allies Section */}
-      <section className="bg-stone-100 text-stone-800 py-10 px-6">
-        <div className="max-w-5xl mx-auto text-center">
+      <section className="bg-stone-100 text-stone-800 py-16 px-6">
+        <div className="max-w-6xl mx-auto text-center">
           <h2 className="text-3xl font-bold mb-4">
             Reach Out – Your Trusted Real Estate Allies
           </h2>
-          <p className="text-lg text-stone-600 mb-8 max-w-3xl mx-auto">
-            At Zivaas Properties, we support developers in managing properties and
-            users in curating wishlists with expert guidance. With over 15 years
-            of experience in India, our team ensures top-notch service from
-            listing to ownership.
+          <p className="text-lg text-stone-600 mb-12 max-w-3xl mx-auto leading-relaxed">
+            At{" "}
+            <span className="font-semibold text-stone-800">
+              Zivaas Properties
+            </span>
+            , we support developers in managing properties and users in curating
+            wishlists with expert guidance. With over{" "}
+            <strong>15 years of experience</strong> in India, our team ensures
+            top-notch service from listing to ownership.
           </p>
 
-          <h3 className="text-2xl font-semibold mb-6">Frequently Asked Questions</h3>
-          <div className="grid md:grid-cols-3 gap-6 mb-12">
-            <div className="bg-white rounded-lg shadow p-6 text-left">
-              <h4 className="font-semibold text-base mb-2">
-                How do I add a property as a developer?
-              </h4>
-              <p className="text-sm text-stone-600">
-                Log in to your profile, fill out the property details, and upload
-                images to list it.
+          <h3 className="text-2xl font-semibold mb-10">
+            Frequently Asked Questions
+          </h3>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {/* Card 1 */}
+            <div className="bg-white rounded-xl shadow-md border border-stone-200 p-6 text-left transform transition-transform duration-300 hover:-translate hover:shadow-xl">
+              <div className="flex items-start gap-3 mb-3">
+                <span className="text-stone-700 text-xl">📤</span>
+                <h4 className="font-semibold text-lg">
+                  How do I add a property as a developer?
+                </h4>
+              </div>
+              <p className="text-sm text-stone-600 leading-relaxed">
+                Log in to your profile, fill out the property details, and
+                upload images to list it.
               </p>
             </div>
-            <div className="bg-white rounded-lg shadow p-6 text-left">
-              <h4 className="font-semibold text-base mb-2">
-                What details are required for a property?
-              </h4>
-              <p className="text-sm text-stone-600">
-                Name, location, price, area, type, and status are mandatory fields.
+
+            {/* Card 2 */}
+            <div className="bg-white rounded-xl shadow-md border border-stone-200 p-6 text-left transform transition-transform duration-300 hover:-translate hover:shadow-xl">
+              <div className="flex items-start gap-3 mb-3">
+                <span className="text-stone-700 text-xl">📋</span>
+                <h4 className="font-semibold text-lg">
+                  What details are required for a property?
+                </h4>
+              </div>
+              <p className="text-sm text-stone-600 leading-relaxed">
+                Name, location, price, area, type, and status are mandatory
+                fields.
               </p>
             </div>
-            <div className="bg-white rounded-lg shadow p-6 text-left">
-              <h4 className="font-semibold text-base mb-2">
-                How can I contact support?
-              </h4>
-              <p className="text-sm text-stone-600">
+
+            {/* Card 3 */}
+            <div className="bg-white rounded-xl shadow-md border border-stone-200 p-6 text-left transform transition-transform duration-300 hover:-translate hover:shadow-xl">
+              <div className="flex items-start gap-3 mb-3">
+                <span className="text-stone-700 text-xl">📞</span>
+                <h4 className="font-semibold text-lg">
+                  How can I contact support?
+                </h4>
+              </div>
+              <p className="text-sm text-stone-600 leading-relaxed">
                 Reach us via phone or email with your query details.
               </p>
             </div>

@@ -63,8 +63,8 @@ const ContactUs = () => {
             <section
                 id="contactBanner"
                 ref={bannerRef}
-                className="relative h-[80vh] bg-cover bg-center flex p-20 items-center transition-all duration-1000"
-                style={{ backgroundImage: `url(https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Bg%20img/bgcontact.jpg)` }}
+                className="relative h-[77vh] bg-cover bg-center flex p-20 items-center transition-all duration-1000"
+                style={{ backgroundImage: `url(https://i.pinimg.com/1200x/6e/b4/1c/6eb41c402cdd5c7d9f51ab8e68c6d284.jpg)` }}
                 onError={(e) => {
                     console.error('Contact banner background image load failed');
                     e.target.style.backgroundImage = 'url(https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80)';
