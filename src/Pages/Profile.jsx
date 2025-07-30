@@ -4,14 +4,16 @@ import { supabase } from "../supabaseClient";
 import { motion } from "framer-motion";
 import {
   FaUser,
-  FaBuilding,
-  FaHome,
   FaHeart,
   FaTrash,
   FaEdit,
   FaMapMarkerAlt,
   FaMoneyBill,
   FaPlus,
+  FaBriefcase,
+  FaTasks,
+  FaAward,
+  FaCertificate,
 } from "react-icons/fa";
 
 // Fallback placeholder image URL
@@ -127,7 +129,9 @@ const Profile = () => {
         setUser(userData);
         setPreviewImages((prev) => ({
           ...prev,
-          developer_logo: [],
+          developer_logo: userData.developer_logo
+            ? userData.developer_logo.split(",").filter((url) => url.trim())
+            : [],
           developer_image: userData.developer_image
             ? userData.developer_image.split(",").filter((url) => url.trim())
             : [],
@@ -146,14 +150,29 @@ const Profile = () => {
           const { data: propertiesData, error: propertiesError } =
             await supabase
               .from("properties")
-              .select("*")
-              .eq("developer_id", userData.id);
+              .select(
+                "*, developer_experience, developer_projects_completed, developer_awards, developer_certifications"
+              )
+              .eq("developer_id", userData.id)
+              .order("updated_at", { ascending: false })
+              .limit(1); // Fetch the most recent property for profile display
 
           if (propertiesError)
             throw new Error(
               `Failed to fetch properties: ${propertiesError.message}`
             );
           setProperties(propertiesData || []);
+          // Set editProfile with the most recent property data for display
+          if (propertiesData && propertiesData.length > 0) {
+            setEditProfile((prev) => ({
+              ...prev,
+              developer_experience: propertiesData[0].developer_experience || "",
+              developer_projects_completed: propertiesData[0].developer_projects_completed || "",
+              developer_awards: propertiesData[0].developer_awards || "",
+              developer_certifications: propertiesData[0].developer_certifications || "",
+              property_id: propertiesData[0].id
+            }));
+          }
         } else {
           const { data: wishlistData, error: wishlistError } = await supabase
             .from("wishlist")
@@ -435,8 +454,15 @@ const Profile = () => {
     },
     [user, newProperty, navigate, location.pathname]
   );
-
-  const [editProfile, setEditProfile] = useState({ username: "", email: "" });
+  const [editProfile, setEditProfile] = useState({
+    username: "",
+    email: "",
+    developer_experience: "",
+    developer_projects_completed: "",
+    developer_awards: "",
+    developer_certifications: "",
+    property_id: null // Track the property being edited
+  });
 
   const handleEditProfile = async (e) => {
     e.preventDefault();
@@ -449,19 +475,20 @@ const Profile = () => {
         throw new Error("Invalid email format.");
       }
 
-      const updates = {
+      // Update user data
+      const userUpdates = {
         username: editProfile.username,
         email: editProfile.email,
         developer_image: previewImages.developer_image[0] || user.developer_image,
         developer_logo: previewImages.developer_logo[0] || user.developer_logo,
       };
 
-      const { error: dbError } = await supabase
+      const { error: userError } = await supabase
         .from("users")
-        .update(updates)
+        .update(userUpdates)
         .eq("id", user.id);
 
-      if (dbError) throw dbError;
+      if (userError) throw userError;
 
       // Update auth email if changed
       if (editProfile.email !== user.email) {
@@ -471,13 +498,45 @@ const Profile = () => {
         if (authError) throw authError;
       }
 
+      // Update property data if a property is selected
+      if (editProfile.property_id) {
+        const propertyUpdates = {
+          developer_experience: parseInt(editProfile.developer_experience) || null,
+          developer_projects_completed: parseInt(editProfile.developer_projects_completed) || null,
+          developer_awards: editProfile.developer_awards || null,
+          developer_certifications: editProfile.developer_certifications || null,
+        };
+
+        const { error: propertyError } = await supabase
+          .from("properties")
+          .update(propertyUpdates)
+          .eq("id", editProfile.property_id);
+
+        if (propertyError) throw propertyError;
+
+        // Update local properties state
+        setProperties((prev) =>
+          prev.map((p) =>
+            p.id === editProfile.property_id ? { ...p, ...propertyUpdates } : p
+          )
+        );
+      }
+
       // Update local user state
       setUser((prev) => ({
         ...prev,
-        ...updates,
+        ...userUpdates,
       }));
       setSuccessMessage("Profile updated successfully!");
-      setEditProfile({ username: "", email: "" });
+      setEditProfile({
+        username: "",
+        email: "",
+        developer_experience: "",
+        developer_projects_completed: "",
+        developer_awards: "",
+        developer_certifications: "",
+        property_id: null
+      });
       setPreviewImages((prev) => ({
         ...prev,
         developer_image: [],
@@ -755,7 +814,7 @@ const Profile = () => {
         transition={{ duration: 0.6 }}
       >
         <motion.div
-          className="relative h-[80vh] overflow-hidden bg-gray-200"
+          className="relative h-[60vh] overflow-hidden bg-gray-200"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6 }}
@@ -763,7 +822,7 @@ const Profile = () => {
           <img
             src={user.developer_logo || PLACEHOLDER_IMAGE_URL}
             alt="Developer Logo"
-            className="w-full h-[80vh] object-center"
+            className="w-full h-[60vh] object-center"
             onError={(e) => {
               console.error("Failed to load hero image:", e.target.src);
               e.target.src = PLACEHOLDER_IMAGE_URL;
@@ -800,51 +859,92 @@ const Profile = () => {
           <h2 className="text-4xl font-bold text-stone-700 mb-6 text-center">
             Profile
           </h2>
-          <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center">
-                {user.role === "developer" && user.developer_image ? (
-                  <img
-                    src={user.developer_image.split(",")[0] || PLACEHOLDER_IMAGE_URL}
-                    alt="Developer Image"
-                    className="w-16 h-16 rounded-full mr-4 object-cover"
-                    onError={(e) => {
-                      e.target.src = PLACEHOLDER_IMAGE_URL;
-                      console.error(
-                        "Profile: Failed to load developer image:",
-                        user.developer_image
-                      );
-                    }}
-                  />
-                ) : (
-                  <FaUser className="inline mr-4 text-stone-700 w-16 h-16" />
-                )}
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-xl font-semibold text-stone-700">
-                      {user.username}
-                    </h3>
-                    {user.role === "developer" && (
-                      <button
-                        onClick={() => {
-                          setEditProfile({
-                            username: user.username,
-                            email: user.email,
-                          });
-                          document.getElementById("edit-developer-profile-dialog").showModal();
+          <div className="bg-stone-100 rounded-lg shadow-md p-6 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-6">
+                <div className="flex items-center space-x-4">
+
+                  {/* Developer image block */}
+                  <div className="flex justify-center">
+                    {user.role === "developer" && user.developer_image ? (
+                      <img
+                        src={user.developer_image.split(",")[0] || PLACEHOLDER_IMAGE_URL}
+                        alt="Developer Image"
+                        className="w-24 h-24 rounded-full object-cover"
+                        onError={(e) => {
+                          e.target.src = PLACEHOLDER_IMAGE_URL;
+                          console.error(
+                            "Profile: Failed to load developer image:",
+                            user.developer_image
+                          );
                         }}
-                        className="text-stone-700"
-                        aria-label={`Edit developer profile for ${user.username}`}
-                      >
-                        <FaEdit className="inline text-2xl" />
-                      </button>
+                      />
+                    ) : (
+                      <FaUser className="inline rounded-full text-stone-700 w-24 h-2" />
                     )}
                   </div>
-                  <p className="text-stone-600">{user.email}</p>
-                </div>
 
+                  {/* Developer name and tagline */}
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-3xl font-bold text-gray-800">
+                        {properties[0]?.developer || user.username}
+                      </h2>
+                      {user.role === "developer" && (
+                        <button
+                          onClick={() => {
+                            const recentProperty = properties[0] || {};
+                            setEditProfile({
+                              username: user.username,
+                              email: user.email,
+                              developer_experience: recentProperty.developer_experience || "",
+                              developer_projects_completed: recentProperty.developer_projects_completed || "",
+                              developer_awards: recentProperty.developer_awards || "",
+                              developer_certifications: recentProperty.developer_certifications || "",
+                              property_id: recentProperty.id || null
+                            });
+                            document.getElementById("edit-developer-profile-dialog").showModal();
+                          }}
+                          className="text-stone-700"
+                          aria-label={`Edit developer profile for ${user.username}`}
+                        >
+                          <FaEdit className="inline text-2xl" />
+                        </button>
+                      )}
+                    </div>
+                    <p className="text-stone-600">{user.email}</p>
+                  </div>
+                </div>
+              </div>
+              {/* Developer stats cards */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-gray-50 p-4 rounded-lg text-center">
+                  <div className="text-3xl font-bold text-primary">
+                    {properties[0].developer_experience || "N/A"}+
+                  </div>
+                  <div className="text-gray-600">Years Experience</div>
+                </div>
+                <div className="bg-gray-50 p-4 rounded-lg text-center">
+                  <div className="text-3xl font-bold text-primary">
+                    {properties[0].developer_projects_completed || "N/A"}+
+                  </div>
+                  <div className="text-gray-600">Projects Completed</div>
+                </div>
+                <div className="bg-gray-50 p-4 rounded-lg text-center">
+                  <div className="text-3xl font-bold text-primary">
+                    {properties[0].developer_awards || "N/A"}+
+                  </div>
+                  <div className="text-gray-600">Awards Won</div>
+                </div>
+                <div className="bg-gray-50 p-4 rounded-lg text-center">
+                  <div className="text-2xl font-bold text-primary">
+                    {properties[0].developer_certifications || "N/A"}
+                  </div>
+                  <div className="text-gray-600">Certified</div>
+                </div>
               </div>
             </div>
+
             {user.role === "developer" && (
               <motion.dialog
                 id="edit-developer-profile-dialog"
@@ -890,6 +990,70 @@ const Profile = () => {
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500"
                       placeholder="Enter email"
                       aria-label="Developer email"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-stone-700 mb-2">
+                      Developer Experience
+                    </label>
+                    <input
+                      type="number"
+                      name="developer_experience"
+                      value={editProfile.developer_experience}
+                      onChange={(e) =>
+                        setEditProfile({ ...editProfile, developer_experience: e.target.value })
+                      }
+                      className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500"
+                      placeholder="Enter experience in years (optional)"
+                      aria-label="Developer experience"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-stone-700 mb-2">
+                      Developer Projects Completed
+                    </label>
+                    <input
+                      type="number"
+                      name="developer_projects_completed"
+                      value={editProfile.developer_projects_completed}
+                      onChange={(e) =>
+                        setEditProfile({ ...editProfile, developer_projects_completed: e.target.value })
+                      }
+                      className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500"
+                      placeholder="Enter projects completed (optional)"
+                      aria-label="Developer projects completed"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-stone-700 mb-2">
+                      Developer Awards
+                    </label>
+                    <input
+                      type="text"
+                      name="developer_awards"
+                      value={editProfile.developer_awards}
+                      onChange={(e) =>
+                        setEditProfile({ ...editProfile, developer_awards: e.target.value })
+                      }
+                      className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500"
+                      placeholder="Enter awards (optional)"
+                      aria-label="Developer awards"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-stone-700 mb-2">
+                      Developer Certifications
+                    </label>
+                    <input
+                      type="text"
+                      name="developer_certifications"
+                      value={editProfile.developer_certifications}
+                      onChange={(e) =>
+                        setEditProfile({ ...editProfile, developer_certifications: e.target.value })
+                      }
+                      className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500"
+                      placeholder="Enter certifications (optional)"
+                      aria-label="Developer certifications"
                     />
                   </div>
                   <div>
@@ -962,7 +1126,15 @@ const Profile = () => {
                       type="button"
                       onClick={() => {
                         document.getElementById("edit-developer-profile-dialog").close();
-                        setEditProfile({ username: "", email: "" });
+                        setEditProfile({
+                          username: "",
+                          email: "",
+                          developer_experience: "",
+                          developer_projects_completed: "",
+                          developer_awards: "",
+                          developer_certifications: "",
+                          property_id: null
+                        });
                         setPreviewImages((prev) => ({
                           ...prev,
                           developer_image: [],
@@ -2522,14 +2694,14 @@ const Profile = () => {
                             <p>• {item.properties.status}</p>
                           </div>
                           <button
-                              onClick={() =>
-                                handleRemoveWishlistItem(item.property_id)
-                              }
-                              className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-white hover:text-red-500"
-                              aria-label={`Remove ${item.properties.name} from wishlist`}
-                            >
-                              <FaHeart className="inline mr-2 fill-white" />
-                            </button>
+                            onClick={() =>
+                              handleRemoveWishlistItem(item.property_id)
+                            }
+                            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-white hover:text-red-500"
+                            aria-label={`Remove ${item.properties.name} from wishlist`}
+                          >
+                            <FaHeart className="inline mr-2 fill-white" />
+                          </button>
                         </div>
                       </div>
                     </motion.div>
