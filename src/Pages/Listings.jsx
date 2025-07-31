@@ -139,7 +139,7 @@ const FilterBar = ({
                 value={filters.location}
                 onChange={handleChange}
                 placeholder="Enter location"
-                className="w-full border border-stone-300 bg-stone-50 text-stone-700 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-stone-400 transition"
+                className="w-full border border-stone-300 bg-stone-50 text-stone-700 p-2 rounded-md focus:outline-none focus:ring-none focus:ring-stone-400 transition"
               />
             </div>
             <div>
@@ -150,7 +150,7 @@ const FilterBar = ({
                 name="price"
                 value={filters.price}
                 onChange={handleChange}
-                className="w-full border border-stone-300 bg-stone-50 text-stone-700 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-stone-400 transition"
+                className="w-full border border-stone-300 bg-stone-50 text-stone-700 p-2 rounded-md focus:outline-none focus:ring-none focus:ring-stone-400 transition"
               >
                 <option value="">Any</option>
                 <option value="0-5000000">0-₹50L</option>
@@ -170,7 +170,7 @@ const FilterBar = ({
                 value={filters.area}
                 onChange={handleChange}
                 placeholder="e.g., 1000 or 1500+"
-                className="w-full border border-stone-300 bg-stone-50 text-stone-700 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-stone-400 transition"
+                className="w-full border border-stone-300 bg-stone-50 text-stone-700 p-2 rounded-md focus:outline-none focus:ring-none focus:ring-stone-400 transition"
               />
             </div>
             <div>
@@ -181,7 +181,7 @@ const FilterBar = ({
                 name="property_type"
                 value={filters.property_type}
                 onChange={handleChange}
-                className="w-full border border-stone-300 bg-stone-50 text-stone-700 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-stone-400 transition"
+                className="w-full border border-stone-300 bg-stone-50 text-stone-700 p-2 rounded-md focus:outline-none focus:ring-none focus:ring-stone-400 transition"
               >
                 <option value="">Any</option>
                 <option value="Flat">Flat</option>
@@ -198,7 +198,7 @@ const FilterBar = ({
                 name="status"
                 value={filters.status}
                 onChange={handleChange}
-                className="w-full border border-stone-300 bg-stone-50 text-stone-700 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-stone-400 transition"
+                className="w-full border border-stone-300 bg-stone-50 text-stone-700 p-2 rounded-md focus:outline-none focus:ring-none focus:ring-stone-400 transition"
               >
                 <option value="">Any</option>
                 <option value="Ready">Ready to Move</option>
@@ -214,7 +214,7 @@ const FilterBar = ({
                 name="sort"
                 value={filters.sort}
                 onChange={handleChange}
-                className="w-full border border-stone-300 bg-stone-50 text-stone-700 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-stone-400 transition"
+                className="w-full border border-stone-300 bg-stone-50 text-stone-700 p-2 rounded-md focus:outline-none focus:ring-none focus:ring-stone-400 transition"
               >
                 <option value="">Sort</option>
                 <option value="priceLowHigh">Price: Low to High</option>

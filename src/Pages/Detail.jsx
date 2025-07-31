@@ -94,7 +94,7 @@ const EMICalculator = ({ property }) => {
                   type="number"
                   value={loanAmount}
                   onChange={(e) => setLoanAmount(e.target.value)}
-                  className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-blue-500 focus:border-transparent text-sm"
                   placeholder="Enter loan amount"
                   min="0"
                 />
@@ -108,7 +108,7 @@ const EMICalculator = ({ property }) => {
                   value={interestRate}
                   onChange={(e) => setInterestRate(e.target.value)}
                   step="0.1"
-                  className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-blue-500 focus:border-transparent text-sm"
                   placeholder="Enter interest rate"
                   min="0"
                 />
@@ -121,7 +121,7 @@ const EMICalculator = ({ property }) => {
                   type="number"
                   value={loanTenure}
                   onChange={(e) => setLoanTenure(e.target.value)}
-                  className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-blue-500 focus:border-transparent text-sm"
                   placeholder="Enter loan tenure"
                   min="0"
                 />
@@ -1230,32 +1230,32 @@ const Details = () => {
                   <input
                     type="text"
                     placeholder="First Name"
-                    className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500 focus:border-transparent text-sm"
+                    className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500 focus:border-transparent text-sm"
                   />
                   <input
                     type="text"
                     placeholder="Last Name"
-                    className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500 focus:border-transparent text-sm"
+                    className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500 focus:border-transparent text-sm"
                   />
                 </div>
                 <input
                   type="email"
                   placeholder="Email Address"
-                  className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500 focus:border-transparent text-sm"
+                  className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500 focus:border-transparent text-sm"
                 />
                 <input
                   type="tel"
                   placeholder="Phone Number"
-                  className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500 focus:border-transparent text-sm"
+                  className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500 focus:border-transparent text-sm"
                 />
                 <input
                   type="date"
-                  className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500 focus:border-transparent text-sm"
+                  className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500 focus:border-transparent text-sm"
                 />
                 <textarea
                   placeholder="Special Requirements (Optional)"
                   rows="3"
-                  className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500 focus:border-transparent text-sm"
+                  className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500 focus:border-transparent text-sm"
                 ></textarea>
                 <button
                   className="relative inline-block w-full py-3 px-6 rounded-lg font-semibold text-white bg-stone-700 z-10 overflow-hidden

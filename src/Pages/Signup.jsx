@@ -144,7 +144,7 @@ const SignUp = () => {
               value={formData.username}
               onChange={handleChange}
               required
-              className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500 focus:border-transparent text-sm"
+              className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500 focus:border-transparent text-sm"
               placeholder="Enter your username"
             />
           </div>
@@ -158,7 +158,7 @@ const SignUp = () => {
               value={formData.email}
               onChange={handleChange}
               required
-              className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500 focus:border-transparent text-sm"
+              className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500 focus:border-transparent text-sm"
               placeholder="Enter your email"
             />
           </div>
@@ -172,7 +172,7 @@ const SignUp = () => {
               value={formData.password}
               onChange={handleChange}
               required
-              className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500 focus:border-transparent text-sm"
+              className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500 focus:border-transparent text-sm"
               placeholder="Enter your password"
             />
             <div className="mt-2">
@@ -189,7 +189,7 @@ const SignUp = () => {
               name="role"
               value={formData.role}
               onChange={handleChange}
-              className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500 focus:border-transparent text-sm"
+              className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500 focus:border-transparent text-sm"
             >
               <option value="customer">Customer</option>
               <option value="developer">Developer</option>

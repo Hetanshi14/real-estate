@@ -197,7 +197,7 @@ const Developer = () => {
                 value={minExperience}
                 onChange={(e) => setMinExperience(e.target.value)}
                 placeholder="e.g., 5"
-                className="p-2 border border-gray-300 rounded-lg text-sm w-28 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="p-2 border border-gray-300 rounded-lg text-sm w-28 focus:ring-none focus:ring-blue-500 focus:border-transparent"
                 min="0"
               />
             </div>
@@ -210,7 +210,7 @@ const Developer = () => {
                 value={minRating}
                 onChange={(e) => setMinRating(e.target.value)}
                 placeholder="e.g., 3.0"
-                className="p-2 border border-gray-300 rounded-lg text-sm w-28 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="p-2 border border-gray-300 rounded-lg text-sm w-28 focus:ring-none focus:ring-blue-500 focus:border-transparent"
                 min="0"
                 max="5"
                 step="0.1"
