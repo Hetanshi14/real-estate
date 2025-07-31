@@ -14,14 +14,12 @@ const AboutUs = () => {
   const [developers, setDevelopers] = useState([]);
   const [properties, setProperties] = useState([]);
   const [error, setError] = useState(null);
-  const [isLoading, setIsLoading] = useState(true); // New loading state
 
   useEffect(() => {
     document.title = 'About Us - Zivaas Properties';
 
     const fetchData = async () => {
       try {
-        setIsLoading(true); // Start loading
         // Fetch users with role 'developer'
         const { data: developersData, error: developersError } = await supabase
           .from('users')
@@ -94,26 +92,11 @@ const AboutUs = () => {
         setError(err.message);
         setDevelopers([]);
         setProperties([]);
-      } finally {
-        setIsLoading(false); // Stop loading
       }
     };
 
     fetchData();
   }, []);
-
-  // Render loading screen if isLoading is true
-  if (isLoading) {
-    return (
-      <div className="col-span-full flex justify-center items-center min-h-screen w-auto h-72">
-        <motion.img
-          src={LOGO_URL}
-          alt="Zivaas Properties Logo"
-          className="h-32 w-auto object-contain animate-pulse"
-        />
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen">
@@ -123,7 +106,7 @@ const AboutUs = () => {
         style={{ backgroundImage: `url(https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Bg%20img/bgabout.jpg)` }}
         onError={(e) => {
           console.error('Banner background image load failed');
-          e.target.style.backgroundImage = 'url(https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80)';
+          e.target.style.backgroundImage = 'ur[](https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80)';
         }}
       >
         <div className="absolute inset-0 bg-black/60 z-0" />

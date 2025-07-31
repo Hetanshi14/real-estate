@@ -20,7 +20,6 @@ const Home = () => {
   const [selectedFilter, setSelectedFilter] = useState("All");
   const [properties, setProperties] = useState([]);
   const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [statsInView, setStatsInView] = useState(false);
   const [counts, setCounts] = useState([0, 0, 0, 0]);
   const cardRefs = useRef([]);
@@ -59,7 +58,6 @@ const Home = () => {
     const fetchProperties = async () => {
       try {
         console.log("Fetching properties from Supabase");
-        setLoading(true);
         const { data: propertiesData, error: propertiesError } = await supabase
           .from("properties")
           .select("*");
@@ -119,8 +117,6 @@ const Home = () => {
         console.error("Error fetching properties:", error.message);
         setError(error.message);
         setProperties([]);
-      } finally {
-        setLoading(false);
       }
     };
 
@@ -410,7 +406,7 @@ const Home = () => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {filteredProperties.length > 0 && !loading
+          {filteredProperties.length > 0
             ? filteredProperties.slice(0, 6).map((property, i) => (
                 <div
                   key={property.id}
@@ -463,19 +459,11 @@ const Home = () => {
                   </div>
                 </div>
               ))
-            : !loading && (
+            : (
                 <p className="text-center text-stone-600 text-lg col-span-full">
                   No properties found for the selected filter.
                 </p>
               )}
-          {loading && (
-            <div className="col-span-full flex justify-center items-center min-h-screen h-72 w-auto">
-              <img
-                src="https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/logo/zivaaslogo01.jpg"
-                className="h-32 w-auto object-contain animate-pulse"
-              />
-            </div>
-          )}
         </div>
 
         <div className="flex justify-center mt-8 mb-8">
@@ -570,7 +558,7 @@ const Home = () => {
         ref={zivaasRef}
         className="relative md:h-100 h-[70vh] bg-cover bg-center text-white flex flex-col justify-center items-center text-center px-4"
         style={{
-          backgroundImage: `url(https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Bg%20img/bghome.jpg)`,
+          backgroundImage: `ur[](https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Bg%20img/bghome.jpg)`,
         }}
       >
         <div className="absolute inset-0 bg-black/60 z-0" />

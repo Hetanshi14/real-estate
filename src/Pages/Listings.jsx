@@ -245,7 +245,6 @@ const Listings = () => {
   const [allProps, setAllProps] = useState([]);
   const [error, setError] = useState(null);
   const [page, setPage] = useState(1);
-  const [isLoading, setIsLoading] = useState(true); // New loading state
   const perPage = 9;
 
   const [filters, setFilters] = useState(() => {
@@ -320,8 +319,6 @@ const Listings = () => {
         console.error("Listings: Error fetching user data:", error);
         setError(`Error fetching user data: ${error.message}`);
         setWishlistCriteria({});
-      } finally {
-        setIsLoading(false); // Stop loading after user data fetch
       }
     };
     fetchUserData();
@@ -330,7 +327,6 @@ const Listings = () => {
   useEffect(() => {
     const fetchProperties = async () => {
       try {
-        setIsLoading(true); // Start loading
         console.log("Listings: Fetching properties from Supabase");
         const { data: propertiesData, error: propertiesError } =
           await supabase.from("properties").select(`
@@ -396,8 +392,6 @@ const Listings = () => {
           `Error loading properties: ${error.message}. Check console for details.`
         );
         setAllProps([]);
-      } finally {
-        setIsLoading(false); // Stop loading after properties fetch
       }
     };
 
@@ -561,7 +555,7 @@ const Listings = () => {
       if (currentFilters.sort === "priceLowHigh") {
         result.sort((a, b) => a.price - b.price);
       } else if (currentFilters.sort === "priceHighLow") {
-        result.sort((a, b) => b.price - a.price);
+        result.sort((a, b) => b.price - b.price);
       }
     }
 
@@ -683,18 +677,6 @@ const Listings = () => {
       setError(err.message);
     }
   };
-
-  // Render loading screen if isLoading is true
-  if (isLoading) {
-    return (
-      <div className="col-span-full flex justify-center items-center min-h-screen w-auto h-72r">
-        <motion.img
-          src={LOGO_URL}
-          className="h-32 w-auto object-contain animate-pulse"
-        />
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-stone-50">

@@ -77,7 +77,7 @@ const Login = () => {
     <div
       className="min-h-screen flex items-center justify-center"
       style={{
-        backgroundImage: `url('https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Bg%20img/bglogin.jpg')`,
+        backgroundImage: "url('/public/bglogin.jpg')",
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { FaPhoneAlt, FaEnvelope, FaMapMarkerAlt, FaPaperPlane } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 
@@ -14,19 +14,10 @@ const ContactUs = () => {
     });
 
     const [visibleSections, setVisibleSections] = useState(['contactBanner', 'contactInfo', 'contactForm']); // Initialize with all sections visible
-    const [isLoading, setIsLoading] = useState(true); // New loading state
+
     const bannerRef = useRef(null);
     const contactRef = useRef(null);
     const formRef = useRef(null);
-
-    useEffect(() => {
-        // Simulate a loading delay (e.g., 1 second) to mimic data fetching
-        const timer = setTimeout(() => {
-            setIsLoading(false);
-        }, 1000);
-
-        return () => clearTimeout(timer); // Cleanup timer on unmount
-    }, []);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -44,19 +35,6 @@ const ContactUs = () => {
             message: ''
         });
     };
-
-    // Render loading screen if isLoading is true
-    if (isLoading) {
-        return (
-            <div className="col-span-full flex justify-center items-center min-h-screen w-auto h-72">
-                <motion.img
-                    src={LOGO_URL}
-                    alt="Zivaas Properties Logo"
-                    className="h-32 w-auto object-contain animate-pulse"
-                    />
-            </div>
-        );
-    }
 
     return (
         <div className="bg-white">

@@ -105,7 +105,7 @@ const SignUp = () => {
     <div
       className="min-h-screen flex items-center justify-center"
       style={{
-        backgroundImage: `url(${backgroundImageUrl})`,
+        backgroundImage: "url('/public/bgsignup.jpg')",
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',

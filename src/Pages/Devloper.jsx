@@ -18,15 +18,12 @@ const Developer = () => {
   const [minExperience, setMinExperience] = useState("");
   const [minRating, setMinRating] = useState("");
   const [filteredDevelopers, setFilteredDevelopers] = useState([]);
-  const [isLoading, setIsLoading] = useState(true); // New loading state
-
   const sectionRefs = useRef([]);
   const [visibleSections, setVisibleSections] = useState(["hero", "developers"]); // Initialize with sections visible
 
   useEffect(() => {
     const fetchDevelopersAndProperties = async () => {
       try {
-        setIsLoading(true); // Start loading
         console.log("Fetching developers and properties...");
         const { data, error: fetchError } = await supabase.from("properties")
           .select(`
@@ -106,8 +103,6 @@ const Developer = () => {
         setError(`Failed to load developers and properties: ${error.message}`);
         setDevelopers([]);
         setFilteredDevelopers([]);
-      } finally {
-        setIsLoading(false); // Stop loading
       }
     };
 
@@ -134,19 +129,6 @@ const Developer = () => {
     setMinExperience("");
     setMinRating("");
   };
-
-  // Render loading screen if isLoading is true
-  if (isLoading) {
-    return (
-      <div className="col-span-full flex justify-center items-center min-h-screen w-auto h-72">
-        <motion.img
-          src={LOGO_URL}
-          alt="Zivaas Properties Logo"
-          className="h-32 w-auto object-contain animate-pulse"
-          />
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen">
