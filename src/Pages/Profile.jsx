@@ -2877,51 +2877,63 @@ const Profile = () => {
               {filteredWishlist.map((item) => (
                 <motion.div
                   key={item.property_id}
-                  className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
+                  className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3 }}
                 >
-                  <div className="flex justify-between items-center mb-4">
-                    <h4 className="text-xl font-semibold text-stone-700">
-                      {item.properties.name}
-                    </h4>
-                    <button
-                      onClick={() => handleRemoveWishlistItem(item.property_id)}
-                      className="text-red-700 hover:text-red-900"
-                      aria-label={`Remove ${item.properties.name} from wishlist`}
-                    >
-                      <FaHeart className="inline text-xl" />
-                    </button>
-                  </div>
-                  <img
-                    src={item.properties.images?.split(",")[0] || PLACEHOLDER_IMAGE_URL}
-                    alt={`Property ${item.properties.name} image`}
-                    className="w-full h-48 object-cover rounded-lg mb-4"
-                    onError={(e) => {
-                      console.error("Profile: Failed to load wishlist image:", item.properties.images);
-                      e.target.src = PLACEHOLDER_IMAGE_URL;
-                    }}
-                  />
-                  <p className="text-stone-600">
-                    <FaMapMarkerAlt className="inline mr-2" />
-                    {item.properties.location}
-                  </p>
-                  <p className="text-stone-600">
-                    <FaMoneyBill className="inline mr-2" />
-                    ₹{item.properties.price.toLocaleString()}
-                  </p>
-                  <p className="text-stone-600">
-                    {item.properties.carpet_area} sq.ft | {item.properties.property_type}
-                  </p>
-                  <p className="text-stone-600">{item.properties.status}</p>
-                </motion.div>
-              ))}
-            </div>
+                  <div className="relative group h-[300px] w-full text-white overflow-hidden rounded">
+                        <img
+                          src={
+                            item.properties.images?.split(",")[0] ||
+                            PLACEHOLDER_IMAGE_URL
+                          }
+                          alt={item.properties.name}
+                          className="w-full h-full transition-transform duration-300 group-hover:scale-105 rounded"
+                          onError={(e) => {
+                            console.error(
+                              "Profile: Failed to load wishlist property image:",
+                              item.properties.images
+                            );
+                            e.target.src = PLACEHOLDER_IMAGE_URL;
+                          }}
+                        />
+                        <div className="absolute inset-0 bg-black opacity-40 md:opacity-0 md:group-hover:opacity-40 transition-opacity duration-300 z-0"></div>
+                        <div className="absolute inset-0 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity duration-400">
+                          <div className="absolute bottom-4 left-4 text-left">
+                            <h4 className="text-xl font-semibold">
+                              {item.properties.name}
+                            </h4>
+                            <p className="flex items-center">
+                              <FaMapMarkerAlt className="mr-2" />{" "}
+                              {item.properties.location}
+                            </p>
+                            <p className="flex items-center">
+                              <FaMoneyBill className="mr-2" /> ₹{item.properties.price}
+                            </p>
+                            <p>
+                              • {item.properties.property_type}
+                            </p>
+                            <p>• {item.properties.status}</p>
+                          </div>
+                          <button
+                            onClick={() =>
+                              handleRemoveWishlistItem(item.property_id)
+                            }
+                            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-white hover:text-red-500"
+                            aria-label={`Remove ${item.properties.name} from wishlist`}
+                          >
+                            <FaHeart className="inline mr-2 size-6 fill-white" />
+                          </button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
+            </>
           )}
-        </>
-      )}
-    </div>
+        </div>
       </motion.section >
     </div >
   );
