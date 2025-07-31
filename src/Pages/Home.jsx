@@ -841,17 +841,17 @@ const Home = () => {
       {/* Reach Out – Your Trusted Real Estate Allies Section */}
       <section className="bg-stone-100 text-stone-800 py-16 px-6">
         <div className="max-w-6xl mx-auto text-center">
-          <h2 className="text-3xl font-bold mb-4">
+          <h2 className="text-4xl font-bold text-stone-800 mb-4">
             Reach Out – Your Trusted Real Estate Allies
           </h2>
           <p className="text-lg text-stone-600 mb-12 max-w-3xl mx-auto leading-relaxed">
             At{" "}
-            <span className="font-semibold text-stone-800">
+            <span className="font-semibold text-stone-600">
               Zivaas Properties
             </span>
             , we support developers in managing properties and users in curating
             wishlists with expert guidance. With over{" "}
-            <strong>15 years of experience</strong> in India, our team ensures
+            <strong className="font-semibold">15 years of experience</strong> in India, our team ensures
             top-notch service from listing to ownership.
           </p>
 

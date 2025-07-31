@@ -414,7 +414,7 @@ const PropertyDetails = () => {
         )}
 
         {/* Properties Section */}
-        <div ref={(el) => (sectionRefs.current[4] = { ...el, id: "properties" })} className="mb-16">
+        <div ref={(el) => (sectionRefs.current[4] = { ...el, id: "properties" })} className="p-9">
           <h3 className="text-3xl font-bold text-gray-800 mb-12 text-center">
             Properties by {properties[0]?.developer || "Developer"}
           </h3>
