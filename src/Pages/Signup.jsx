@@ -14,7 +14,7 @@ const SignUp = () => {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [passwordError, setPasswordError] = useState('');
+  const [passwordStrength, setPasswordStrength] = useState(0); // Strength level from 0 to 4
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -22,20 +22,25 @@ const SignUp = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
 
     if (name === 'password') {
-      const isValid = validatePassword(value);
-      setPasswordError(
-        !isValid
-          ? 'Password must start with an uppercase letter, include a symbol (!@#$%^&*(),.?":{}|<>), a lowercase letter, and be at least 6 characters.'
-          : ''
-      );
+      calculatePasswordStrength(value);
     }
   };
 
-  const validatePassword = (password) => {
-    const hasUpperCase = /[A-Z]/.test(password);
-    const hasSymbol = /[!@#$%^&*(),.?":{}|<>]/.test(password);
-    const hasLowerCase = /[a-z]/.test(password);
-    return hasUpperCase && hasSymbol && hasLowerCase && password.length >= 6;
+  const calculatePasswordStrength = (password) => {
+    let strength = 0;
+    if (password.length > 0) {
+      strength = 1; // 1/4: At least one character
+      if (/^[A-Z][a-z]*$/.test(password)) {
+        strength = 2; // 2/4: Starts with capital, followed by lowercase
+      }
+      if (/^[A-Z][a-z]*[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+        strength = 3; // 3/4: Includes a special character
+      }
+      if (/^[A-Z][a-z]*[!@#$%^&*(),.?":{}|<>].*\d/.test(password)) {
+        strength = 4; // 4/4: Includes a number
+      }
+    }
+    setPasswordStrength(strength);
   };
 
   const handleSubmit = async (e) => {
@@ -44,8 +49,8 @@ const SignUp = () => {
     setSuccess(false);
     setLoading(true);
 
-    if (!validatePassword(formData.password)) {
-      setError('Invalid password. Please check the requirements.');
+    if (!formData.password) {
+      setError('Password cannot be empty.');
       setLoading(false);
       return;
     }
@@ -170,9 +175,11 @@ const SignUp = () => {
               className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-stone-500 focus:border-transparent text-sm"
               placeholder="Enter your password"
             />
-            {passwordError && (
-              <p className="text-red-500 text-xs mt-1">{passwordError}</p>
-            )}
+            <div className="mt-2">
+              <p className="text-sm text-stone-600">
+                Password Strength: {passwordStrength}/4
+              </p>
+            </div>
           </div>
           <div>
             <label className="text-sm font-semibold text-stone-700 mb-2 flex items-center">
@@ -190,7 +197,7 @@ const SignUp = () => {
           </div>
           <button
             type="submit"
-            disabled={loading || !!passwordError}
+            disabled={loading}
             className={`relative w-full py-3 px-6 rounded-lg font-semibold text-white bg-stone-700 z-10 overflow-hidden
               before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
               before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white

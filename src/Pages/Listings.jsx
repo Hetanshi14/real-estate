@@ -8,6 +8,8 @@ import {
   FaHome,
   FaRulerCombined,
   FaFilter,
+  FaArrowLeft,
+  FaArrowRight,
 } from "react-icons/fa";
 import { Heart } from "lucide-react";
 import { motion } from "framer-motion";
@@ -876,21 +878,23 @@ const Listings = () => {
                     before:absolute before:right-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
                     before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white
                     disabled:opacity-50 disabled:cursor-not-allowed"
+            aria-label="Previous page"
           >
-            Previous
+            <FaArrowLeft size={20} />
           </button>
-          <span className="text-stone-700">
+          <span className="text-stone-700 mt-1">
             Page {page} of {totalPages}
           </span>
           <button
             onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
             disabled={page === totalPages}
-            className="relative inline-block px-6 py-2 mr-3 rounded font-medium text-white bg-stone-700 z-10 overflow-hidden
+            className="relative inline-block px-6 py-2 rounded font-medium text-white bg-stone-700 z-10 overflow-hidden
                     before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
                     before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white
                     disabled:opacity-50 disabled:cursor-not-allowed"
+            aria-label="Next page"
           >
-            Next
+            <FaArrowRight size={20} />
           </button>
         </div>
       )}

@@ -83,7 +83,7 @@ const ContactUs = () => {
                 <div
                     id="contactInfo"
                     ref={contactRef}
-                    className="transition-all duration-1000"
+                    className="transition-all shadow-md p-6 bg-stone-100 rounded duration-1000"
                 >
                     <h2 className="text-3xl font-bold text-stone-700 mb-6">Contact Information</h2>
                     <div className="space-y-6">
@@ -117,7 +117,7 @@ const ContactUs = () => {
                     id="contactForm"
                     ref={formRef}
                     onSubmit={handleSubmit}
-                    className="bg-white shadow-md p-6 rounded space-y-5 w-full transition-all duration-1000"
+                    className="shadow-md p-6 bg-stone-100 rounded space-y-5 w-full transition-all duration-1000"
                 >
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
@@ -128,7 +128,7 @@ const ContactUs = () => {
                                 value={formData.name}
                                 onChange={handleChange}
                                 required
-                                className="w-full border border-stone-300 px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-stone-500"
+                                className="w-full border border-stone-300 px-4 py-2 rounded focus:outline-none focus:ring-none focus:ring-stone-500"
                             />
                         </div>
 
@@ -140,7 +140,7 @@ const ContactUs = () => {
                                 value={formData.email}
                                 onChange={handleChange}
                                 required
-                                className="w-full border border-stone-300 px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-stone-500"
+                                className="w-full border border-stone-300 px-4 py-2 rounded focus:outline-none focus:ring-none focus:ring-stone-500"
                             />
                         </div>
                     </div>
@@ -153,7 +153,7 @@ const ContactUs = () => {
                             value={formData.subject}
                             onChange={handleChange}
                             required
-                            className="w-full border border-stone-300 px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-stone-500"
+                            className="w-full border border-stone-300 px-4 py-2 rounded focus:outline-none focus:ring-none focus:ring-stone-500"
                         />
                     </div>
 
@@ -165,7 +165,7 @@ const ContactUs = () => {
                             value={formData.message}
                             onChange={handleChange}
                             required
-                            className="w-full border border-stone-300 px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-stone-500"
+                            className="w-full border border-stone-300 px-4 py-2 rounded focus:outline-none focus:ring-none focus:ring-stone-500"
                             placeholder="Tell us about your project or inquiry..."
                         />
                     </div>
