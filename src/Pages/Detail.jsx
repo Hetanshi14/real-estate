@@ -2,8 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../supabaseClient";
 import { motion } from "framer-motion";
-import Rating from "@mui/material/Rating";
-import Stack from "@mui/material/Stack";
+import { FaStar, FaRegStar, FaTimes, FaEdit, FaTrash, FaUser } from "react-icons/fa";
 
 const EMICalculator = ({ property }) => {
   const [loanAmount, setLoanAmount] = useState(
@@ -173,6 +172,430 @@ const EMICalculator = ({ property }) => {
   );
 };
 
+const CustomerReviews = ({ propertyId }) => {
+  const [rating, setRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
+  const [reviewText, setReviewText] = useState('');
+  const [showForm, setShowForm] = useState(false);
+  const [averageRating, setAverageRating] = useState(0);
+  const [error, setError] = useState('');
+  const [reviews, setReviews] = useState([]);
+  const [showAllReviews, setShowAllReviews] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState(null);
+  const [propertyOwnerId, setPropertyOwnerId] = useState(null);
+
+  const fetchPropertyData = async () => {
+    try {
+      if (!propertyId) {
+        setError('Property ID is missing.');
+        return { developerRating: 0, ownerId: null };
+      }
+
+      const { data, error: fetchError } = await supabase
+        .from('properties')
+        .select('developer_rating, developer_id')
+        .eq('id', propertyId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      return {
+        developerRating: data?.developer_rating || 0,
+        ownerId: data?.developer_id || null
+      };
+    } catch (error) {
+      console.error('Error fetching property data:', error.message);
+      setError('Failed to load property data. Please try again.');
+      return { developerRating: 0, ownerId: null };
+    }
+  };
+
+  const fetchUser = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+
+      // Fetch username from users table
+      const { data: userData, error } = await supabase
+        .from('users')
+        .select('username')
+        .eq('id', user.id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching username:', error.message);
+        return { id: user.id, username: user.email.split('@')[0] }; // Fallback to email-based username
+      }
+
+      return { id: user.id, username: userData.username || user.email.split('@')[0] };
+    } catch (error) {
+      console.error('Error fetching user:', error.message);
+      return null;
+    }
+  };
+
+  const fetchReviews = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('wishlist')
+        .select('id, rating, notes, created_at, user_id, username')
+        .eq('property_id', propertyId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      return data.map(item => ({
+        id: item.id,
+        rating: item.rating || 0,
+        reviewText: item.notes || 'No feedback provided',
+        createdAt: item.created_at || new Date().toISOString(),
+        user_id: item.user_id,
+        username: item.username || 'Guest'
+      }));
+    } catch (error) {
+      console.error('Error fetching reviews:', error.message);
+      setError('Failed to load reviews. Please try again.');
+      return [];
+    }
+  };
+
+  useEffect(() => {
+    // Clean up old localStorage data
+    localStorage.removeItem(`reviews_${propertyId}`);
+
+    const loadData = async () => {
+      const { developerRating, ownerId } = await fetchPropertyData();
+      const user = await fetchUser();
+      const fetchedReviews = await fetchReviews();
+
+      setCurrentUserId(user?.id || null);
+      setPropertyOwnerId(ownerId);
+      setReviews(fetchedReviews);
+      setAverageRating(developerRating);
+    };
+
+    loadData();
+  }, [propertyId]);
+
+  const handleStarClick = (value) => {
+    setRating(value);
+  };
+
+  const calculateAverageRating = (reviews) => {
+    if (reviews.length === 0) return 0;
+    const sum = reviews.reduce((acc, curr) => acc + (curr.rating || 0), 0);
+    return sum / reviews.length;
+  };
+
+  const handleSubmit = async () => {
+    if (!rating) {
+      setError('Please provide a rating.');
+      return;
+    }
+
+    if (rating < 0 || rating > 5) {
+      setError('Rating must be between 0 and 5.');
+      return;
+    }
+
+    try {
+      const user = await fetchUser();
+      if (!user) {
+        setError('You must be logged in to submit a review.');
+        return;
+      }
+
+      const { data, error: insertError } = await supabase
+        .from('wishlist')
+        .insert({
+          user_id: user.id,
+          property_id: propertyId,
+          rating: rating,
+          notes: reviewText.trim() || null,
+          username: user.username
+        })
+        .select('id, rating, notes, created_at, user_id, username')
+        .single();
+
+      if (insertError) {
+        if (insertError.code === '42501') {
+          throw new Error('Permission denied: You are not allowed to submit a review.');
+        }
+        throw new Error(insertError.message);
+      }
+
+      const newReview = {
+        id: data.id,
+        rating: data.rating,
+        reviewText: data.notes || 'No feedback provided',
+        createdAt: data.created_at || new Date().toISOString(),
+        user_id: data.user_id,
+        username: data.username || 'Guest'
+      };
+
+      const updatedReviews = [newReview, ...reviews];
+      setReviews(updatedReviews);
+
+      const newAverage = calculateAverageRating(updatedReviews);
+      const { error: updateError } = await supabase
+        .from('properties')
+        .update({ developer_rating: newAverage })
+        .eq('id', propertyId);
+
+      if (updateError) {
+        if (updateError.code === '42501') {
+          throw new Error('Permission denied: Unable to update property rating.');
+        }
+        throw new Error(updateError.message);
+      }
+
+      setReviewText('');
+      setRating(0);
+      setShowForm(false);
+      setError('');
+      setAverageRating(newAverage);
+    } catch (error) {
+      console.error('Error submitting review:', error.message);
+      setError(`Failed to save review: ${error.message}. Please try again.`);
+    }
+  };
+
+  const handleDelete = async (reviewId, reviewUserId) => {
+    if (!currentUserId) {
+      setError('You must be logged in to delete a review.');
+      return;
+    }
+
+    if (currentUserId !== reviewUserId && currentUserId !== propertyOwnerId) {
+      setError('You are not authorized to delete this review.');
+      return;
+    }
+
+    // Optimistic update: remove review from UI immediately
+    const previousReviews = [...reviews];
+    const updatedReviews = reviews.filter(review => review.id !== reviewId);
+    setReviews(updatedReviews);
+
+    try {
+      const { error: deleteError } = await supabase
+        .from('wishlist')
+        .delete()
+        .eq('id', reviewId)
+        .eq('property_id', propertyId);
+
+      if (deleteError) {
+        // Rollback UI if delete fails
+        setReviews(previousReviews);
+        if (deleteError.code === '42501') {
+          throw new Error('Permission denied: You are not allowed to delete this review.');
+        }
+        throw new Error(deleteError.message);
+      }
+
+      // Update average rating after successful delete
+      const newAverage = calculateAverageRating(updatedReviews);
+      const { error: updateError } = await supabase
+        .from('properties')
+        .update({ developer_rating: newAverage })
+        .eq('id', propertyId);
+
+      if (updateError) {
+        // Rollback UI if rating update fails
+        setReviews(previousReviews);
+        if (updateError.code === '42501') {
+          throw new Error('Permission denied: Unable to update property rating.');
+        }
+        throw new Error(updateError.message);
+      }
+
+      setAverageRating(newAverage);
+      setError('');
+    } catch (error) {
+      console.error('Error deleting review:', error.message);
+      setError(`Failed to delete review: ${error.message}. Please try again.`);
+    }
+  };
+
+  const handleClear = () => {
+    setRating(0);
+    setReviewText('');
+    setError('');
+  };
+
+  return (
+    <div className="max-w-6xl mx-auto p-6 bg-white rounded-2xl shadow-lg">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-3xl font-bold text-stone-700">Customer Reviews</h2>
+        {!showForm && (
+          <button
+            className="relative inline-flex items-center px-4 py-2 rounded-lg font-semibold text-white bg-stone-700 hover:bg-stone-800 transition-colors duration-300"
+            onClick={() => setShowForm(true)}
+          >
+            <FaEdit className="mr-2" /> Add Review
+          </button>
+        )}
+        {showForm && (
+          <button
+            onClick={() => setShowForm(false)}
+            className="relative inline-flex items-center px-4 py-2 rounded-lg font-semibold text-white bg-stone-700 hover:bg-stone-800 transition-colors duration-300"
+          >
+            <FaTimes className="mr-2" /> Cancel
+          </button>
+        )}
+      </div>
+      <div className="text-yellow-500 mt-2 flex flex-col gap-2">
+        <div className="flex items-center gap-2 mb-2">
+          <div className="flex gap-1">
+            {Array(5)
+              .fill(0)
+              .map((_, i) =>
+                i < Math.round(averageRating) ? <FaStar key={i} /> : <FaRegStar key={i} />
+              )}
+          </div>
+          <span className="text-black text-lg font-medium">{averageRating.toFixed(1) || 0}</span>
+        </div>
+        <p className="text-stone-600 text-sm">Average based on {reviews.length} entries</p>
+      </div>
+      <hr className="border-stone-200 mb-6" />
+      {showForm && (
+        <div className="bg-stone-50 border border-stone-200 p-6 rounded-xl shadow-md mb-6">
+          <h3 className="text-xl font-semibold text-stone-700 flex items-center gap-2 mb-4">
+            <FaEdit /> Add Your Review
+          </h3>
+          <div className="flex gap-1 text-2xl mb-4">
+            {Array(5)
+              .fill(0)
+              .map((_, i) =>
+                i < (hoverRating || rating) ? (
+                  <FaStar
+                    key={i}
+                    onClick={() => handleStarClick(i + 1)}
+                    onMouseEnter={() => setHoverRating(i + 1)}
+                    onMouseLeave={() => setHoverRating(0)}
+                    className="cursor-pointer text-yellow-500 hover:text-yellow-600"
+                  />
+                ) : (
+                  <FaRegStar
+                    key={i}
+                    onClick={() => handleStarClick(i + 1)}
+                    onMouseEnter={() => setHoverRating(i + 1)}
+                    onMouseLeave={() => setHoverRating(0)}
+                    className="cursor-pointer text-yellow-300 hover:text-yellow-500"
+                  />
+                )
+              )}
+          </div>
+          <textarea
+            value={reviewText}
+            onChange={(e) => setReviewText(e.target.value)}
+            className="w-full p-3 border border-stone-300 rounded-md focus:ring-stone-500 focus:border-transparent text-sm mb-4"
+            rows={4}
+            placeholder="Your feedback (optional)"
+          />
+          {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+          <div className="flex gap-3">
+            <button
+              onClick={handleClear}
+              className="px-4 py-2 border border-stone-300 rounded-md text-stone-700 hover:bg-stone-100 transition-colors"
+            >
+              Clear
+            </button>
+            <button
+              onClick={handleSubmit}
+              className="px-4 py-2 rounded-lg font-semibold text-white bg-stone-700 hover:bg-stone-800 transition-colors"
+            >
+              Submit Review
+            </button>
+          </div>
+        </div>
+      )}
+      {!showForm && (
+        <div>
+          {reviews.length > 0 && (
+            <div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {(showAllReviews ? reviews : reviews.slice(0, 3)).map((review) => (
+                  <div
+                    key={review.id}
+                    className="bg-stone-50 rounded-lg shadow-lg p-4 hover:shadow-xl transition-shadow duration-300"
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="flex text-yellow-500">
+                        {Array(5)
+                          .fill(0)
+                          .map((_, i) =>
+                            i < Math.round(review.rating) ? (
+                              <FaStar key={i} />
+                            ) : (
+                              <FaRegStar key={i} />
+                            )
+                          )}
+                      </div>
+                      <span className="text-stone-700 font-medium">
+                        {review.rating.toFixed(1)}
+                      </span>
+                    </div>
+                    <p className="text-stone-600 text-sm mb-2">
+                      {review.reviewText || 'No feedback provided'}
+                    </p>
+                    <p className="text-xs text-stone-400 flex items-center gap-1">
+                      <FaUser className="text-stone-500" /> {review.username}
+                    </p>
+                    <p className="text-xs text-stone-400">
+                      {new Date(review.createdAt).toLocaleString()}
+                    </p>
+                    {(currentUserId === review.user_id || currentUserId === propertyOwnerId) && (
+                      <button
+                        onClick={() => handleDelete(review.id, review.user_id)}
+                        className="mt-2 text-stone-500 hover:text-stone-700 flex items-center gap-1 text-sm"
+                      >
+                        <FaTrash /> Delete
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+              {showAllReviews && reviews.length > 3 && (
+                <p className="text-stone-600 text-sm mt-4 text-center">
+                  <a
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setShowAllReviews(false);
+                    }}
+                    className="text-blue-500 hover:underline"
+                  >
+                    Close
+                  </a>
+                </p>
+              )}
+              {!showAllReviews && reviews.length > 3 && (
+                <p className="text-stone-600 text-sm mt-4 text-center">
+                  <a
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setShowAllReviews(true);
+                    }}
+                    className="text-blue-500 hover:underline"
+                  >
+                    More Reviews
+                  </a>
+                </p>
+              )}
+            </div>
+          )}
+          {!showForm && reviews.length === 0 && (
+            <p className="text-center text-stone-500 text-lg py-6">
+              No reviews yet. Be the first to add your review!
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const Details = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -182,10 +605,10 @@ const Details = () => {
   const [error, setError] = useState(null);
   const [rating, setRating] = useState(null);
   const [ratingError, setRatingError] = useState("");
-  const [currentIndex, setCurrentIndex] = useState(0); // For slideshow
-  const [zoomLevel, setZoomLevel] = useState(1); // For zoom control
-
-  // State for Floor Plans
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [zoomLevel, setZoomLevel] = useState(1);
+  const [review, setReview] = useState("");
+  const [reviewError, setReviewError] = useState("");
   const [activeTab, setActiveTab] = useState("unit-plans");
   const [activePlan, setActivePlan] = useState(null);
   const [floorPlans, setFloorPlans] = useState([]);
@@ -297,6 +720,7 @@ const Details = () => {
           amenities: normalizedAmenities,
           nearby_landmarks: landmarks,
         };
+
         setProperty(mappedProperty);
         setFloorPlans(floorPlansData || []);
         setImages(
@@ -314,14 +738,11 @@ const Details = () => {
             : []
         );
 
-        // Set initial active plan based on tabs
         setActivePlan(
           activeTab === "unit-plans"
-            ? floorPlansData.find((plan) => plan.type === "residential")
-                ?.image ||
-                floorPlansData.find((plan) => plan.type === "commercial")
-                  ?.image ||
-                "https://via.placeholder.com/800x600?text=No+Unit+Plan+Available"
+            ? floorPlansData.find((plan) => plan.type === "residential")?.image ||
+              floorPlansData.find((plan) => plan.type === "commercial")?.image ||
+              "https://via.placeholder.com/800x600?text=No+Unit+Plan+Available"
             : activeTab === "site-plan"
             ? propertyData.site_plan ||
               "https://via.placeholder.com/800x600?text=No+Site+Plan+Available"
@@ -336,6 +757,7 @@ const Details = () => {
         setLoading(false);
       }
     };
+
     fetchProperty();
   }, [id]);
 
@@ -343,8 +765,8 @@ const Details = () => {
     if (images.length > 0) {
       const interval = setInterval(() => {
         setCurrentIndex((prev) => (prev + 1) % images.length);
-      }, 3000); // Auto-slide every 3 seconds
-      return () => clearInterval(interval); // Cleanup interval on component unmount
+      }, 3000);
+      return () => clearInterval(interval);
     }
   }, [images]);
 
@@ -364,11 +786,37 @@ const Details = () => {
         .eq("id", id);
 
       if (error) throw error;
-      setRating(null); // Reset rating after submission
-      setTimeout(() => setRatingError(""), 3000); // Clear success message after 3 seconds
+      setRating(null);
+      setTimeout(() => setRatingError(""), 3000);
     } catch (error) {
       console.error("Error submitting rating:", error.message);
       setRatingError("Failed to submit rating. Please try again.");
+    }
+  };
+
+  const handleSubmitReview = async () => {
+    if (!rating) {
+      setReviewError("Please provide a rating with your review.");
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from("property_reviews")
+        .insert({
+          property_id: id,
+          rating: rating,
+          review_text: review || null,
+          created_at: new Date().toISOString(),
+        });
+
+      if (error) throw error;
+      setRating(null);
+      setReview("");
+      setTimeout(() => setReviewError("Review submitted successfully!"), 3000);
+    } catch (error) {
+      console.error("Error submitting review:", error.message);
+      setReviewError("Failed to submit review. Please try again.");
     }
   };
 
@@ -377,8 +825,8 @@ const Details = () => {
     setActivePlan(
       tab === "unit-plans"
         ? floorPlans.find((plan) => plan.type === "residential")?.image ||
-            floorPlans.find((plan) => plan.type === "commercial")?.image ||
-            "https://via.placeholder.com/800x600?text=No+Unit+Plan+Available"
+          floorPlans.find((plan) => plan.type === "commercial")?.image ||
+          "https://via.placeholder.com/800x600?text=No+Unit+Plan+Available"
         : tab === "site-plan"
         ? property?.site_plan ||
           "https://via.placeholder.com/800x600?text=No+Site+Plan+Available"
@@ -396,6 +844,7 @@ const Details = () => {
         />
       </div>
     );
+
   if (error || !property)
     return (
       <div className="min-h-screen flex items-center justify-center text-red-700 flex-col">
@@ -522,7 +971,6 @@ const Details = () => {
           </motion.div>
         </motion.div>
       </section>
-
       <motion.section
         className="sticky top-16 bg-white shadow-md z-20"
         initial={{ opacity: 0, y: 30 }}
@@ -583,7 +1031,6 @@ const Details = () => {
           </div>
         </div>
       </motion.section>
-
       <motion.section
         className="py-12 bg-stone-50"
         initial={{ opacity: 0, y: 30 }}
@@ -664,7 +1111,6 @@ const Details = () => {
           </div>
         </div>
       </motion.section>
-
       <motion.section
         className="py-8 bg-white"
         initial={{ opacity: 0, y: 30 }}
@@ -679,9 +1125,7 @@ const Details = () => {
           <p className="text-base text-stone-600 mb-6 text-center max-w-xl mx-auto">
             Explore the premium facilities at {property.name}
           </p>
-
-          {Array.isArray(property.amenities) &&
-          property.amenities.length > 0 ? (
+          {Array.isArray(property.amenities) && property.amenities.length > 0 ? (
             <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-6 gap-5 justify-items-center max-w-4xl mx-auto">
               {property.amenities.map((amenity, index) => (
                 <div
@@ -712,7 +1156,6 @@ const Details = () => {
           )}
         </div>
       </motion.section>
-
       <motion.section
         className="py-12 bg-white"
         initial={{ opacity: 0, y: 50 }}
@@ -727,10 +1170,8 @@ const Details = () => {
           <p className="text-base md:text-lg text-stone-600 mb-4 text-center max-w-xl mx-auto">
             Explore more visuals of {property.name}
           </p>
-
           {images.length > 0 ? (
             <div className="relative flex flex-col md:flex-row items-center justify-center">
-              {/* Previous Image (Faded Preview - Hidden on small screens) */}
               {images.length > 1 && (
                 <div className="hidden md:block absolute left-0 w-1/3 h-[30rem] opacity-50 scale-90 transition-all duration-500">
                   <img
@@ -747,8 +1188,6 @@ const Details = () => {
                   />
                 </div>
               )}
-
-              {/* Main Image */}
               <div className="w-full sm:w-[90%] md:w-[90vh] h-[20rem] sm:h-[25rem] md:h-[30rem] rounded-lg overflow-hidden shadow-md border border-stone-200 z-10">
                 <img
                   src={images[currentIndex].src}
@@ -760,8 +1199,6 @@ const Details = () => {
                   }}
                 />
               </div>
-
-              {/* Next Image (Faded Preview - Hidden on small screens) */}
               {images.length > 1 && (
                 <div className="hidden md:block absolute right-0 w-1/3 h-[30rem] opacity-50 scale-90 transition-all duration-500">
                   <img
@@ -784,8 +1221,6 @@ const Details = () => {
               </p>
             </div>
           )}
-
-          {/* Pagination Dots */}
           <div className="text-center mb-4">
             {images.length > 0 ? (
               <div className="flex justify-center gap-2 mt-3 flex-wrap">
@@ -809,7 +1244,6 @@ const Details = () => {
           </div>
         </div>
       </motion.section>
-
       <motion.section
         className="py-12 bg-stone-50"
         initial={{ opacity: 0, y: 30 }}
@@ -986,7 +1420,6 @@ const Details = () => {
           </div>
         </div>
       </motion.section>
-
       <motion.section
         className="py-12 bg-stone-50"
         initial={{ opacity: 0, y: 50 }}
@@ -995,7 +1428,7 @@ const Details = () => {
         transition={{ duration: 0.6 }}
       >
         <div className="max-w-6xl mx-auto px-4">
-          <h2 className="text-4xl font-bold text-stone-700 mb-6">
+          <h2 className="text-4xl font-bold text-stone-700 mb-6 text-center">
             About the Developer
           </h2>
           <div className="bg-white rounded-lg shadow-md p-6 md:p-8">
@@ -1072,7 +1505,6 @@ const Details = () => {
           </div>
         </div>
       </motion.section>
-
       <motion.section
         className="py-12 bg-white"
         initial={{ opacity: 0, y: 30 }}
@@ -1132,9 +1564,7 @@ const Details = () => {
           </div>
         </div>
       </motion.section>
-
       <EMICalculator property={property} />
-
       <motion.section
         className="py-12 bg-stone-50"
         initial={{ opacity: 0, y: 50 }}
@@ -1143,7 +1573,7 @@ const Details = () => {
         transition={{ duration: 0.6 }}
       >
         <div className="max-w-6xl mx-auto px-4">
-          <h2 className="text-4xl font-bold text-stone-700 mb-6">Contact Us</h2>
+          <h2 className="text-4xl font-bold text-stone-700 mb-6 text-center">Contact Us</h2>
           <div className="grid md:grid-cols-2 gap-6">
             <div className="bg-white rounded-lg shadow-md p-6">
               <div className="text-center mb-6">
@@ -1157,7 +1587,7 @@ const Details = () => {
                 </h3>
                 <p className="text-stone-600 text-sm">{property.agent_role}</p>
                 <div className="flex items-center justify-center mt-2">
-                  <div className="flex text-stone-500">
+                  <div className="flex text-yellow-500">
                     {property.agent_rating ? (
                       <>
                         {Array(Math.round(property.agent_rating))
@@ -1269,47 +1699,14 @@ const Details = () => {
           </div>
         </div>
       </motion.section>
-
       <motion.section
-        className="py-12 bg-white"
+        className="py-12 bg-stone-50"
         initial={{ opacity: 0, y: 50 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, amount: 0.3 }}
         transition={{ duration: 0.6 }}
       >
-        <div className="max-w-6xl mx-auto px-4">
-          <h2 className="text-4xl font-bold text-stone-700 mb-6 text-center">
-            Rate the Developer
-          </h2>
-          <p className="text-lg text-stone-600 mb-6 text-center max-w-xl mx-auto">
-            Share your experience with {property.developer_name}
-          </p>
-          <div className="bg-white rounded-lg shadow-md p-6 md:p-8 text-center">
-            <Stack spacing={2} alignItems="center">
-              <Rating
-                name="developer-rating"
-                value={rating}
-                onChange={(event, newValue) => {
-                  setRating(newValue);
-                  setRatingError("");
-                }}
-                precision={0.5}
-                size="large"
-              />
-              {ratingError && (
-                <p className="text-red-600 text-sm">{ratingError}</p>
-              )}
-              <button
-                onClick={handleSubmitRating}
-                className="relative inline-block py-3 px-6 rounded-lg font-semibold text-white bg-stone-700 z-10 overflow-hidden
-                before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
-                before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white transition-colors"
-              >
-                Submit Rating
-              </button>
-            </Stack>
-          </div>
-        </div>
+        <CustomerReviews propertyId={id} />
       </motion.section>
     </div>
   );
