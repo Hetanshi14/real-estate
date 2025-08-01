@@ -3052,6 +3052,31 @@ const Profile = () => {
                 </div>
               </div>
 
+              {error && (
+                <div className="mt-8 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg text-center">
+                  {error}
+                  <button
+                    onClick={() => setError(null)}
+                    className="ml-2 text-red-700 hover:text-red-900"
+                    aria-label="Dismiss error"
+                  >
+                    ×
+                  </button>
+                </div>
+              )}
+              {successMessage && (
+                <div className="mt-8 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg text-center">
+                  {successMessage}
+                  <button
+                    onClick={() => setSuccessMessage(null)}
+                    className="ml-2 text-green-700 hover:text-green-900"
+                    aria-label="Dismiss success message"
+                  >
+                    ×
+                  </button>
+                </div>
+              )}
+
               <h3 className="text-2xl font-bold text-stone-700 mb-4">
                 Your Wishlist
               </h3>
@@ -3072,9 +3097,8 @@ const Profile = () => {
                       <div className="relative group h-[300px] w-full overflow-hidden rounded">
                         <img
                           src={
-                            item.properties.images
-                              ? item.properties.images.split(",")[0].trim()
-                              : PLACEHOLDER_IMAGE_URL
+                            item.properties.images?.split(",")[0] ||
+                            PLACEHOLDER_IMAGE_URL
                           }
                           alt={item.properties.name}
                           className="w-full h-full transition-transform duration-300 group-hover:scale-105 rounded"
@@ -3097,28 +3121,22 @@ const Profile = () => {
                               {item.properties.location}
                             </p>
                             <p className="flex items-center">
-                              <FaMoneyBill className="mr-2" /> ₹
-                              {item.properties.price.toLocaleString()}
+                              <FaMoneyBill className="mr-2" /> ₹{item.properties.price}
                             </p>
                             <p>
-                              {item.properties.configuration
-                                ? `${item.properties.configuration} • `
-                                : ""}
-                              {item.properties.property_type}
+                              • {item.properties.property_type}
                             </p>
-                            <p>{item.properties.status}</p>
+                            <p>• {item.properties.status}</p>
                           </div>
-                          <div className="absolute bottom-4 right-4">
-                            <button
-                              onClick={() =>
-                                handleRemoveWishlistItem(item.property_id)
-                              }
-                              className="text-red-500 hover:text-red-700"
-                              aria-label={`Remove ${item.properties.name} from wishlist`}
-                            >
-                              <FaHeart className="inline text-xl" />
-                            </button>
-                          </div>
+                          <button
+                            onClick={() =>
+                              handleRemoveWishlistItem(item.property_id)
+                            }
+                            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-white hover:text-red-500"
+                            aria-label={`Remove ${item.properties.name} from wishlist`}
+                          >
+                            <FaHeart className="inline mr-2 size-6 fill-white" />
+                          </button>
                         </div>
                       </div>
                     </motion.div>
@@ -3126,31 +3144,6 @@ const Profile = () => {
                 </div>
               )}
             </>
-          )}
-
-          {error && (
-            <div className="mt-8 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg text-center">
-              {error}
-              <button
-                onClick={() => setError(null)}
-                className="ml-2 text-red-700 hover:text-red-900"
-                aria-label="Dismiss error"
-              >
-                ×
-              </button>
-            </div>
-          )}
-          {successMessage && (
-            <div className="mt-8 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg text-center">
-              {successMessage}
-              <button
-                onClick={() => setSuccessMessage(null)}
-                className="ml-2 text-green-700 hover:text-green-900"
-                aria-label="Dismiss success message"
-              >
-                ×
-              </button>
-            </div>
           )}
         </div>
       </motion.section>
