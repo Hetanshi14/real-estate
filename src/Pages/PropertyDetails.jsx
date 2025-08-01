@@ -212,11 +212,6 @@ const PropertyDetails = () => {
   if (loading) {
     return (
       <div className="col-span-full flex justify-center items-center min-h-screen">
-        <img
-          src="https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/logo/zivaaslogo01.jpg"
-          className="h-32 w-auto object-contain animate-pulse"
-          alt="Loading"
-        />
       </div>
     );
   }
@@ -295,13 +290,13 @@ const PropertyDetails = () => {
                 </div>
               </div>
               <div className="flex justify-center">
-                <div className="w-80 h-80 rounded-xl overflow-hidden shadow-lg hover:scale-105 transition-transform duration-300">
+                <div className="w-100 h-80 ml-24 rounded-xl overflow-hidden shadow-lg hover:scale-105 transition-transform duration-300">
                   <img
                     src={
                       developerLogo 
                     }
                     alt={properties[0].developer}
-                    className="w-full h-full object-cover object-top"
+                    className="w-full h-full object-top"
                     onError={(e) => (e.target.src = defaultImage)}
                   />
                 </div>
