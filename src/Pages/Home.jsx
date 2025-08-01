@@ -558,7 +558,7 @@ const Home = () => {
         ref={zivaasRef}
         className="relative md:h-100 h-[70vh] bg-cover bg-center text-white flex flex-col justify-center items-center text-center px-4"
         style={{
-          backgroundImage: `ur[](https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Bg%20img/bghome.jpg)`,
+          backgroundImage: `url(https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Bg%20img/bghome.jpg)`,
         }}
       >
         <div className="absolute inset-0 bg-black/60 z-0" />
