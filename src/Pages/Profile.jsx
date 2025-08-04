@@ -147,11 +147,10 @@ const Profile = () => {
             await supabase
               .from("properties")
               .select(
-                "*, developer_experience, developer_projects_completed, developer_awards, developer_certifications"
+                "*, developer_experience, developer_projects_completed, developer_awards, developer_certifications, developer_description"
               )
               .eq("developer_id", userData.id)
-              .order("updated_at", { ascending: false })
-              .limit(1);
+              .order("updated_at", { ascending: false });
 
           if (propertiesError)
             throw new Error(
@@ -168,6 +167,7 @@ const Profile = () => {
               developer_awards: propertiesData[0].developer_awards || "",
               developer_certifications:
                 propertiesData[0].developer_certifications || "",
+              developer_description: propertiesData[0].developer_description || "",
               property_id: propertiesData[0].id,
             }));
           }
@@ -319,6 +319,7 @@ const Profile = () => {
           throw new Error(`Failed to update ${field}: ${error.message}`);
 
         setUser((prev) => ({ ...prev, [field]: updatedUrls }));
+        setEditProfile((prev) => ({ ...prev, [field]: updatedUrls }));
         setSuccessMessage(`Successfully uploaded ${field}!`);
       } else if (editProperty) {
         setEditProperty((prev) => ({
@@ -335,15 +336,13 @@ const Profile = () => {
             : uploadedUrls.join(","),
         }));
       }
-      setSuccessMessage(`Successfully uploaded ${field} images!`);
       setError(null);
     } catch (err) {
       console.error("Profile: Error in handleImageUpload:", err);
       setError(
-        `Failed to upload ${field}: ${
-          err.message.includes("unique")
-            ? "RERA number already exists."
-            : err.message
+        `Failed to upload ${field}: ${err.message.includes("unique")
+          ? "RERA number already exists."
+          : err.message
         }. Please try again.`
       );
     }
@@ -361,6 +360,7 @@ const Profile = () => {
           throw new Error(`Failed to clear ${field}: ${error.message}`);
 
         setUser((prev) => ({ ...prev, [field]: null }));
+        setEditProfile((prev) => ({ ...prev, [field]: null }));
         setPreviewImages((prev) => ({
           ...prev,
           [field]: [],
@@ -444,10 +444,9 @@ const Profile = () => {
           .select("*");
         if (error)
           throw new Error(
-            `Failed to add property: ${
-              error.message.includes("unique")
-                ? "RERA number already exists."
-                : error.message
+            `Failed to add property: ${error.message.includes("unique")
+              ? "RERA number already exists."
+              : error.message
             }`
           );
 
@@ -510,6 +509,9 @@ const Profile = () => {
     developer_projects_completed: "",
     developer_awards: "",
     developer_certifications: "",
+    developer_description: "",
+    developer_image: "",
+    developer_logo: "",
     property_id: null,
   });
 
@@ -523,13 +525,21 @@ const Profile = () => {
       if (!editProfile.email.match(/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/)) {
         throw new Error("Invalid email format.");
       }
+      if (
+        editProfile.developer_description &&
+        editProfile.developer_description.length > 1000
+      ) {
+        throw new Error("Developer description cannot exceed 1000 characters.");
+      }
 
       // Update user data
       const userUpdates = {
         username: editProfile.username,
         email: editProfile.email,
-        developer_image: previewImages.developer_image[0] || null,
-        developer_logo: previewImages.developer_logo[0] || user.developer_logo,
+        developer_image:
+          previewImages.developer_image[0] || user.developer_image || null,
+        developer_logo:
+          previewImages.developer_logo[0] || user.developer_logo || null,
       };
 
       const { error: userError } = await supabase
@@ -550,13 +560,12 @@ const Profile = () => {
       // Update property data if a property is selected
       if (editProfile.property_id) {
         const propertyUpdates = {
-          developer_experience:
-            parseInt(editProfile.developer_experience) || null,
+          developer_experience: parseInt(editProfile.developer_experience) || null,
           developer_projects_completed:
             parseInt(editProfile.developer_projects_completed) || null,
           developer_awards: editProfile.developer_awards || null,
-          developer_certifications:
-            editProfile.developer_certifications || null,
+          developer_certifications: editProfile.developer_certifications || null,
+          developer_description: editProfile.developer_description || null,
         };
 
         const { error: propertyError } = await supabase
@@ -587,12 +596,15 @@ const Profile = () => {
         developer_projects_completed: "",
         developer_awards: "",
         developer_certifications: "",
+        developer_description: "",
+        developer_image: "",
+        developer_logo: "",
         property_id: null,
       });
       setPreviewImages((prev) => ({
         ...prev,
-        developer_image: [],
-        developer_logo: [],
+        developer_image: previewImages.developer_image.length > 0 ? prev.developer_image : [],
+        developer_logo: previewImages.developer_logo.length > 0 ? prev.developer_logo : [],
       }));
       document.getElementById("edit-developer-profile-dialog").close();
     } catch (err) {
@@ -630,6 +642,13 @@ const Profile = () => {
           developer_description: editProperty.developer_description || "",
         };
 
+        if (
+          propertyData.developer_description &&
+          propertyData.developer_description.length > 1000
+        ) {
+          throw new Error("Developer description cannot exceed 1000 characters.");
+        }
+
         const missingFields = requiredFields.filter(
           (field) => !propertyData[field] && propertyData[field] !== 0
         );
@@ -646,10 +665,9 @@ const Profile = () => {
 
         if (error)
           throw new Error(
-            `Failed to update property: ${
-              error.message.includes("unique")
-                ? "RERA number already exists."
-                : error.message
+            `Failed to update property: ${error.message.includes("unique")
+              ? "RERA number already exists."
+              : error.message
             }`
           );
 
@@ -792,7 +810,7 @@ const Profile = () => {
           const nextIndex = (currentIndexOptional + 1) % allFields.length;
           const nextField = allFields[nextIndex];
           const nextInput = document.querySelector(
-            `input[name="${nextField}"], select[name="${nextField}"]`
+            `input[name="${nextField}"], select[name="${nextField}"], textarea[name="${nextField}"]`
           );
           if (nextInput) nextInput.focus();
         }
@@ -840,9 +858,6 @@ const Profile = () => {
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-red-700 text-lg">
-          Not authenticated. Redirecting to login...
-        </div>
       </div>
     );
   }
@@ -883,7 +898,7 @@ const Profile = () => {
               </h1>
               <p className="text-xl md:text-2xl max-w-xl mx-auto mt-2">
                 {user.role === "developer"
-                  ? "Manage your properties here."
+                  ? "Manage your properties and showcase your expertise."
                   : "Explore your wishlist and criteria."}
               </p>
             </div>
@@ -891,6 +906,7 @@ const Profile = () => {
         </motion.div>
       </motion.section>
 
+      {/* Profile Section */}
       <motion.section
         className="py-12 px-4"
         initial={{ opacity: 0, y: 30 }}
@@ -929,40 +945,23 @@ const Profile = () => {
                   <div>
                     <div className="flex items-center gap-2">
                       <h2 className="text-3xl font-bold text-gray-800">
-                        {properties[0]?.developer || user.username}
+                        {properties[0]?.developer_name || user.username}
                       </h2>
-                      {user.role === "developer" && (
-                        <button
-                          onClick={() => {
-                            const recentProperty = properties[0] || {};
-                            setEditProfile({
-                              username: user.username,
-                              email: user.email,
-                              developer_experience:
-                                recentProperty.developer_experience || "",
-                              developer_projects_completed:
-                                recentProperty.developer_projects_completed ||
-                                "",
-                              developer_awards:
-                                recentProperty.developer_awards || "",
-                              developer_certifications:
-                                recentProperty.developer_certifications || "",
-                              property_id: recentProperty.id || null,
-                            });
-                            document
-                              .getElementById("edit-developer-profile-dialog")
-                              .showModal();
-                          }}
-                          className="text-stone-700"
-                          aria-label={`Edit developer profile for ${user.username}`}
-                        >
-                          <FaEdit className="inline text-2xl" />
-                        </button>
-                      )}
                     </div>
                     <p className="text-stone-600">{user.email}</p>
                   </div>
                 </div>
+                {user.role === "developer" && (
+                  <div className="mt-4">
+                    <h3 className="text-lg font-semibold text-stone-700 mb-2">
+                      About {properties[0]?.developer_name}
+                    </h3>
+                    <p className="text-stone-600 leading-relaxed">
+                      {properties[0]?.developer_description ||
+                        "Add a description to showcase your expertise."}
+                    </p>
+                  </div>
+                )}
               </div>
               {user.role === "developer" && (
                 <div className="grid grid-cols-2 gap-4">
@@ -997,7 +996,7 @@ const Profile = () => {
             {user.role === "developer" && (
               <motion.dialog
                 id="edit-developer-profile-dialog"
-                className="fixed inset-0 m-auto bg-white shadow-lg w-full max-w-4xl max-h-[80vh] rounded-lg p-6 sm:p-8"
+                className="fixed inset-0 m-auto bg-white shadow-lg w-full max-w-4xl max-h-screen rounded-lg p-6 sm:p-8"
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
@@ -1126,6 +1125,30 @@ const Profile = () => {
                       aria-label="Developer certifications"
                     />
                   </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-semibold text-stone-700 mb-2">
+                      Developer Description
+                    </label>
+                    <textarea
+                      name="developer_description"
+                      value={editProfile.developer_description}
+                      onChange={(e) =>
+                        setEditProfile({
+                          ...editProfile,
+                          developer_description: e.target.value,
+                        })
+                      }
+                      onKeyPress={(e) => handleEnterKey(e, "developer_description")}
+                      className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
+                      placeholder="Enter a description about your company (max 1000 characters)"
+                      maxLength={1000}
+                      rows={5}
+                      aria-label="Developer description"
+                    />
+                    <p className="text-sm text-stone-600 mt-1">
+                      {editProfile.developer_description.length}/1000 characters
+                    </p>
+                  </div>
                   <div>
                     <label className="block text-sm font-semibold text-stone-700 mb-2">
                       Developer Image
@@ -1232,8 +1255,8 @@ const Profile = () => {
                     <button
                       type="submit"
                       className="relative inline-block w-40 h-9 rounded-lg font-medium text-white bg-stone-700 z-10 overflow-hidden
-              before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
-              before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
+          before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
+          before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
                       aria-label="Save developer profile"
                     >
                       Save
@@ -1251,6 +1274,9 @@ const Profile = () => {
                           developer_projects_completed: "",
                           developer_awards: "",
                           developer_certifications: "",
+                          developer_description: "",
+                          developer_image: "",
+                          developer_logo: "",
                           property_id: null,
                         });
                         setPreviewImages((prev) => ({
@@ -1260,8 +1286,8 @@ const Profile = () => {
                         }));
                       }}
                       className="relative inline-block w-40 h-9 rounded-lg font-medium text-stone-700 border border-stone-700 z-10 overflow-hidden
-              before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-700
-              before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:border-none hover:text-white"
+          before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-700
+          before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:border-none hover:text-white"
                       aria-label="Cancel developer profile edit"
                     >
                       Cancel
@@ -1294,20 +1320,57 @@ const Profile = () => {
                 </form>
               </motion.dialog>
             )}
-            <button
-              onClick={async () => {
-                await supabase.auth.signOut();
-                navigate("/login", { state: { from: location.pathname } });
-              }}
-              className="relative mt-2 inline-block px-6 py-2 rounded font-medium text-white bg-stone-700 z-10 overflow-hidden
-      before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
-      before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
-              aria-label="Log out"
-            >
-              Log Out
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={async () => {
+                  await supabase.auth.signOut();
+                  navigate("/login", { state: { from: location.pathname } });
+                }}
+                className="relative mt-2 inline-block px-6 py-2 rounded font-medium text-white bg-stone-700 z-10 overflow-hidden
+              before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
+              before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
+                aria-label="Log out"
+              >
+                Log Out
+              </button>
+              {user.role === "developer" && (
+                <button
+                  onClick={() => {
+                    const recentProperty = properties[0] || {};
+                    setEditProfile({
+                      username: user.username,
+                      email: user.email,
+                      developer_experience: recentProperty.developer_experience || "",
+                      developer_projects_completed:
+                        recentProperty.developer_projects_completed || "",
+                      developer_awards: recentProperty.developer_awards || "",
+                      developer_certifications: recentProperty.developer_certifications || "",
+                      developer_description: recentProperty.developer_description || "",
+                      developer_image: user.developer_image || "",
+                      developer_logo: user.developer_logo || "",
+                      property_id: recentProperty.id || null,
+                    });
+                    setPreviewImages((prev) => ({
+                      ...prev,
+                      developer_image: user.developer_image
+                        ? user.developer_image.split(",").filter((url) => url.trim())
+                        : [],
+                      developer_logo: user.developer_logo
+                        ? user.developer_logo.split(",").filter((url) => url.trim())
+                        : [],
+                    }));
+                    document.getElementById("edit-developer-profile-dialog").showModal();
+                  }}
+                  className="relative mt-2 inline-block px-6 py-2 border-1 border-stone-700 rounded font-medium text-stone-700 bg-stone-100 z-10 overflow-hidden
+              before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-700
+              before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
+                  aria-label={`Edit developer profile for ${user.username}`}
+                >Profile
+                  <FaEdit className="inline ml-1 mb-1 text-xl" />
+                </button>
+              )}
+            </div>
           </div>
-
           {user.role === "developer" && (
             <>
               <button
@@ -1325,7 +1388,7 @@ const Profile = () => {
 
               <dialog
                 id="add-property-dialog"
-                className="fixed inset-0 m-auto bg-white shadow-lg w-full max-w-4xl max-h-[80vh] rounded-lg p-6 sm:p-8"
+                className="fixed inset-0 m-auto bg-white shadow-lg w-full max-w-4xl max-h-screen rounded-lg p-6 sm:p-8 overflow-y-auto"
               >
                 <form
                   onSubmit={handleAddProperty}
@@ -1628,6 +1691,27 @@ const Profile = () => {
                       aria-label="Nearby landmarks"
                     />
                   </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-semibold text-stone-700 mb-2">
+                      Developer Description
+                    </label>
+                    <textarea
+                      name="developer_description"
+                      value={newProperty.developer_description}
+                      onChange={handlePropertyChange}
+                      onKeyPress={(e) =>
+                        handleEnterKey(e, "developer_description")
+                      }
+                      className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
+                      placeholder="Enter a description about your company (max 1000 characters)"
+                      maxLength={1000}
+                      rows={5}
+                      aria-label="Developer description"
+                    />
+                    <p className="text-sm text-stone-600 mt-1">
+                      {newProperty.developer_description.length}/1000 characters
+                    </p>
+                  </div>
                   <div>
                     <label className="block text-sm font-semibold text-stone-700 mb-2">
                       Agent Name
@@ -1734,6 +1818,38 @@ const Profile = () => {
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
                       placeholder="Enter agent reviews (optional)"
                       aria-label="Agent reviews"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-stone-700 mb-2">
+                      Developer Awards
+                    </label>
+                    <input
+                      type="text"
+                      name="developer_awards"
+                      value={newProperty.developer_awards}
+                      onChange={handlePropertyChange}
+                      onKeyPress={(e) => handleEnterKey(e, "developer_awards")}
+                      className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
+                      placeholder="Enter developer awards (optional)"
+                      aria-label="Developer awards"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-stone-700 mb-2">
+                      Developer Certifications
+                    </label>
+                    <input
+                      type="text"
+                      name="developer_certifications"
+                      value={newProperty.developer_certifications}
+                      onChange={handlePropertyChange}
+                      onKeyPress={(e) =>
+                        handleEnterKey(e, "developer_certifications")
+                      }
+                      className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
+                      placeholder="Enter developer certifications (optional)"
+                      aria-label="Developer certifications"
                     />
                   </div>
                   <div>
@@ -1934,54 +2050,6 @@ const Profile = () => {
                       </div>
                     )}
                   </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-stone-700 mb-2">
-                      Developer Description
-                    </label>
-                    <textarea
-                      name="developer_description"
-                      value={newProperty.developer_description}
-                      onChange={handlePropertyChange}
-                      onKeyPress={(e) =>
-                        handleEnterKey(e, "developer_description")
-                      }
-                      className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                      placeholder="Enter developer description (optional)"
-                      aria-label="Developer description"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-stone-700 mb-2">
-                      Developer Awards
-                    </label>
-                    <input
-                      type="text"
-                      name="developer_awards"
-                      value={newProperty.developer_awards}
-                      onChange={handlePropertyChange}
-                      onKeyPress={(e) => handleEnterKey(e, "developer_awards")}
-                      className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                      placeholder="Enter developer awards (optional)"
-                      aria-label="Developer awards"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-stone-700 mb-2">
-                      Developer Certifications
-                    </label>
-                    <input
-                      type="text"
-                      name="developer_certifications"
-                      value={newProperty.developer_certifications}
-                      onChange={handlePropertyChange}
-                      onKeyPress={(e) =>
-                        handleEnterKey(e, "developer_certifications")
-                      }
-                      className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                      placeholder="Enter developer certifications (optional)"
-                      aria-label="Developer certifications"
-                    />
-                  </div>
                   <div className="md:col-span-2 flex justify-end gap-4">
                     <button
                       type="submit"
@@ -2040,8 +2108,8 @@ const Profile = () => {
                       }}
                       className="relative inline-block w-40 h-9 rounded-lg font-medium text-stone-700 border border-stone-700 z-10 overflow-hidden
                         before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-700
-                        before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:border-none hover:text-white"
-                      aria-label="Cancel adding property"
+                                                before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:border-none hover:text-white"
+                      aria-label="Cancel add property"
                     >
                       Cancel
                     </button>
@@ -2143,23 +2211,23 @@ const Profile = () => {
                                     ...previewImages,
                                     images: property.images
                                       ? property.images
-                                          .split(",")
-                                          .filter((url) => url.trim())
+                                        .split(",")
+                                        .filter((url) => url.trim())
                                       : [],
                                     agents_image: property.agents_image
                                       ? property.agents_image
-                                          .split(",")
-                                          .filter((url) => url.trim())
+                                        .split(",")
+                                        .filter((url) => url.trim())
                                       : [],
                                     developer_image: property.developer_image
                                       ? property.developer_image
-                                          .split(",")
-                                          .filter((url) => url.trim())
+                                        .split(",")
+                                        .filter((url) => url.trim())
                                       : [],
                                     developer_logo: property.developer_logo
                                       ? property.developer_logo
-                                          .split(",")
-                                          .filter((url) => url.trim())
+                                        .split(",")
+                                        .filter((url) => url.trim())
                                       : [],
                                   });
                                   document
@@ -2191,7 +2259,7 @@ const Profile = () => {
 
               <dialog
                 id="edit-property-dialog"
-                className="fixed inset-0 m-auto bg-white shadow-lg w-full max-w-4xl max-h-[80vh] rounded-lg p-6 sm:p-8"
+                className="fixed inset-0 m-auto bg-white shadow-lg w-full max-w-4xl max-h-screen rounded-lg p-6 sm:p-8"
               >
                 {editProperty && (
                   <form
@@ -2950,11 +3018,17 @@ const Profile = () => {
 
           {user.role !== "developer" && (
             <>
-              <h3 className="text-2xl font-bold text-stone-700 mb-4">
-                Wishlist Criteria
+              <h3 className="text-4xl font-bold text-stone-700 mb-6 text-center">
+                Your Wishlist Criteria
               </h3>
               <div className="bg-stone-100 rounded-lg shadow-md p-6 mb-8">
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleSaveWishlistCriteria();
+                  }}
+                  className="grid grid-cols-1 sm:grid-cols-2 gap-6"
+                >
                   <div>
                     <label className="block text-sm font-semibold text-stone-700 mb-2">
                       Location
@@ -2965,13 +3039,13 @@ const Profile = () => {
                       value={wishlistCriteria.location}
                       onChange={handleWishlistCriteriaChange}
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                      placeholder="Enter location"
+                      placeholder="Enter preferred location"
                       aria-label="Wishlist location"
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-stone-700 mb-2">
-                      Price Range
+                      Price Range (₹)
                     </label>
                     <select
                       name="price"
@@ -2981,10 +3055,10 @@ const Profile = () => {
                       aria-label="Wishlist price range"
                     >
                       <option value="">Select price range</option>
-                      <option value="0-50L">Up to 50L</option>
-                      <option value="50L-1Cr">50L - 1Cr</option>
-                      <option value="1Cr-2Cr">1Cr - 2Cr</option>
-                      <option value="2Cr+">2Cr+</option>
+                      <option value="0-5000000">Up to 50 Lakhs</option>
+                      <option value="5000000-10000000">50 Lakhs - 1 Crore</option>
+                      <option value="10000000-20000000">1 Crore - 2 Crores</option>
+                      <option value="20000000-+">2 Crores+</option>
                     </select>
                   </div>
                   <div>
@@ -2997,7 +3071,7 @@ const Profile = () => {
                       value={wishlistCriteria.area}
                       onChange={handleWishlistCriteriaChange}
                       className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                      placeholder="Enter area (e.g., 1000)"
+                      placeholder="Enter minimum area (e.g., 1000)"
                       aria-label="Wishlist area"
                     />
                   </div>
@@ -3032,15 +3106,13 @@ const Profile = () => {
                     >
                       <option value="">Select status</option>
                       <option value="Ready">Ready to Move</option>
-                      <option value="Under Construction">
-                        Under Construction
-                      </option>
+                      <option value="Under Construction">Under Construction</option>
                       <option value="Upcoming">Upcoming</option>
                     </select>
                   </div>
-                  <div className="md:col-span-3">
+                  <div className="md:col-span-2 flex justify-end">
                     <button
-                      onClick={handleSaveWishlistCriteria}
+                      type="submit"
                       className="relative inline-block px-6 py-2 rounded-lg font-semibold text-white bg-stone-700 z-10 overflow-hidden
                         before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
                         before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
@@ -3049,52 +3121,27 @@ const Profile = () => {
                       Save Criteria
                     </button>
                   </div>
-                </div>
+                </form>
               </div>
 
-              {error && (
-                <div className="mt-8 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg text-center">
-                  {error}
-                  <button
-                    onClick={() => setError(null)}
-                    className="ml-2 text-red-700 hover:text-red-900"
-                    aria-label="Dismiss error"
-                  >
-                    ×
-                  </button>
-                </div>
-              )}
-              {successMessage && (
-                <div className="mt-8 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg text-center">
-                  {successMessage}
-                  <button
-                    onClick={() => setSuccessMessage(null)}
-                    className="ml-2 text-green-700 hover:text-green-900"
-                    aria-label="Dismiss success message"
-                  >
-                    ×
-                  </button>
-                </div>
-              )}
-
-              <h3 className="text-2xl font-bold text-stone-700 mb-4">
+              <h3 className="text-4xl font-bold text-stone-700 mb-6 text-center">
                 Your Wishlist
               </h3>
               {filteredWishlist.length === 0 ? (
-                <p className="text-stone-600">
-                  No properties in your wishlist yet.
+                <p className="text-stone-600 text-center">
+                  No properties in your wishlist yet. Add some properties!
                 </p>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   {filteredWishlist.map((item) => (
                     <motion.div
                       key={item.property_id}
-                      className="bg-white text-white rounded-lg shadow-md hover:shadow-lg transition-shadow group"
+                      className="bg-white rounded-lg shadow-md relative"
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.4 }}
+                      transition={{ duration: 0.3 }}
                     >
-                      <div className="relative group h-[300px] w-full overflow-hidden rounded">
+                      <div className="relative group h-[300px] w-full overflow-hidden text-white rounded">
                         <img
                           src={
                             item.properties.images?.split(",")[0] ||
