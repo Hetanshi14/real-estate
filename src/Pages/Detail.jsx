@@ -577,7 +577,7 @@ const CustomerReviews = ({ propertyId }) => {
                       e.preventDefault();
                       setShowAllReviews(true);
                     }}
-                    className="text-blue-500 hover:underline"
+                    className="text-stone-600 hover:underline"
                   >
                     More Reviews
                   </a>
