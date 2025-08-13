@@ -4,7 +4,6 @@ import { Menu, X, UserCircle } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { motion } from 'framer-motion';
 
-// ✅ Updated with a real transparent logo URL from Supabase
 const LOGO_URL = 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/logo/zivaas-logo.png';
 
 const Header = () => {
