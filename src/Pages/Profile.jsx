@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import React, { useState, useEffect, useCallback, useContext } from "react";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { supabase } from "../supabaseClient";
+import { AuthContext } from "../context/AuthContext"; // Import AuthContext
 import { motion } from "framer-motion";
 import {
   FaUser,
@@ -11,12 +12,15 @@ import {
   FaMoneyBill,
   FaPlus,
 } from "react-icons/fa";
+import { Tabs, Tab, Box } from '@mui/material';
+import AdminUsers from "../Admin/AdminUsers";
+import AdminProperties from "../Admin/AdminProperties";
 
 // Fallback placeholder image URL
 const PLACEHOLDER_IMAGE_URL = "https://via.placeholder.com/300?text=No+Image";
 
 const Profile = () => {
-  const [user, setUser] = useState(null);
+  const { user, authLoading, refreshUser } = useContext(AuthContext);
   const [properties, setProperties] = useState([]);
   const [wishlist, setWishlist] = useState([]);
   const [wishlistCriteria, setWishlistCriteria] = useState({
@@ -60,6 +64,18 @@ const Profile = () => {
     developer_logo: "",
   });
   const [editProperty, setEditProperty] = useState(null);
+  const [editProfile, setEditProfile] = useState({
+    username: "",
+    email: "",
+    developer_experience: "",
+    developer_projects_completed: "",
+    developer_awards: "",
+    developer_certifications: "",
+    developer_description: "",
+    developer_image: "",
+    developer_logo: "",
+    property_id: null,
+  });
   const [showAddForm, setShowAddForm] = useState(false);
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
@@ -70,6 +86,17 @@ const Profile = () => {
     images: [],
     agents_image: [],
   });
+  const [adminStats, setAdminStats] = useState({
+    totalUsers: 0,
+    totalProperties: 0,
+    pendingProperties: 0,
+    approvedProperties: 0,
+  });
+  const [adminTabValue, setAdminTabValue] = useState(0);
+
+  const handleAdminTabChange = (event, newValue) => {
+    setAdminTabValue(newValue);
+  };
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -90,28 +117,23 @@ const Profile = () => {
   ];
 
   useEffect(() => {
-    const checkAuthAndFetch = async () => {
+    const fetchData = async () => {
+      if (!user) {
+        setLoading(false);
+        navigate("/login", { state: { from: location.pathname } });
+        return;
+      }
+
       try {
         setLoading(true);
-        const {
-          data: { session },
-          error: sessionError,
-        } = await supabase.auth.getSession();
-        console.log("Profile: Session:", session);
-        if (sessionError)
-          throw new Error(`Session error: ${sessionError.message}`);
-        if (!session) {
-          console.log("Profile: No session, redirecting to login");
-          navigate("/login", { state: { from: location.pathname } });
-          return;
-        }
 
+        // Fetch user data
         const { data: userData, error: userError } = await supabase
           .from("users")
           .select(
             "id, username, email, role, wishlist_criteria, developer_logo, developer_image"
           )
-          .eq("id", session.user.id)
+          .eq("id", user.id)
           .single();
 
         if (userError || !userData) {
@@ -122,7 +144,6 @@ const Profile = () => {
           );
         }
 
-        setUser(userData);
         setPreviewImages((prev) => ({
           ...prev,
           developer_logo: userData.developer_logo
@@ -142,15 +163,47 @@ const Profile = () => {
           }
         );
 
-        if (userData.role === "developer") {
-          const { data: propertiesData, error: propertiesError } =
-            await supabase
+        if (userData.role === "admin") {
+          // Fetch admin stats
+          const [
+            { count: totalUsers, error: usersError },
+            { count: totalProperties, error: propertiesError },
+            { count: pendingProperties, error: pendingError },
+            { count: approvedProperties, error: approvedError }, // Added query for approved properties
+          ] = await Promise.all([
+            supabase.from("users").select("*", { count: "exact", head: true }),
+            supabase.from("properties").select("*", { count: "exact", head: true }),
+            supabase
               .from("properties")
-              .select(
-                "*, developer_experience, developer_projects_completed, developer_awards, developer_certifications, developer_description"
-              )
-              .eq("developer_id", userData.id)
-              .order("updated_at", { ascending: false });
+              .select("*", { count: "exact", head: true })
+              .neq("status", "Approved"),
+            supabase
+              .from("properties")
+              .select("*", { count: "exact", head: true })
+              .eq("status", "Approved"), // Added query
+          ]);
+
+          if (usersError || propertiesError || pendingError || approvedError) {
+            throw new Error(
+              `Failed to fetch admin stats: ${usersError?.message || propertiesError?.message || pendingError?.message || approvedError?.message}`
+            );
+          }
+
+          setAdminStats({
+            totalUsers,
+            totalProperties,
+            pendingProperties,
+            approvedProperties, // Updated to include approvedProperties
+          });
+        }
+        else if (userData.role === "developer") {
+          const { data: propertiesData, error: propertiesError } = await supabase
+            .from("properties")
+            .select(
+              "*, developer_experience, developer_projects_completed, developer_awards, developer_certifications, developer_description"
+            )
+            .eq("developer_id", userData.id)
+            .order("updated_at", { ascending: false });
 
           if (propertiesError)
             throw new Error(
@@ -186,21 +239,19 @@ const Profile = () => {
           setWishlist(wishlistData || []);
         }
       } catch (err) {
-        console.error("Profile: Error in checkAuthAndFetch:", err);
+        console.error("Profile: Error in fetchData:", err);
         setError(err.message);
       } finally {
         setLoading(false);
       }
     };
 
-    checkAuthAndFetch();
+    fetchData();
 
     const { data: authListener } = supabase.auth.onAuthStateChange(
       (event, session) => {
         console.log("Profile: Auth state changed:", event, session);
-        if (event === "SIGNED_IN" && session) {
-          checkAuthAndFetch();
-        } else if (event === "SIGNED_OUT" || !session) {
+        if (event === "SIGNED_OUT" || !session) {
           setUser(null);
           setProperties([]);
           setWishlist([]);
@@ -216,7 +267,7 @@ const Profile = () => {
     );
 
     return () => authListener?.subscription?.unsubscribe?.();
-  }, [navigate, location.pathname]);
+  }, [user, navigate, location.pathname]);
 
   const handlePropertyChange = (e) => {
     const { name, value } = e.target;
@@ -246,16 +297,13 @@ const Profile = () => {
     }
   };
 
-  const handleImageUpload = async (e, field) => {
+  const handleImageUpload = async (e, field, propertyId = null) => {
     const files = e.target.files;
     if (!files || files.length === 0) {
       setError(`No files selected for ${field}.`);
       return;
     }
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
     if (!user) {
       setError("Please log in to upload images.");
       navigate("/login", { state: { from: location.pathname } });
@@ -321,13 +369,24 @@ const Profile = () => {
         setUser((prev) => ({ ...prev, [field]: updatedUrls }));
         setEditProfile((prev) => ({ ...prev, [field]: updatedUrls }));
         setSuccessMessage(`Successfully uploaded ${field}!`);
-      } else if (editProperty) {
-        setEditProperty((prev) => ({
-          ...prev,
-          [field]: prev[field]
-            ? `${prev[field]},${uploadedUrls.join(",")}`
-            : uploadedUrls.join(","),
-        }));
+      } else if (propertyId && editProperty) {
+        const existingUrls = editProperty[field]
+          ? editProperty[field].split(",").filter((url) => url.trim())
+          : [];
+        const updatedUrls = [...existingUrls, ...uploadedUrls].join(",");
+        const { error } = await supabase
+          .from("properties")
+          .update({ [field]: updatedUrls })
+          .eq("id", propertyId);
+
+        if (error)
+          throw new Error(`Failed to update ${field}: ${error.message}`);
+
+        setEditProperty((prev) => ({ ...prev, [field]: updatedUrls }));
+        setProperties((prev) =>
+          prev.map((p) => (p.id === propertyId ? { ...p, [field]: updatedUrls } : p))
+        );
+        setSuccessMessage(`Successfully uploaded ${field}!`);
       } else {
         setNewProperty((prev) => ({
           ...prev,
@@ -502,19 +561,6 @@ const Profile = () => {
     [user, newProperty, navigate, location.pathname]
   );
 
-  const [editProfile, setEditProfile] = useState({
-    username: "",
-    email: "",
-    developer_experience: "",
-    developer_projects_completed: "",
-    developer_awards: "",
-    developer_certifications: "",
-    developer_description: "",
-    developer_image: "",
-    developer_logo: "",
-    property_id: null,
-  });
-
   const handleEditProfile = async (e) => {
     e.preventDefault();
     try {
@@ -555,6 +601,19 @@ const Profile = () => {
           email: editProfile.email,
         });
         if (authError) throw authError;
+      }
+
+      if (authLoading) {
+        console.log('Profile: Waiting for auth to load');
+        return (
+          <div className="min-h-screen flex items-center justify-center">
+            <p className="text-stone-600">Loading...</p>
+          </div>
+        );
+      }
+      if (!user) {
+        console.log('Profile: No user, redirecting to /login');
+        return <Navigate to="/login" state={{ from: location.pathname }} replace />;
       }
 
       // Update property data if a property is selected
@@ -858,6 +917,7 @@ const Profile = () => {
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
+        <p className="text-stone-600">Please log in to view your profile.</p>
       </div>
     );
   }
@@ -878,7 +938,7 @@ const Profile = () => {
         >
           <img
             src={user.developer_logo || PLACEHOLDER_IMAGE_URL}
-            alt="Developer Logo"
+            alt="Profile Header"
             className="w-full h-[60vh] object-center"
             onError={(e) => {
               console.error("Failed to load hero image:", e.target.src);
@@ -897,16 +957,17 @@ const Profile = () => {
                 Welcome, {user.username}!
               </h1>
               <p className="text-xl md:text-2xl max-w-xl mx-auto mt-2">
-                {user.role === "developer"
-                  ? "Manage your properties and showcase your expertise."
-                  : "Explore your wishlist and criteria."}
+                {user.role === "admin"
+                  ? "Manage the platform and oversee all activities."
+                  : user.role === "developer"
+                    ? "Manage your properties and showcase your expertise."
+                    : "Explore your wishlist and criteria."}
               </p>
             </div>
           </motion.div>
         </motion.div>
       </motion.section>
 
-      {/* Profile Section */}
       <motion.section
         className="py-12 px-4"
         initial={{ opacity: 0, y: 30 }}
@@ -914,1588 +975,291 @@ const Profile = () => {
         transition={{ duration: 0.6 }}
       >
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-4xl font-bold text-stone-700 mb-6 text-center">
-            Profile
-          </h2>
-          <div className="bg-stone-100 rounded-lg shadow-md p-6 mb-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="space-y-6">
-                <div className="flex items-center space-x-4">
-                  <div className="flex justify-center">
-                    {user.role === "developer" && user.developer_image ? (
-                      <img
-                        src={
-                          user.developer_image.split(",")[0] ||
-                          PLACEHOLDER_IMAGE_URL
-                        }
-                        alt="Developer Image"
-                        className="w-24 h-24 rounded-full object-cover"
-                        onError={(e) => {
-                          e.target.src = PLACEHOLDER_IMAGE_URL;
-                          console.error(
-                            "Profile: Failed to load developer image:",
-                            user.developer_image
-                          );
-                        }}
-                      />
-                    ) : (
-                      <FaUser className="inline rounded-full text-stone-700 w-20 h-20" />
-                    )}
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h2 className="text-3xl font-bold text-gray-800">
-                        {properties[0]?.developer_name || user.username}
-                      </h2>
-                    </div>
-                    <p className="text-stone-600">{user.email}</p>
-                  </div>
-                </div>
-                {user.role === "developer" && (
-                  <div className="mt-4">
-                    <h3 className="text-lg font-semibold text-stone-700 mb-2">
-                      About {properties[0]?.developer_name}
-                    </h3>
-                    <p className="text-stone-600 leading-relaxed">
-                      {properties[0]?.developer_description ||
-                        "Add a description to showcase your expertise."}
-                    </p>
-                  </div>
-                )}
-              </div>
-              {user.role === "developer" && (
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-gray-50 shadow p-4 rounded-lg text-center">
-                    <div className="text-3xl font-bold text-primary">
-                      {properties[0]?.developer_experience || "N/A"}+
-                    </div>
-                    <div className="text-gray-600">Years Experience</div>
-                  </div>
-                  <div className="bg-gray-50 shadow p-4 rounded-lg text-center">
-                    <div className="text-3xl font-bold text-primary">
-                      {properties[0]?.developer_projects_completed || "N/A"}+
-                    </div>
-                    <div className="text-gray-600">Projects Completed</div>
-                  </div>
-                  <div className="bg-gray-50 shadow p-4 rounded-lg text-center">
-                    <div className="text-3xl font-bold text-primary">
-                      {properties[0]?.developer_awards || "N/A"}+
-                    </div>
-                    <div className="text-gray-600">Awards Won</div>
-                  </div>
-                  <div className="bg-gray-50 shadow p-4 rounded-lg text-center">
-                    <div className="text-2xl font-bold text-primary">
-                      {properties[0]?.developer_certifications || "N/A"}
-                    </div>
-                    <div className="text-gray-600">Certified</div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {user.role === "developer" && (
-              <motion.dialog
-                id="edit-developer-profile-dialog"
-                className="fixed inset-0 m-auto bg-white shadow-lg w-full max-w-4xl max-h-screen rounded-lg p-6 sm:p-8"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.3 }}
-              >
-                <form
-                  onSubmit={handleEditProfile}
-                  className="grid grid-cols-1 sm:grid-cols-2 gap-6"
-                >
-                  <h3 className="text-2xl font-bold text-stone-700 mb-4 md:col-span-2">
-                    Edit Developer Profile
-                  </h3>
-                  <div>
-                    <label className="block text-sm font-semibold text-stone-700 mb-2">
-                      Username *
-                    </label>
-                    <input
-                      type="text"
-                      name="username"
-                      value={editProfile.username}
-                      onChange={(e) =>
-                        setEditProfile({
-                          ...editProfile,
-                          username: e.target.value,
-                        })
-                      }
-                      required
-                      className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                      placeholder="Enter username"
-                      aria-label="Developer username"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-stone-700 mb-2">
-                      Email *
-                    </label>
-                    <input
-                      type="email"
-                      name="email"
-                      value={editProfile.email}
-                      onChange={(e) =>
-                        setEditProfile({
-                          ...editProfile,
-                          email: e.target.value,
-                        })
-                      }
-                      required
-                      className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                      placeholder="Enter email"
-                      aria-label="Developer email"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-stone-700 mb-2">
-                      Developer Experience
-                    </label>
-                    <input
-                      type="number"
-                      name="developer_experience"
-                      value={editProfile.developer_experience}
-                      onChange={(e) =>
-                        setEditProfile({
-                          ...editProfile,
-                          developer_experience: e.target.value,
-                        })
-                      }
-                      className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                      placeholder="Enter experience in years (optional)"
-                      aria-label="Developer experience"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-stone-700 mb-2">
-                      Developer Projects Completed
-                    </label>
-                    <input
-                      type="number"
-                      name="developer_projects_completed"
-                      value={editProfile.developer_projects_completed}
-                      onChange={(e) =>
-                        setEditProfile({
-                          ...editProfile,
-                          developer_projects_completed: e.target.value,
-                        })
-                      }
-                      className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                      placeholder="Enter projects completed (optional)"
-                      aria-label="Developer projects completed"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-stone-700 mb-2">
-                      Developer Awards
-                    </label>
-                    <input
-                      type="text"
-                      name="developer_awards"
-                      value={editProfile.developer_awards}
-                      onChange={(e) =>
-                        setEditProfile({
-                          ...editProfile,
-                          developer_awards: e.target.value,
-                        })
-                      }
-                      className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                      placeholder="Enter awards (optional)"
-                      aria-label="Developer awards"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-stone-700 mb-2">
-                      Developer Certifications
-                    </label>
-                    <input
-                      type="text"
-                      name="developer_certifications"
-                      value={editProfile.developer_certifications}
-                      onChange={(e) =>
-                        setEditProfile({
-                          ...editProfile,
-                          developer_certifications: e.target.value,
-                        })
-                      }
-                      className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                      placeholder="Enter certifications (optional)"
-                      aria-label="Developer certifications"
-                    />
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-semibold text-stone-700 mb-2">
-                      Developer Description
-                    </label>
-                    <textarea
-                      name="developer_description"
-                      value={editProfile.developer_description}
-                      onChange={(e) =>
-                        setEditProfile({
-                          ...editProfile,
-                          developer_description: e.target.value,
-                        })
-                      }
-                      onKeyPress={(e) => handleEnterKey(e, "developer_description")}
-                      className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                      placeholder="Enter a description about your company (max 1000 characters)"
-                      maxLength={1000}
-                      rows={5}
-                      aria-label="Developer description"
-                    />
-                    <p className="text-sm text-stone-600 mt-1">
-                      {editProfile.developer_description.length}/1000 characters
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-stone-700 mb-2">
-                      Developer Image
-                    </label>
-                    <div className="relative flex gap-4">
-                      <div className="flex-1">
-                        <input
-                          type="file"
-                          id="developer-image-input"
-                          accept="image/*"
-                          onChange={(e) =>
-                            handleImageUpload(e, "developer_image")
-                          }
-                          className="absolute opacity-0 w-0 h-0"
-                          aria-label="Upload developer image"
-                        />
-                        <button
-                          type="button"
-                          onClick={() =>
-                            document
-                              .getElementById("developer-image-input")
-                              .click()
-                          }
-                          className="w-full px-4 py-3 border border-stone-300 rounded-lg text-stone-700 bg-stone-100 hover:bg-stone-200 transition-colors"
-                        >
-                          Choose Image
-                        </button>
-                      </div>
-                      {previewImages.developer_image.length > 0 && (
-                        <button
-                          type="button"
-                          onClick={() => handleClearImage("developer_image")}
-                          className="text-stone-700 hover:text-stone-900"
-                          aria-label="Clear developer image"
-                        >
-                          <FaTrash className="inline text-xl" />
-                        </button>
-                      )}
-                    </div>
-                    {previewImages.developer_image.length > 0 && (
-                      <div className="mt-2">
-                        <p className="text-sm text-stone-600">
-                          Uploaded Developer Image:
-                        </p>
-                        {renderImages(
-                          previewImages.developer_image,
-                          "Developer Image"
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-stone-700 mb-2">
-                      Developer Logo
-                    </label>
-                    <div className="relative flex gap-4">
-                      <div className="flex-1">
-                        <input
-                          type="file"
-                          id="developer-logo-input"
-                          accept="image/*"
-                          onChange={(e) =>
-                            handleImageUpload(e, "developer_logo")
-                          }
-                          className="absolute opacity-0 w-0 h-0"
-                          aria-label="Upload developer logo"
-                        />
-                        <button
-                          type="button"
-                          onClick={() =>
-                            document
-                              .getElementById("developer-logo-input")
-                              .click()
-                          }
-                          className="w-full px-4 py-3 border border-stone-300 rounded-lg text-stone-700 bg-stone-100 hover:bg-stone-200 transition-colors"
-                        >
-                          Choose Logo
-                        </button>
-                      </div>
-                      {previewImages.developer_logo.length > 0 && (
-                        <button
-                          type="button"
-                          onClick={() => handleClearImage("developer_logo")}
-                          className="text-stone-700 hover:text-stone-900"
-                          aria-label="Clear developer logo"
-                        >
-                          <FaTrash className="inline text-xl" />
-                        </button>
-                      )}
-                    </div>
-                    {previewImages.developer_logo.length > 0 && (
-                      <div className="mt-2">
-                        <p className="text-sm text-stone-600">
-                          Uploaded Developer Logo:
-                        </p>
-                        {renderImages(
-                          previewImages.developer_logo,
-                          "Developer Logo"
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  <div className="md:col-span-2 flex justify-end gap-4">
-                    <button
-                      type="submit"
-                      className="relative inline-block w-40 h-9 rounded-lg font-medium text-white bg-stone-700 z-10 overflow-hidden
-          before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
-          before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
-                      aria-label="Save developer profile"
-                    >
-                      Save
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        document
-                          .getElementById("edit-developer-profile-dialog")
-                          .close();
-                        setEditProfile({
-                          username: "",
-                          email: "",
-                          developer_experience: "",
-                          developer_projects_completed: "",
-                          developer_awards: "",
-                          developer_certifications: "",
-                          developer_description: "",
-                          developer_image: "",
-                          developer_logo: "",
-                          property_id: null,
-                        });
-                        setPreviewImages((prev) => ({
-                          ...prev,
-                          developer_image: [],
-                          developer_logo: [],
-                        }));
-                      }}
-                      className="relative inline-block w-40 h-9 rounded-lg font-medium text-stone-700 border border-stone-700 z-10 overflow-hidden
-          before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-700
-          before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:border-none hover:text-white"
-                      aria-label="Cancel developer profile edit"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                  {error && (
-                    <div className="mt-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg text-center">
-                      {error}
-                      <button
-                        onClick={() => setError(null)}
-                        className="ml-2 text-red-700 hover:text-red-900"
-                        aria-label="Dismiss error"
-                      >
-                        ×
-                      </button>
-                    </div>
-                  )}
-                  {successMessage && (
-                    <div className="mt-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg text-center">
-                      {successMessage}
-                      <button
-                        onClick={() => setSuccessMessage(null)}
-                        className="ml-2 text-green-700 hover:text-green-900"
-                        aria-label="Dismiss success message"
-                      >
-                        ×
-                      </button>
-                    </div>
-                  )}
-                </form>
-              </motion.dialog>
-            )}
-            <div className="flex gap-2">
-              <button
-                onClick={async () => {
-                  await supabase.auth.signOut();
-                  navigate("/login", { state: { from: location.pathname } });
-                }}
-                className="relative mt-2 inline-block px-6 py-2 rounded font-medium text-white bg-stone-700 z-10 overflow-hidden
-              before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
-              before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
-                aria-label="Log out"
-              >
-                Log Out
-              </button>
-              {user.role === "developer" && (
-                <button
-                  onClick={() => {
-                    const recentProperty = properties[0] || {};
-                    setEditProfile({
-                      username: user.username,
-                      email: user.email,
-                      developer_experience: recentProperty.developer_experience || "",
-                      developer_projects_completed:
-                        recentProperty.developer_projects_completed || "",
-                      developer_awards: recentProperty.developer_awards || "",
-                      developer_certifications: recentProperty.developer_certifications || "",
-                      developer_description: recentProperty.developer_description || "",
-                      developer_image: user.developer_image || "",
-                      developer_logo: user.developer_logo || "",
-                      property_id: recentProperty.id || null,
-                    });
-                    setPreviewImages((prev) => ({
-                      ...prev,
-                      developer_image: user.developer_image
-                        ? user.developer_image.split(",").filter((url) => url.trim())
-                        : [],
-                      developer_logo: user.developer_logo
-                        ? user.developer_logo.split(",").filter((url) => url.trim())
-                        : [],
-                    }));
-                    document.getElementById("edit-developer-profile-dialog").showModal();
-                  }}
-                  className="relative mt-2 inline-block px-6 py-2 border-1 border-stone-700 rounded font-medium text-stone-700 bg-stone-100 z-10 overflow-hidden
-              before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-700
-              before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
-                  aria-label={`Edit developer profile for ${user.username}`}
-                >Profile
-                  <FaEdit className="inline ml-1 mb-1 text-xl" />
-                </button>
-              )}
-            </div>
-          </div>
-          {user.role === "developer" && (
+          {user.role === "admin" ? (
             <>
-              <button
-                onClick={() => {
-                  setShowAddForm(true);
-                  document.getElementById("add-property-dialog").showModal();
-                }}
-                className="relative mb-6 inline-block px-6 py-2 rounded-lg font-semibold text-white bg-stone-700 z-10 overflow-hidden
-                  before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
-                  before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
-                aria-label="Show add property form"
-              >
-                <FaPlus className="inline mr-2" /> Add Property
-              </button>
-
-              <dialog
-                id="add-property-dialog"
-                className="fixed inset-0 m-auto bg-white shadow-lg w-full max-w-4xl max-h-screen rounded-lg p-6 sm:p-8 overflow-y-auto"
-              >
-                <form
-                  onSubmit={handleAddProperty}
-                  className="grid grid-cols-1 sm:grid-cols-2 gap-6"
-                >
-                  <h3 className="text-2xl font-bold text-stone-700 mb-4 md:col-span-2">
-                    Add Property
-                  </h3>
-                  <div>
-                    <label className="block text-sm font-semibold text-stone-700 mb-2">
-                      Property Name *
-                    </label>
-                    <input
-                      type="text"
-                      name="name"
-                      value={newProperty.name}
-                      onChange={handlePropertyChange}
-                      onKeyPress={(e) => handleEnterKey(e, "name")}
-                      required
-                      className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                      placeholder="Enter property name"
-                      aria-label="Property name"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-stone-700 mb-2">
-                      Location *
-                    </label>
-                    <input
-                      type="text"
-                      name="location"
-                      value={newProperty.location}
-                      onChange={handlePropertyChange}
-                      onKeyPress={(e) => handleEnterKey(e, "location")}
-                      required
-                      className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                      placeholder="Enter location"
-                      aria-label="Location"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-stone-700 mb-2">
-                      Price (₹) *
-                    </label>
-                    <input
-                      type="number"
-                      name="price"
-                      value={newProperty.price}
-                      onChange={handlePropertyChange}
-                      onKeyPress={(e) => handleEnterKey(e, "price")}
-                      required
-                      className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                      placeholder="Enter price"
-                      aria-label="Price"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-stone-700 mb-2">
-                      Carpet Area (sq.ft) *
-                    </label>
-                    <input
-                      type="number"
-                      name="carpet_area"
-                      value={newProperty.carpet_area}
-                      onChange={handlePropertyChange}
-                      onKeyPress={(e) => handleEnterKey(e, "carpet_area")}
-                      required
-                      className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                      placeholder="Enter carpet area"
-                      aria-label="Carpet area"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-stone-700 mb-2">
-                      Configuration *
-                    </label>
-                    <input
-                      type="text"
-                      name="configuration"
-                      value={newProperty.configuration}
-                      onChange={handlePropertyChange}
-                      onKeyPress={(e) => handleEnterKey(e, "configuration")}
-                      required
-                      className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                      placeholder="e.g., 2 BHK"
-                      aria-label="Configuration"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-stone-700 mb-2">
-                      Property Type *
-                    </label>
-                    <select
-                      name="property_type"
-                      value={newProperty.property_type}
-                      onChange={handlePropertyChange}
-                      onKeyPress={(e) => handleEnterKey(e, "property_type")}
-                      required
-                      className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                      aria-label="Property type"
-                    >
-                      <option value="">Select type</option>
-                      <option value="Flat">Flat</option>
-                      <option value="Villa">Villa</option>
-                      <option value="Plot">Plot</option>
-                      <option value="Commercial">Commercial</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-stone-700 mb-2">
-                      Total Floors *
-                    </label>
-                    <input
-                      type="number"
-                      name="total_floors"
-                      value={newProperty.total_floors}
-                      onChange={handlePropertyChange}
-                      onKeyPress={(e) => handleEnterKey(e, "total_floors")}
-                      required
-                      className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                      placeholder="Enter total floors"
-                      aria-label="Total floors"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-stone-700 mb-2">
-                      Total Units *
-                    </label>
-                    <input
-                      type="number"
-                      name="total_units"
-                      value={newProperty.total_units}
-                      onChange={handlePropertyChange}
-                      onKeyPress={(e) => handleEnterKey(e, "total_units")}
-                      required
-                      className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                      placeholder="Enter total units"
-                      aria-label="Total units"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-stone-700 mb-2">
-                      Status *
-                    </label>
-                    <select
-                      name="status"
-                      value={newProperty.status}
-                      onChange={handlePropertyChange}
-                      onKeyPress={(e) => handleEnterKey(e, "status")}
-                      required
-                      className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                      aria-label="Status"
-                    >
-                      <option value="">Select status</option>
-                      <option value="Ready">Ready to Move</option>
-                      <option value="Under Construction">
-                        Under Construction
-                      </option>
-                      <option value="Upcoming">Upcoming</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-stone-700 mb-2">
-                      RERA Number *
-                    </label>
-                    <input
-                      type="text"
-                      name="rera_number"
-                      value={newProperty.rera_number}
-                      onChange={handlePropertyChange}
-                      onKeyPress={(e) => handleEnterKey(e, "rera_number")}
-                      required
-                      className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                      placeholder="Enter RERA number"
-                      aria-label="RERA number"
-                    />
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-semibold text-stone-700 mb-2">
-                      Amenities
-                    </label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {[
-                        "24/7 Security",
-                        "Lift",
-                        "Parking",
-                        "Swimming Pool",
-                        "Gym",
-                        "Clubhouse",
-                      ].map((amenity) => (
-                        <label key={amenity} className="flex items-center">
-                          <input
-                            type="checkbox"
-                            value={amenity}
-                            checked={newProperty.amenities.includes(amenity)}
-                            onChange={handleAmenitiesChange}
-                            className="mr-2"
-                            aria-label={`Amenity: ${amenity}`}
-                          />
-                          {amenity}
-                        </label>
-                      ))}
+              <h2 className="text-4xl font-bold text-stone-700 mb-6 text-center">
+                Admin Profile
+              </h2>
+              <div className="bg-stone-100 rounded-lg shadow-md p-6 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-6">
+                    <div className="flex items-center space-x-4">
+                      <FaUser className="inline rounded-full text-stone-700 w-20 h-20" />
+                      <div>
+                        <h2 className="text-3xl font-bold text-gray-800">
+                          {user.username}
+                        </h2>
+                        <p className="text-stone-600">{user.email}</p>
+                      </div>
                     </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-stone-700 mb-2">
-                      Developer Name *
-                    </label>
-                    <input
-                      type="text"
-                      name="developer_name"
-                      value={newProperty.developer_name}
-                      onChange={handlePropertyChange}
-                      onKeyPress={(e) => handleEnterKey(e, "developer_name")}
-                      required
-                      className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                      placeholder="Enter developer name"
-                      aria-label="Developer name"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-stone-700 mb-2">
-                      Developer Tagline
-                    </label>
-                    <input
-                      type="text"
-                      name="developer_tagline"
-                      value={newProperty.developer_tagline}
-                      onChange={handlePropertyChange}
-                      onKeyPress={(e) => handleEnterKey(e, "developer_tagline")}
-                      className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                      placeholder="Enter developer tagline (optional)"
-                      aria-label="Developer tagline"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-stone-700 mb-2">
-                      Developer Experience
-                    </label>
-                    <input
-                      type="number"
-                      name="developer_experience"
-                      value={newProperty.developer_experience}
-                      onChange={handlePropertyChange}
-                      onKeyPress={(e) =>
-                        handleEnterKey(e, "developer_experience")
-                      }
-                      className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                      placeholder="Enter developer experience (optional)"
-                      aria-label="Developer experience"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-stone-700 mb-2">
-                      Developer Projects Completed
-                    </label>
-                    <input
-                      type="number"
-                      name="developer_projects_completed"
-                      value={newProperty.developer_projects_completed}
-                      onChange={handlePropertyChange}
-                      onKeyPress={(e) =>
-                        handleEnterKey(e, "developer_projects_completed")
-                      }
-                      className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                      placeholder="Enter projects completed (optional)"
-                      aria-label="Developer projects completed"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-stone-700 mb-2">
-                      Developer Happy Families
-                    </label>
-                    <input
-                      type="number"
-                      name="developer_happy_families"
-                      value={newProperty.developer_happy_families}
-                      onChange={handlePropertyChange}
-                      onKeyPress={(e) =>
-                        handleEnterKey(e, "developer_happy_families")
-                      }
-                      className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                      placeholder="Enter happy families (optional)"
-                      aria-label="Developer happy families"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-stone-700 mb-2">
-                      Nearby Landmarks *
-                    </label>
-                    <input
-                      type="text"
-                      name="nearby_landmarks"
-                      value={newProperty.nearby_landmarks}
-                      onChange={handlePropertyChange}
-                      onKeyPress={(e) => handleEnterKey(e, "nearby_landmarks")}
-                      required
-                      className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                      placeholder="Enter landmarks as text (e.g., Park, School)"
-                      aria-label="Nearby landmarks"
-                    />
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-semibold text-stone-700 mb-2">
-                      Developer Description
-                    </label>
-                    <textarea
-                      name="developer_description"
-                      value={newProperty.developer_description}
-                      onChange={handlePropertyChange}
-                      onKeyPress={(e) =>
-                        handleEnterKey(e, "developer_description")
-                      }
-                      className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                      placeholder="Enter a description about your company (max 1000 characters)"
-                      maxLength={1000}
-                      rows={5}
-                      aria-label="Developer description"
-                    />
-                    <p className="text-sm text-stone-600 mt-1">
-                      {newProperty.developer_description.length}/1000 characters
+                    <p className="text-stone-600 leading-relaxed">
+                      As an admin, you have full access to manage users, properties, and platform settings. Use the dashboard to oversee operations and approve content.
                     </p>
                   </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-stone-700 mb-2">
-                      Agent Name
-                    </label>
-                    <input
-                      type="text"
-                      name="agent_name"
-                      value={newProperty.agent_name}
-                      onChange={handlePropertyChange}
-                      onKeyPress={(e) => handleEnterKey(e, "agent_name")}
-                      className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                      placeholder="Enter agent name (optional)"
-                      aria-label="Agent name"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-stone-700 mb-2">
-                      Agent Role
-                    </label>
-                    <input
-                      type="text"
-                      name="agent_role"
-                      value={newProperty.agent_role}
-                      onChange={handlePropertyChange}
-                      onKeyPress={(e) => handleEnterKey(e, "agent_role")}
-                      className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                      placeholder="Enter agent role (optional)"
-                      aria-label="Agent role"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-stone-700 mb-2">
-                      Agent Phone
-                    </label>
-                    <input
-                      type="text"
-                      name="agent_phone"
-                      value={newProperty.agent_phone}
-                      onChange={handlePropertyChange}
-                      onKeyPress={(e) => handleEnterKey(e, "agent_phone")}
-                      className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                      placeholder="Enter agent phone (optional)"
-                      aria-label="Agent phone"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-stone-700 mb-2">
-                      Agent Email
-                    </label>
-                    <input
-                      type="email"
-                      name="agent_email"
-                      value={newProperty.agent_email}
-                      onChange={handlePropertyChange}
-                      onKeyPress={(e) => handleEnterKey(e, "agent_email")}
-                      className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                      placeholder="Enter agent email (optional)"
-                      aria-label="Agent email"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-stone-700 mb-2">
-                      Agent Availability
-                    </label>
-                    <input
-                      type="text"
-                      name="agent_availability"
-                      value={newProperty.agent_availability}
-                      onChange={handlePropertyChange}
-                      onKeyPress={(e) =>
-                        handleEnterKey(e, "agent_availability")
-                      }
-                      className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                      placeholder="Enter agent availability (optional)"
-                      aria-label="Agent availability"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-stone-700 mb-2">
-                      Agent Rating
-                    </label>
-                    <input
-                      type="number"
-                      step="0.1"
-                      name="agent_rating"
-                      value={newProperty.agent_rating}
-                      onChange={handlePropertyChange}
-                      onKeyPress={(e) => handleEnterKey(e, "agent_rating")}
-                      className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                      placeholder="Enter agent rating (optional, 0-5)"
-                      aria-label="Agent rating"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-stone-700 mb-2">
-                      Agent Reviews
-                    </label>
-                    <input
-                      type="number"
-                      name="agent_reviews"
-                      value={newProperty.agent_reviews}
-                      onChange={handlePropertyChange}
-                      onKeyPress={(e) => handleEnterKey(e, "agent_reviews")}
-                      className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                      placeholder="Enter agent reviews (optional)"
-                      aria-label="Agent reviews"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-stone-700 mb-2">
-                      Developer Awards
-                    </label>
-                    <input
-                      type="text"
-                      name="developer_awards"
-                      value={newProperty.developer_awards}
-                      onChange={handlePropertyChange}
-                      onKeyPress={(e) => handleEnterKey(e, "developer_awards")}
-                      className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                      placeholder="Enter developer awards (optional)"
-                      aria-label="Developer awards"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-stone-700 mb-2">
-                      Developer Certifications
-                    </label>
-                    <input
-                      type="text"
-                      name="developer_certifications"
-                      value={newProperty.developer_certifications}
-                      onChange={handlePropertyChange}
-                      onKeyPress={(e) =>
-                        handleEnterKey(e, "developer_certifications")
-                      }
-                      className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                      placeholder="Enter developer certifications (optional)"
-                      aria-label="Developer certifications"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-stone-700 mb-2">
-                      Property Images
-                    </label>
-                    <div className="relative flex gap-4">
-                      <div className="flex-1">
-                        <input
-                          type="file"
-                          id="add-property-images-input"
-                          accept="image/*"
-                          multiple
-                          onChange={(e) => handleImageUpload(e, "images")}
-                          className="absolute opacity-0 w-0 h-0"
-                          aria-label="Upload property images"
-                        />
-                        <button
-                          type="button"
-                          onClick={() =>
-                            document
-                              .getElementById("add-property-images-input")
-                              .click()
-                          }
-                          className="w-full px-4 py-3 border border-stone-300 rounded-lg text-stone-700 bg-stone-100 hover:bg-stone-200 transition-colors"
-                        >
-                          Choose Images
-                        </button>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-gray-50 shadow p-4 rounded-lg text-center">
+                      <div className="text-3xl font-bold text-stone-700">
+                        {adminStats.totalUsers}
                       </div>
-                      {previewImages.images.length > 0 && (
-                        <button
-                          type="button"
-                          onClick={() => handleClearImage("images")}
-                          className="text-stone-700 hover:text-stone-900"
-                          aria-label="Clear property images"
-                        >
-                          <FaTrash className="inline text-xl" />
-                        </button>
-                      )}
+                      <div className="text-stone-600">Total Users</div>
                     </div>
-                    {previewImages.images.length > 0 && (
-                      <div className="mt-2">
-                        <p className="text-sm text-stone-600">
-                          Uploaded Property Images:
-                        </p>
-                        {renderImages(previewImages.images, "Property Image")}
+                    <div className="bg-gray-50 shadow p-4 rounded-lg text-center">
+                      <div className="text-3xl font-bold text-stone-700">
+                        {adminStats.totalProperties}
                       </div>
-                    )}
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-stone-700 mb-2">
-                      Agent Image
-                    </label>
-                    <div className="relative flex gap-4">
-                      <div className="flex-1">
-                        <input
-                          type="file"
-                          id="add-agent-image-input"
-                          accept="image/*"
-                          onChange={(e) => handleImageUpload(e, "agents_image")}
-                          className="absolute opacity-0 w-0 h-0"
-                          aria-label="Upload agent image"
-                        />
-                        <button
-                          type="button"
-                          onClick={() =>
-                            document
-                              .getElementById("add-agent-image-input")
-                              .click()
-                          }
-                          className="w-full px-4 py-3 border border-stone-300 rounded-lg text-stone-700 bg-stone-100 hover:bg-stone-200 transition-colors"
-                        >
-                          Choose Image
-                        </button>
-                      </div>
-                      {previewImages.agents_image.length > 0 && (
-                        <button
-                          type="button"
-                          onClick={() => handleClearImage("agents_image")}
-                          className="text-stone-700 hover:text-stone-900"
-                          aria-label="Clear agent image"
-                        >
-                          <FaTrash className="inline text-xl" />
-                        </button>
-                      )}
+                      <div className="text-stone-600">Total Properties</div>
                     </div>
-                    {previewImages.agents_image.length > 0 && (
-                      <div className="mt-2">
-                        <p className="text-sm text-stone-600">
-                          Uploaded Agent Image:
-                        </p>
-                        {renderImages(
-                          previewImages.agents_image,
-                          "Agent Image"
+                    <div className="bg-gray-50 shadow p-4 rounded-lg text-center">
+                      <div className="text-3xl font-bold text-stone-700">
+                        {adminStats.pendingProperties}
+                      </div>
+                      <div className="text-stone-600">Pending Properties</div>
+                    </div>
+                    <div className="bg-gray-50 shadow p-4 rounded-lg text-center">
+                      <div className="text-3xl font-bold text-stone-700">
+                        {adminStats.approvedProperties}
+                      </div>
+                      <div className="text-stone-600">Approved Properties</div>
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={async () => {
+                    await supabase.auth.signOut();
+                    navigate("/login", { state: { from: location.pathname } });
+                  }}
+                  className="relative inline-block px-6 py-2 rounded font-semibold text-stone-700 border border-stone-700 z-10 overflow-hidden
+                      before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-700
+                      before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:border-none hover:text-white"
+                  aria-label="Log out"
+                >
+                  Log Out
+                </button>
+              </div>
+              {error && (
+                <div className="mt-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg text-center">
+                  {error}
+                  <button
+                    onClick={() => setError(null)}
+                    className="ml-2 text-red-700 hover:text-red-900"
+                    aria-label="Dismiss error"
+                  >
+                    ×
+                  </button>
+                </div>
+              )}
+              {successMessage && (
+                <div className="mt-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg text-center">
+                  {successMessage}
+                  <button
+                    onClick={() => setSuccessMessage(null)}
+                    className="ml-2 text-green-700 hover:text-green-900"
+                    aria-label="Dismiss success message"
+                  >
+                    ×
+                  </button>
+                </div>
+              )}
+              <div className="p-6 bg-stone-100 rounded-lg shadow-md max-w-6xl mx-auto">
+                <h2 className="text-3xl font-bold text-stone-700 mb-6">Admin Dashboard</h2>
+                <Tabs value={adminTabValue} onChange={handleAdminTabChange} aria-label="admin tabs">
+                  <Tab label="Manage Users" />
+                  <Tab label="Manage Properties" />
+                </Tabs>
+                <Box sx={{ p: 3 }}>
+                  {adminTabValue === 0 && <AdminUsers />}
+                  {adminTabValue === 1 && <AdminProperties />}
+                </Box>
+              </div>
+            </>
+          ) : (
+            <>
+              <h2 className="text-4xl font-bold text-stone-700 mb-6 text-center">
+                Profile
+              </h2>
+              <div className="bg-stone-100 rounded-lg shadow-md p-6 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-6">
+                    <div className="flex items-center space-x-4">
+                      <div className="flex justify-center">
+                        {user.role === "developer" && user.developer_image ? (
+                          <img
+                            src={
+                              user.developer_image.split(",")[0] ||
+                              PLACEHOLDER_IMAGE_URL
+                            }
+                            alt="Developer Image"
+                            className="w-24 h-24 rounded-full object-cover"
+                            onError={(e) => {
+                              e.target.src = PLACEHOLDER_IMAGE_URL;
+                              console.error(
+                                "Profile: Failed to load developer image:",
+                                user.developer_image
+                              );
+                            }}
+                          />
+                        ) : (
+                          <FaUser className="inline rounded-full text-stone-700 w-20 h-20" />
                         )}
                       </div>
-                    )}
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-stone-700 mb-2">
-                      Developer Image
-                    </label>
-                    <div className="relative flex gap-4">
-                      <div className="flex-1">
-                        <input
-                          type="file"
-                          id="add-developer-image-input"
-                          accept="image/*"
-                          onChange={(e) =>
-                            handleImageUpload(e, "developer_image")
-                          }
-                          className="absolute opacity-0 w-0 h-0"
-                          aria-label="Upload developer image"
-                        />
-                        <button
-                          type="button"
-                          onClick={() =>
-                            document
-                              .getElementById("add-developer-image-input")
-                              .click()
-                          }
-                          className="w-full px-4 py-3 border border-stone-300 rounded-lg text-stone-700 bg-stone-100 hover:bg-stone-200 transition-colors"
-                        >
-                          Choose Image
-                        </button>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h2 className="text-3xl font-bold text-gray-800">
+                            {properties[0]?.developer_name || user.username}
+                          </h2>
+                        </div>
+                        <p className="text-stone-600">{user.email}</p>
                       </div>
-                      {previewImages.developer_image.length > 0 && (
-                        <button
-                          type="button"
-                          onClick={() => handleClearImage("developer_image")}
-                          className="text-stone-700 hover:text-stone-900"
-                          aria-label="Clear developer image"
-                        >
-                          <FaTrash className="inline text-xl" />
-                        </button>
-                      )}
                     </div>
-                    {previewImages.developer_image.length > 0 && (
-                      <div className="mt-2">
-                        <p className="text-sm text-stone-600">
-                          Uploaded Developer Image:
+                    {user.role === "developer" && (
+                      <div className="mt-4">
+                        <h3 className="text-lg font-semibold text-stone-700 mb-2">
+                          About {properties[0]?.developer_name}
+                        </h3>
+                        <p className="text-stone-600 leading-relaxed">
+                          {properties[0]?.developer_description ||
+                            "Add a description to showcase your expertise."}
                         </p>
-                        {renderImages(
-                          previewImages.developer_image,
-                          "Developer Image"
-                        )}
                       </div>
                     )}
                   </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-stone-700 mb-2">
-                      Developer Logo
-                    </label>
-                    <div className="relative flex gap-4">
-                      <div className="flex-1">
-                        <input
-                          type="file"
-                          id="add-developer-logo-input"
-                          accept="image/*"
-                          onChange={(e) =>
-                            handleImageUpload(e, "developer_logo")
-                          }
-                          className="absolute opacity-0 w-0 h-0"
-                          aria-label="Upload developer logo"
-                        />
-                        <button
-                          type="button"
-                          onClick={() =>
-                            document
-                              .getElementById("add-developer-logo-input")
-                              .click()
-                          }
-                          className="w-full px-4 py-3 border border-stone-300 rounded-lg text-stone-700 bg-stone-100 hover:bg-stone-200 transition-colors"
-                        >
-                          Choose Logo
-                        </button>
+                  {user.role === "developer" && (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="bg-gray-50 shadow p-4 rounded-lg text-center">
+                        <div className="text-3xl font-bold text-primary">
+                          {properties[0]?.developer_experience || "N/A"}+
+                        </div>
+                        <div className="text-gray-600">Years Experience</div>
                       </div>
-                      {previewImages.developer_logo.length > 0 && (
-                        <button
-                          type="button"
-                          onClick={() => handleClearImage("developer_logo")}
-                          className="text-stone-700 hover:text-stone-900"
-                          aria-label="Clear developer logo"
-                        >
-                          <FaTrash className="inline text-xl" />
-                        </button>
-                      )}
+                      <div className="bg-gray-50 shadow p-4 rounded-lg text-center">
+                        <div className="text-3xl font-bold text-primary">
+                          {properties[0]?.developer_projects_completed || "N/A"}+
+                        </div>
+                        <div className="text-gray-600">Projects Completed</div>
+                      </div>
+                      <div className="bg-gray-50 shadow p-4 rounded-lg text-center">
+                        <div className="text-2xl font-bold text-primary">
+                          {properties[0]?.developer_awards || "N/A"}
+                        </div>
+                        <div className="text-gray-600">Awards Won</div>
+                      </div>
+                      <div className="bg-gray-50 shadow p-4 rounded-lg text-center">
+                        <div className="text-2xl font-bold text-primary">
+                          {properties[0]?.developer_certifications || "N/A"}
+                        </div>
+                        <div className="text-gray-600">Certified</div>
+                      </div>
                     </div>
-                    {previewImages.developer_logo.length > 0 && (
-                      <div className="mt-2">
-                        <p className="text-sm text-stone-600">
-                          Uploaded Developer Logo:
-                        </p>
-                        {renderImages(
-                          previewImages.developer_logo,
-                          "Developer Logo"
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  <div className="md:col-span-2 flex justify-end gap-4">
+                  )}
+                </div>
+
+                <div className="flex gap-2">
+                  <button
+                    onClick={async () => {
+                      await supabase.auth.signOut();
+                      navigate("/login", { state: { from: location.pathname } });
+                    }}
+                    className="relative mt-2 inline-block px-6 py-2 rounded font-medium text-white bg-stone-700 z-10 overflow-hidden
+                      before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
+                      before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
+                    aria-label="Log out"
+                  >
+                    Log Out
+                  </button>
+                  {user.role === "developer" && (
                     <button
-                      type="submit"
-                      className="relative h-9 w-40 rounded-lg font-semibold text-white bg-stone-700 z-10 overflow-hidden
-                        before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
-                        before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
-                      aria-label="Add property"
-                    >
-                      Add Property
-                    </button>
-                    <button
-                      type="button"
                       onClick={() => {
-                        setShowAddForm(false);
-                        document.getElementById("add-property-dialog").close();
-                        setNewProperty({
-                          name: "",
-                          location: "",
-                          price: "",
-                          carpet_area: "",
-                          configuration: "",
-                          property_type: "",
-                          total_floors: "",
-                          total_units: "",
-                          status: "",
-                          rera_number: "",
-                          amenities: [],
-                          developer_name: "",
-                          developer_tagline: "",
-                          developer_experience: "",
-                          developer_projects_completed: "",
-                          developer_happy_families: "",
-                          nearby_landmarks: "",
-                          agent_name: "",
-                          agent_role: "",
-                          agent_phone: "",
-                          agent_email: "",
-                          agent_availability: "",
-                          agent_rating: "",
-                          agent_reviews: "",
-                          images: "",
-                          agents_image: "",
-                          developer_image: "",
-                          developer_awards: "",
-                          developer_certifications: "",
-                          developer_description: "",
-                          developer_logo: "",
+                        const recentProperty = properties[0] || {};
+                        setEditProfile({
+                          username: user.username,
+                          email: user.email,
+                          developer_experience: recentProperty.developer_experience || "",
+                          developer_projects_completed:
+                            recentProperty.developer_projects_completed || "",
+                          developer_awards: recentProperty.developer_awards || "",
+                          developer_certifications: recentProperty.developer_certifications || "",
+                          developer_description: recentProperty.developer_description || "",
+                          developer_image: user.developer_image || "",
+                          developer_logo: user.developer_logo || "",
+                          property_id: recentProperty.id || null,
                         });
                         setPreviewImages((prev) => ({
                           ...prev,
-                          images: [],
-                          agents_image: [],
-                          developer_image: [],
-                          developer_logo: [],
+                          developer_image: user.developer_image
+                            ? user.developer_image.split(",").filter((url) => url.trim())
+                            : [],
+                          developer_logo: user.developer_logo
+                            ? user.developer_logo.split(",").filter((url) => url.trim())
+                            : [],
                         }));
+                        document.getElementById("edit-developer-profile-dialog").showModal();
                       }}
-                      className="relative inline-block w-40 h-9 rounded-lg font-medium text-stone-700 border border-stone-700 z-10 overflow-hidden
+                      className="relative mt-2 inline-block px-6 py-2 border-1 border-stone-700 rounded font-medium text-stone-700 bg-stone-100 z-10 overflow-hidden
                         before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-700
-                                                before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:border-none hover:text-white"
-                      aria-label="Cancel add property"
+                        before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
+                      aria-label={`Edit developer profile for ${user.username}`}
                     >
-                      Cancel
+                      Profile
+                      <FaEdit className="inline ml-1 mb-1 text-xl" />
                     </button>
-                  </div>
-                  {error && (
-                    <div className="mt-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg text-center md:col-span-2">
-                      {error}
-                      <button
-                        onClick={() => setError(null)}
-                        className="ml-2 text-red-700 hover:text-red-900"
-                        aria-label="Dismiss error"
-                      >
-                        ×
-                      </button>
-                    </div>
                   )}
-                  {successMessage && (
-                    <div className="mt-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg text-center md:col-span-2">
-                      {successMessage}
-                      <button
-                        onClick={() => setSuccessMessage(null)}
-                        className="ml-2 text-green-700 hover:text-green-900"
-                        aria-label="Dismiss success message"
-                      >
-                        ×
-                      </button>
-                    </div>
-                  )}
-                </form>
-              </dialog>
-
-              <h3 className="text-2xl font-bold text-stone-700 mb-4">
-                Your Properties
-              </h3>
-              {properties.length === 0 ? (
-                <p className="text-stone-600">No properties added yet.</p>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {properties.map((property) => (
-                    <motion.div
-                      key={property.id}
-                      className="bg-white text-white rounded-lg shadow-md hover:shadow-lg transition-shadow group"
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.4 }}
-                    >
-                      <div className="relative group h-[300px] w-full overflow-hidden rounded">
-                        <img
-                          src={
-                            property.images
-                              ? property.images.split(",")[0].trim()
-                              : PLACEHOLDER_IMAGE_URL
-                          }
-                          alt={property.name}
-                          className="w-full h-full transition-transform duration-300 group-hover:scale-105 rounded"
-                          onError={(e) => {
-                            console.error(
-                              "Profile: Failed to load property image:",
-                              property.images
-                            );
-                            e.target.src = PLACEHOLDER_IMAGE_URL;
-                          }}
-                        />
-                        <div className="absolute inset-0 bg-black opacity-40 md:opacity-0 md:group-hover:opacity-40 transition-opacity duration-300 z-0"></div>
-                        <div className="absolute inset-0 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity duration-400">
-                          <div className="absolute bottom-4 left-4 text-left">
-                            <h4 className="text-xl font-semibold">
-                              {property.name}
-                            </h4>
-                            <p className="flex items-center">
-                              <FaMapMarkerAlt className="mr-2" />{" "}
-                              {property.location}
-                            </p>
-                            <p className="flex items-center">
-                              <FaMoneyBill className="mr-2" /> ₹
-                              {property.price.toLocaleString()}
-                            </p>
-                            <p>
-                              {property.configuration
-                                ? `${property.configuration} • `
-                                : ""}
-                              {property.property_type}
-                            </p>
-                            <p>{property.status}</p>
-                            <p className="text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                              Built by:{" "}
-                              {property.developer_name || "Unknown Developer"}
-                            </p>
-                            <div className="mt-4 flex gap-4">
-                              <button
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  setEditProperty({
-                                    ...property,
-                                    amenities: property.amenities || [],
-                                  });
-                                  setPreviewImages({
-                                    ...previewImages,
-                                    images: property.images
-                                      ? property.images
-                                        .split(",")
-                                        .filter((url) => url.trim())
-                                      : [],
-                                    agents_image: property.agents_image
-                                      ? property.agents_image
-                                        .split(",")
-                                        .filter((url) => url.trim())
-                                      : [],
-                                    developer_image: property.developer_image
-                                      ? property.developer_image
-                                        .split(",")
-                                        .filter((url) => url.trim())
-                                      : [],
-                                    developer_logo: property.developer_logo
-                                      ? property.developer_logo
-                                        .split(",")
-                                        .filter((url) => url.trim())
-                                      : [],
-                                  });
-                                  document
-                                    .getElementById("edit-property-dialog")
-                                    .showModal();
-                                }}
-                                aria-label={`Edit property ${property.name}`}
-                              >
-                                <FaEdit className="inline hover:font-semibold" />
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  handleDeleteProperty(property.id);
-                                }}
-                                aria-label={`Delete property ${property.name}`}
-                              >
-                                <FaTrash className="inline hover:font-semibold" />
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
                 </div>
-              )}
+              </div>
 
-              <dialog
-                id="edit-property-dialog"
-                className="fixed inset-0 m-auto bg-white shadow-lg w-full max-w-4xl max-h-screen rounded-lg p-6 sm:p-8"
-              >
-                {editProperty && (
+              {user.role === "developer" && (
+                <motion.dialog
+                  id="edit-developer-profile-dialog"
+                  className="fixed inset-0 m-auto bg-white shadow-lg w-full max-w-4xl max-h-screen rounded-lg p-6 sm:p-8"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.3 }}
+                >
                   <form
-                    onSubmit={handleEditProperty}
+                    onSubmit={handleEditProfile}
                     className="grid grid-cols-1 sm:grid-cols-2 gap-6"
                   >
                     <h3 className="text-2xl font-bold text-stone-700 mb-4 md:col-span-2">
-                      Edit Property
+                      Edit Developer Profile
                     </h3>
                     <div>
                       <label className="block text-sm font-semibold text-stone-700 mb-2">
-                        Property Name *
+                        Username *
                       </label>
                       <input
                         type="text"
-                        name="name"
-                        value={editProperty.name}
-                        onChange={handlePropertyChange}
-                        onKeyPress={(e) => handleEnterKey(e, "name")}
-                        required
-                        className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                        placeholder="Enter property name"
-                        aria-label="Property name"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-stone-700 mb-2">
-                        Location *
-                      </label>
-                      <input
-                        type="text"
-                        name="location"
-                        value={editProperty.location}
-                        onChange={handlePropertyChange}
-                        onKeyPress={(e) => handleEnterKey(e, "location")}
-                        required
-                        className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                        placeholder="Enter location"
-                        aria-label="Location"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-stone-700 mb-2">
-                        Price (₹) *
-                      </label>
-                      <input
-                        type="number"
-                        name="price"
-                        value={editProperty.price}
-                        onChange={handlePropertyChange}
-                        onKeyPress={(e) => handleEnterKey(e, "price")}
-                        required
-                        className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                        placeholder="Enter price"
-                        aria-label="Price"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-stone-700 mb-2">
-                        Carpet Area (sq.ft) *
-                      </label>
-                      <input
-                        type="number"
-                        name="carpet_area"
-                        value={editProperty.carpet_area}
-                        onChange={handlePropertyChange}
-                        onKeyPress={(e) => handleEnterKey(e, "carpet_area")}
-                        required
-                        className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                        placeholder="Enter carpet area"
-                        aria-label="Carpet area"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-stone-700 mb-2">
-                        Configuration *
-                      </label>
-                      <input
-                        type="text"
-                        name="configuration"
-                        value={editProperty.configuration}
-                        onChange={handlePropertyChange}
-                        onKeyPress={(e) => handleEnterKey(e, "configuration")}
-                        required
-                        className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                        placeholder="e.g., 2 BHK"
-                        aria-label="Configuration"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-stone-700 mb-2">
-                        Property Type *
-                      </label>
-                      <select
-                        name="property_type"
-                        value={editProperty.property_type}
-                        onChange={handlePropertyChange}
-                        onKeyPress={(e) => handleEnterKey(e, "property_type")}
-                        required
-                        className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                        aria-label="Property type"
-                      >
-                        <option value="">Select type</option>
-                        <option value="Flat">Flat</option>
-                        <option value="Villa">Villa</option>
-                        <option value="Plot">Plot</option>
-                        <option value="Commercial">Commercial</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-stone-700 mb-2">
-                        Total Floors *
-                      </label>
-                      <input
-                        type="number"
-                        name="total_floors"
-                        value={editProperty.total_floors}
-                        onChange={handlePropertyChange}
-                        onKeyPress={(e) => handleEnterKey(e, "total_floors")}
-                        required
-                        className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                        placeholder="Enter total floors"
-                        aria-label="Total floors"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-stone-700 mb-2">
-                        Total Units *
-                      </label>
-                      <input
-                        type="number"
-                        name="total_units"
-                        value={editProperty.total_units}
-                        onChange={handlePropertyChange}
-                        onKeyPress={(e) => handleEnterKey(e, "total_units")}
-                        required
-                        className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                        placeholder="Enter total units"
-                        aria-label="Total units"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-stone-700 mb-2">
-                        Status *
-                      </label>
-                      <select
-                        name="status"
-                        value={editProperty.status}
-                        onChange={handlePropertyChange}
-                        onKeyPress={(e) => handleEnterKey(e, "status")}
-                        required
-                        className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                        aria-label="Status"
-                      >
-                        <option value="">Select status</option>
-                        <option value="Ready">Ready to Move</option>
-                        <option value="Under Construction">
-                          Under Construction
-                        </option>
-                        <option value="Upcoming">Upcoming</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-stone-700 mb-2">
-                        RERA Number *
-                      </label>
-                      <input
-                        type="text"
-                        name="rera_number"
-                        value={editProperty.rera_number}
-                        onChange={handlePropertyChange}
-                        onKeyPress={(e) => handleEnterKey(e, "rera_number")}
-                        required
-                        className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                        placeholder="Enter RERA number"
-                        aria-label="RERA number"
-                      />
-                    </div>
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-semibold text-stone-700 mb-2">
-                        Amenities
-                      </label>
-                      <div className="grid grid-cols-2 gap-2">
-                        {[
-                          "24/7 Security",
-                          "Lift",
-                          "Parking",
-                          "Swimming Pool",
-                          "Gym",
-                          "Clubhouse",
-                        ].map((amenity) => (
-                          <label key={amenity} className="flex items-center">
-                            <input
-                              type="checkbox"
-                              value={amenity}
-                              checked={editProperty.amenities.includes(amenity)}
-                              onChange={handleAmenitiesChange}
-                              className="mr-2"
-                              aria-label={`Amenity: ${amenity}`}
-                            />
-                            {amenity}
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-stone-700 mb-2">
-                        Developer Name *
-                      </label>
-                      <input
-                        type="text"
-                        name="developer_name"
-                        value={editProperty.developer_name}
-                        onChange={handlePropertyChange}
-                        onKeyPress={(e) => handleEnterKey(e, "developer_name")}
-                        required
-                        className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                        placeholder="Enter developer name"
-                        aria-label="Developer name"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-stone-700 mb-2">
-                        Developer Tagline
-                      </label>
-                      <input
-                        type="text"
-                        name="developer_tagline"
-                        value={editProperty.developer_tagline}
-                        onChange={handlePropertyChange}
-                        onKeyPress={(e) =>
-                          handleEnterKey(e, "developer_tagline")
+                        name="username"
+                        value={editProfile.username}
+                        onChange={(e) =>
+                          setEditProfile({
+                            ...editProfile,
+                            username: e.target.value,
+                          })
                         }
+                        required
                         className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                        placeholder="Enter developer tagline (optional)"
-                        aria-label="Developer tagline"
+                        placeholder="Enter username"
+                        aria-label="Developer username"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-stone-700 mb-2">
+                        Email *
+                      </label>
+                      <input
+                        type="email"
+                        name="email"
+                        value={editProfile.email}
+                        onChange={(e) =>
+                          setEditProfile({
+                            ...editProfile,
+                            email: e.target.value,
+                          })
+                        }
+                        required
+                        className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
+                        placeholder="Enter email"
+                        aria-label="Developer email"
                       />
                     </div>
                     <div>
@@ -2505,13 +1269,15 @@ const Profile = () => {
                       <input
                         type="number"
                         name="developer_experience"
-                        value={editProperty.developer_experience}
-                        onChange={handlePropertyChange}
-                        onKeyPress={(e) =>
-                          handleEnterKey(e, "developer_experience")
+                        value={editProfile.developer_experience}
+                        onChange={(e) =>
+                          setEditProfile({
+                            ...editProfile,
+                            developer_experience: e.target.value,
+                          })
                         }
                         className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                        placeholder="Enter developer experience (optional)"
+                        placeholder="Enter experience in years (optional)"
                         aria-label="Developer experience"
                       />
                     </div>
@@ -2522,10 +1288,12 @@ const Profile = () => {
                       <input
                         type="number"
                         name="developer_projects_completed"
-                        value={editProperty.developer_projects_completed}
-                        onChange={handlePropertyChange}
-                        onKeyPress={(e) =>
-                          handleEnterKey(e, "developer_projects_completed")
+                        value={editProfile.developer_projects_completed}
+                        onChange={(e) =>
+                          setEditProfile({
+                            ...editProfile,
+                            developer_projects_completed: e.target.value,
+                          })
                         }
                         className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
                         placeholder="Enter projects completed (optional)"
@@ -2534,254 +1302,65 @@ const Profile = () => {
                     </div>
                     <div>
                       <label className="block text-sm font-semibold text-stone-700 mb-2">
-                        Developer Happy Families
+                        Developer Awards
                       </label>
                       <input
-                        type="number"
-                        name="developer_happy_families"
-                        value={editProperty.developer_happy_families}
-                        onChange={handlePropertyChange}
-                        onKeyPress={(e) =>
-                          handleEnterKey(e, "developer_happy_families")
+                        type="text"
+                        name="developer_awards"
+                        value={editProfile.developer_awards}
+                        onChange={(e) =>
+                          setEditProfile({
+                            ...editProfile,
+                            developer_awards: e.target.value,
+                          })
                         }
                         className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                        placeholder="Enter happy families (optional)"
-                        aria-label="Developer happy families"
+                        placeholder="Enter awards (optional)"
+                        aria-label="Developer awards"
                       />
                     </div>
                     <div>
                       <label className="block text-sm font-semibold text-stone-700 mb-2">
-                        Nearby Landmarks *
+                        Developer Certifications
                       </label>
                       <input
                         type="text"
-                        name="nearby_landmarks"
-                        value={editProperty.nearby_landmarks}
-                        onChange={handlePropertyChange}
-                        onKeyPress={(e) =>
-                          handleEnterKey(e, "nearby_landmarks")
-                        }
-                        required
-                        className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                        placeholder="Enter landmarks as text (e.g., Park, School)"
-                        aria-label="Nearby landmarks"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-stone-700 mb-2">
-                        Agent Name
-                      </label>
-                      <input
-                        type="text"
-                        name="agent_name"
-                        value={editProperty.agent_name}
-                        onChange={handlePropertyChange}
-                        onKeyPress={(e) => handleEnterKey(e, "agent_name")}
-                        className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                        placeholder="Enter agent name (optional)"
-                        aria-label="Agent name"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-stone-700 mb-2">
-                        Agent Role
-                      </label>
-                      <input
-                        type="text"
-                        name="agent_role"
-                        value={editProperty.agent_role}
-                        onChange={handlePropertyChange}
-                        onKeyPress={(e) => handleEnterKey(e, "agent_role")}
-                        className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                        placeholder="Enter agent role (optional)"
-                        aria-label="Agent role"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-stone-700 mb-2">
-                        Agent Phone
-                      </label>
-                      <input
-                        type="text"
-                        name="agent_phone"
-                        value={editProperty.agent_phone}
-                        onChange={handlePropertyChange}
-                        onKeyPress={(e) => handleEnterKey(e, "agent_phone")}
-                        className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                        placeholder="Enter agent phone (optional)"
-                        aria-label="Agent phone"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-stone-700 mb-2">
-                        Agent Email
-                      </label>
-                      <input
-                        type="email"
-                        name="agent_email"
-                        value={editProperty.agent_email}
-                        onChange={handlePropertyChange}
-                        onKeyPress={(e) => handleEnterKey(e, "agent_email")}
-                        className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                        placeholder="Enter agent email (optional)"
-                        aria-label="Agent email"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-stone-700 mb-2">
-                        Agent Availability
-                      </label>
-                      <input
-                        type="text"
-                        name="agent_availability"
-                        value={editProperty.agent_availability}
-                        onChange={handlePropertyChange}
-                        onKeyPress={(e) =>
-                          handleEnterKey(e, "agent_availability")
+                        name="developer_certifications"
+                        value={editProfile.developer_certifications}
+                        onChange={(e) =>
+                          setEditProfile({
+                            ...editProfile,
+                            developer_certifications: e.target.value,
+                          })
                         }
                         className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                        placeholder="Enter agent availability (optional)"
-                        aria-label="Agent availability"
+                        placeholder="Enter certifications (optional)"
+                        aria-label="Developer certifications"
                       />
                     </div>
-                    <div>
+                    <div className="md:col-span-2">
                       <label className="block text-sm font-semibold text-stone-700 mb-2">
-                        Agent Rating
+                        Developer Description
                       </label>
-                      <input
-                        type="number"
-                        step="0.1"
-                        name="agent_rating"
-                        value={editProperty.agent_rating}
-                        onChange={handlePropertyChange}
-                        onKeyPress={(e) => handleEnterKey(e, "agent_rating")}
+                      <textarea
+                        name="developer_description"
+                        value={editProfile.developer_description}
+                        onChange={(e) =>
+                          setEditProfile({
+                            ...editProfile,
+                            developer_description: e.target.value,
+                          })
+                        }
+                        onKeyPress={(e) => handleEnterKey(e, "developer_description")}
                         className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                        placeholder="Enter agent rating (optional, 0-5)"
-                        aria-label="Agent rating"
+                        placeholder="Enter a description about your company (max 1000 characters)"
+                        maxLength={1000}
+                        rows={5}
+                        aria-label="Developer description"
                       />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-stone-700 mb-2">
-                        Agent Reviews
-                      </label>
-                      <input
-                        type="number"
-                        name="agent_reviews"
-                        value={editProperty.agent_reviews}
-                        onChange={handlePropertyChange}
-                        onKeyPress={(e) => handleEnterKey(e, "agent_reviews")}
-                        className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                        placeholder="Enter agent reviews (optional)"
-                        aria-label="Agent reviews"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-stone-700 mb-2">
-                        Property Images
-                      </label>
-                      <div className="relative flex gap-4">
-                        <div className="flex-1">
-                          <input
-                            type="file"
-                            id="edit-property-images-input"
-                            accept="image/*"
-                            multiple
-                            onChange={(e) =>
-                              handleImageUpload(e, "images", editProperty.id)
-                            }
-                            className="absolute opacity-0 w-0 h-0"
-                            aria-label="Upload property images"
-                          />
-                          <button
-                            type="button"
-                            onClick={() =>
-                              document
-                                .getElementById("edit-property-images-input")
-                                .click()
-                            }
-                            className="w-full px-4 py-3 border border-stone-300 rounded-lg text-stone-700 bg-stone-100 hover:bg-stone-200 transition-colors"
-                          >
-                            Choose Images
-                          </button>
-                        </div>
-                        {previewImages.images.length > 0 && (
-                          <button
-                            type="button"
-                            onClick={() =>
-                              handleClearImage("images", editProperty.id)
-                            }
-                            className="text-stone-700 hover:text-stone-900"
-                            aria-label="Clear property images"
-                          >
-                            <FaTrash className="inline text-xl" />
-                          </button>
-                        )}
-                      </div>
-                      {previewImages.images.length > 0 && (
-                        <div className="mt-2">
-                          <p className="text-sm text-stone-600">
-                            Uploaded Property Images:
-                          </p>
-                          {renderImages(previewImages.images, "Property Image")}
-                        </div>
-                      )}
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-stone-700 mb-2">
-                        Agent Image
-                      </label>
-                      <div className="relative flex gap-4">
-                        <div className="flex-1">
-                          <input
-                            type="file"
-                            id="edit-agent-image-input"
-                            accept="image/*"
-                            onChange={(e) =>
-                              handleImageUpload(
-                                e,
-                                "agents_image",
-                                editProperty.id
-                              )
-                            }
-                            className="absolute opacity-0 w-0 h-0"
-                            aria-label="Upload agent image"
-                          />
-                          <button
-                            type="button"
-                            onClick={() =>
-                              document
-                                .getElementById("edit-agent-image-input")
-                                .click()
-                            }
-                            className="w-full px-4 py-3 border border-stone-300 rounded-lg text-stone-700 bg-stone-100 hover:bg-stone-200 transition-colors"
-                          >
-                            Choose Image
-                          </button>
-                        </div>
-                        {previewImages.agents_image.length > 0 && (
-                          <button
-                            type="button"
-                            onClick={() =>
-                              handleClearImage("agents_image", editProperty.id)
-                            }
-                            className="text-stone-700 hover:text-stone-900"
-                            aria-label="Clear agent image"
-                          >
-                            <FaTrash className="inline text-xl" />
-                          </button>
-                        )}
-                      </div>
-                      {previewImages.agents_image.length > 0 && (
-                        <div className="mt-2">
-                          <p className="text-sm text-stone-600">
-                            Uploaded Agent Image:
-                          </p>
-                          {renderImages(
-                            previewImages.agents_image,
-                            "Agent Image"
-                          )}
-                        </div>
-                      )}
+                      <p className="text-sm text-stone-600 mt-1">
+                        {editProfile.developer_description.length}/1000 characters
+                      </p>
                     </div>
                     <div>
                       <label className="block text-sm font-semibold text-stone-700 mb-2">
@@ -2791,14 +1370,10 @@ const Profile = () => {
                         <div className="flex-1">
                           <input
                             type="file"
-                            id="edit-developer-image-input"
+                            id="developer-image-input"
                             accept="image/*"
                             onChange={(e) =>
-                              handleImageUpload(
-                                e,
-                                "developer_image",
-                                editProperty.id
-                              )
+                              handleImageUpload(e, "developer_image")
                             }
                             className="absolute opacity-0 w-0 h-0"
                             aria-label="Upload developer image"
@@ -2807,7 +1382,7 @@ const Profile = () => {
                             type="button"
                             onClick={() =>
                               document
-                                .getElementById("edit-developer-image-input")
+                                .getElementById("developer-image-input")
                                 .click()
                             }
                             className="w-full px-4 py-3 border border-stone-300 rounded-lg text-stone-700 bg-stone-100 hover:bg-stone-200 transition-colors"
@@ -2818,12 +1393,7 @@ const Profile = () => {
                         {previewImages.developer_image.length > 0 && (
                           <button
                             type="button"
-                            onClick={() =>
-                              handleClearImage(
-                                "developer_image",
-                                editProperty.id
-                              )
-                            }
+                            onClick={() => handleClearImage("developer_image")}
                             className="text-stone-700 hover:text-stone-900"
                             aria-label="Clear developer image"
                           >
@@ -2851,14 +1421,10 @@ const Profile = () => {
                         <div className="flex-1">
                           <input
                             type="file"
-                            id="edit-developer-logo-input"
+                            id="developer-logo-input"
                             accept="image/*"
                             onChange={(e) =>
-                              handleImageUpload(
-                                e,
-                                "developer_logo",
-                                editProperty.id
-                              )
+                              handleImageUpload(e, "developer_logo")
                             }
                             className="absolute opacity-0 w-0 h-0"
                             aria-label="Upload developer logo"
@@ -2867,7 +1433,7 @@ const Profile = () => {
                             type="button"
                             onClick={() =>
                               document
-                                .getElementById("edit-developer-logo-input")
+                                .getElementById("developer-logo-input")
                                 .click()
                             }
                             className="w-full px-4 py-3 border border-stone-300 rounded-lg text-stone-700 bg-stone-100 hover:bg-stone-200 transition-colors"
@@ -2878,12 +1444,7 @@ const Profile = () => {
                         {previewImages.developer_logo.length > 0 && (
                           <button
                             type="button"
-                            onClick={() =>
-                              handleClearImage(
-                                "developer_logo",
-                                editProperty.id
-                              )
-                            }
+                            onClick={() => handleClearImage("developer_logo")}
                             className="text-stone-700 hover:text-stone-900"
                             aria-label="Clear developer logo"
                           >
@@ -2903,77 +1464,36 @@ const Profile = () => {
                         </div>
                       )}
                     </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-stone-700 mb-2">
-                        Developer Description
-                      </label>
-                      <textarea
-                        name="developer_description"
-                        value={editProperty.developer_description}
-                        onChange={handlePropertyChange}
-                        onKeyPress={(e) =>
-                          handleEnterKey(e, "developer_description")
-                        }
-                        className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                        placeholder="Enter developer description (optional)"
-                        aria-label="Developer description"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-stone-700 mb-2">
-                        Developer Awards
-                      </label>
-                      <input
-                        type="text"
-                        name="developer_awards"
-                        value={editProperty.developer_awards}
-                        onChange={handlePropertyChange}
-                        onKeyPress={(e) =>
-                          handleEnterKey(e, "developer_awards")
-                        }
-                        className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                        placeholder="Enter developer awards (optional)"
-                        aria-label="Developer awards"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-stone-700 mb-2">
-                        Developer Certifications
-                      </label>
-                      <input
-                        type="text"
-                        name="developer_certifications"
-                        value={editProperty.developer_certifications}
-                        onChange={handlePropertyChange}
-                        onKeyPress={(e) =>
-                          handleEnterKey(e, "developer_certifications")
-                        }
-                        className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                        placeholder="Enter developer certifications (optional)"
-                        aria-label="Developer certifications"
-                      />
-                    </div>
                     <div className="md:col-span-2 flex justify-end gap-4">
                       <button
                         type="submit"
-                        className="relative h-9 w-40 rounded-lg font-semibold text-white bg-stone-700 z-10 overflow-hidden
+                        className="relative inline-block w-40 h-9 rounded-lg font-medium text-white bg-stone-700 z-10 overflow-hidden
                           before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
                           before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
-                        aria-label="Save property"
+                        aria-label="Save developer profile"
                       >
                         Save
                       </button>
                       <button
                         type="button"
                         onClick={() => {
-                          setEditProperty(null);
                           document
-                            .getElementById("edit-property-dialog")
+                            .getElementById("edit-developer-profile-dialog")
                             .close();
+                          setEditProfile({
+                            username: "",
+                            email: "",
+                            developer_experience: "",
+                            developer_projects_completed: "",
+                            developer_awards: "",
+                            developer_certifications: "",
+                            developer_description: "",
+                            developer_image: "",
+                            developer_logo: "",
+                            property_id: null,
+                          });
                           setPreviewImages((prev) => ({
                             ...prev,
-                            images: [],
-                            agents_image: [],
                             developer_image: [],
                             developer_logo: [],
                           }));
@@ -2981,13 +1501,13 @@ const Profile = () => {
                         className="relative inline-block w-40 h-9 rounded-lg font-medium text-stone-700 border border-stone-700 z-10 overflow-hidden
                           before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-700
                           before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:border-none hover:text-white"
-                        aria-label="Cancel editing property"
+                        aria-label="Cancel developer profile edit"
                       >
                         Cancel
                       </button>
                     </div>
                     {error && (
-                      <div className="mt-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg text-center md:col-span-2">
+                      <div className="mt-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg text-center">
                         {error}
                         <button
                           onClick={() => setError(null)}
@@ -2999,7 +1519,7 @@ const Profile = () => {
                       </div>
                     )}
                     {successMessage && (
-                      <div className="mt-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg text-center md:col-span-2">
+                      <div className="mt-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg text-center">
                         {successMessage}
                         <button
                           onClick={() => setSuccessMessage(null)}
@@ -3011,190 +1531,1748 @@ const Profile = () => {
                       </div>
                     )}
                   </form>
-                )}
-              </dialog>
-            </>
-          )}
+                </motion.dialog>
+              )}
 
-          {user.role !== "developer" && (
-            <>
-              <h3 className="text-4xl font-bold text-stone-700 mb-6 text-center">
-                Your Wishlist Criteria
-              </h3>
-              <div className="bg-stone-100 rounded-lg shadow-md p-6 mb-8">
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    handleSaveWishlistCriteria();
-                  }}
-                  className="grid grid-cols-1 sm:grid-cols-2 gap-6"
-                >
-                  <div>
-                    <label className="block text-sm font-semibold text-stone-700 mb-2">
-                      Location
-                    </label>
-                    <input
-                      type="text"
-                      name="location"
-                      value={wishlistCriteria.location}
-                      onChange={handleWishlistCriteriaChange}
-                      className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                      placeholder="Enter preferred location"
-                      aria-label="Wishlist location"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-stone-700 mb-2">
-                      Price Range (₹)
-                    </label>
-                    <select
-                      name="price"
-                      value={wishlistCriteria.price}
-                      onChange={handleWishlistCriteriaChange}
-                      className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                      aria-label="Wishlist price range"
-                    >
-                      <option value="">Select price range</option>
-                      <option value="0-5000000">Up to 50 Lakhs</option>
-                      <option value="5000000-10000000">50 Lakhs - 1 Crore</option>
-                      <option value="10000000-20000000">1 Crore - 2 Crores</option>
-                      <option value="20000000-+">2 Crores+</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-stone-700 mb-2">
-                      Area (sq.ft)
-                    </label>
-                    <input
-                      type="text"
-                      name="area"
-                      value={wishlistCriteria.area}
-                      onChange={handleWishlistCriteriaChange}
-                      className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                      placeholder="Enter minimum area (e.g., 1000)"
-                      aria-label="Wishlist area"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-stone-700 mb-2">
-                      Property Type
-                    </label>
-                    <select
-                      name="property_type"
-                      value={wishlistCriteria.property_type}
-                      onChange={handleWishlistCriteriaChange}
-                      className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                      aria-label="Wishlist property type"
-                    >
-                      <option value="">Select type</option>
-                      <option value="Flat">Flat</option>
-                      <option value="Villa">Villa</option>
-                      <option value="Plot">Plot</option>
-                      <option value="Commercial">Commercial</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-stone-700 mb-2">
-                      Status
-                    </label>
-                    <select
-                      name="status"
-                      value={wishlistCriteria.status}
-                      onChange={handleWishlistCriteriaChange}
-                      className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
-                      aria-label="Wishlist status"
-                    >
-                      <option value="">Select status</option>
-                      <option value="Ready">Ready to Move</option>
-                      <option value="Under Construction">Under Construction</option>
-                      <option value="Upcoming">Upcoming</option>
-                    </select>
-                  </div>
-                  <div className="md:col-span-2 flex justify-end">
-                    <button
-                      type="submit"
-                      className="relative inline-block px-6 py-2 rounded-lg font-semibold text-white bg-stone-700 z-10 overflow-hidden
-                        before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
-                        before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
-                      aria-label="Save wishlist criteria"
-                    >
-                      Save Criteria
-                    </button>
-                  </div>
-                </form>
-              </div>
+              {user.role === "developer" && (
+                <>
+                  <button
+                    onClick={() => {
+                      setShowAddForm(true);
+                      document.getElementById("add-property-dialog").showModal();
+                    }}
+                    className="relative mb-6 inline-block px-6 py-2 rounded-lg font-semibold text-white bg-stone-700 z-10 overflow-hidden
+                      before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
+                      before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
+                    aria-label="Show add property form"
+                  >
+                    <FaPlus className="inline mr-2" /> Add Property
+                  </button>
 
-              <h3 className="text-4xl font-bold text-stone-700 mb-6 text-center">
-                Your Wishlist
-              </h3>
-              {filteredWishlist.length === 0 ? (
-                <p className="text-stone-600 text-center">
-                  No properties in your wishlist yet. Add some properties!
-                </p>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredWishlist.map((item) => (
-                    <motion.div
-                      key={item.property_id}
-                      className="bg-white rounded-lg shadow-md relative"
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3 }}
+                  <dialog
+                    id="add-property-dialog"
+                    className="fixed inset-0 m-auto bg-white shadow-lg w-full max-w-4xl max-h-screen rounded-lg p-6 sm:p-8 overflow-y-auto"
+                  >
+                    <form
+                      onSubmit={handleAddProperty}
+                      className="grid grid-cols-1 sm:grid-cols-2 gap-6"
                     >
-                      <div className="relative group h-[300px] w-full overflow-hidden text-white rounded">
-                        <img
-                          src={
-                            item.properties.images?.split(",")[0] ||
-                            PLACEHOLDER_IMAGE_URL
-                          }
-                          alt={item.properties.name}
-                          className="w-full h-full transition-transform duration-300 group-hover:scale-105 rounded"
-                          onError={(e) => {
-                            console.error(
-                              "Profile: Failed to load wishlist property image:",
-                              item.properties.images
-                            );
-                            e.target.src = PLACEHOLDER_IMAGE_URL;
-                          }}
+                      <h3 className="text-2xl font-bold text-stone-700 mb-4 md:col-span-2">
+                        Add Property
+                      </h3>
+                      <div>
+                        <label className="block text-sm font-semibold text-stone-700 mb-2">
+                          Property Name *
+                        </label>
+                        <input
+                          type="text"
+                          name="name"
+                          value={newProperty.name}
+                          onChange={handlePropertyChange}
+                          onKeyPress={(e) => handleEnterKey(e, "name")}
+                          required
+                          className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
+                          placeholder="Enter property name"
+                          aria-label="Property name"
                         />
-                        <div className="absolute inset-0 bg-black opacity-40 md:opacity-0 md:group-hover:opacity-40 transition-opacity duration-300 z-0"></div>
-                        <div className="absolute inset-0 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity duration-400">
-                          <div className="absolute bottom-4 left-4 text-left">
-                            <h4 className="text-xl font-semibold">
-                              {item.properties.name}
-                            </h4>
-                            <p className="flex items-center">
-                              <FaMapMarkerAlt className="mr-2" />{" "}
-                              {item.properties.location}
-                            </p>
-                            <p className="flex items-center">
-                              <FaMoneyBill className="mr-2" /> ₹{item.properties.price}
-                            </p>
-                            <p>
-                              • {item.properties.property_type}
-                            </p>
-                            <p>• {item.properties.status}</p>
-                          </div>
-                          <button
-                            onClick={() =>
-                              handleRemoveWishlistItem(item.property_id)
-                            }
-                            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-white hover:text-red-500"
-                            aria-label={`Remove ${item.properties.name} from wishlist`}
-                          >
-                            <FaHeart className="inline mr-2 size-6 fill-white" />
-                          </button>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-stone-700 mb-2">
+                          Location *
+                        </label>
+                        <input
+                          type="text"
+                          name="location"
+                          value={newProperty.location}
+                          onChange={handlePropertyChange}
+                          onKeyPress={(e) => handleEnterKey(e, "location")}
+                          required
+                          className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
+                          placeholder="Enter location"
+                          aria-label="Location"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-stone-700 mb-2">
+                          Price (₹) *
+                        </label>
+                        <input
+                          type="number"
+                          name="price"
+                          value={newProperty.price}
+                          onChange={handlePropertyChange}
+                          onKeyPress={(e) => handleEnterKey(e, "price")}
+                          required
+                          className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
+                          placeholder="Enter price"
+                          aria-label="Price"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-stone-700 mb-2">
+                          Carpet Area (sq.ft) *
+                        </label>
+                        <input
+                          type="number"
+                          name="carpet_area"
+                          value={newProperty.carpet_area}
+                          onChange={handlePropertyChange}
+                          onKeyPress={(e) => handleEnterKey(e, "carpet_area")}
+                          required
+                          className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
+                          placeholder="Enter carpet area"
+                          aria-label="Carpet area"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-stone-700 mb-2">
+                          Configuration *
+                        </label>
+                        <input
+                          type="text"
+                          name="configuration"
+                          value={newProperty.configuration}
+                          onChange={handlePropertyChange}
+                          onKeyPress={(e) => handleEnterKey(e, "configuration")}
+                          required
+                          className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
+                          placeholder="e.g., 2 BHK"
+                          aria-label="Configuration"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-stone-700 mb-2">
+                          Property Type *
+                        </label>
+                        <select
+                          name="property_type"
+                          value={newProperty.property_type}
+                          onChange={handlePropertyChange}
+                          onKeyPress={(e) => handleEnterKey(e, "property_type")}
+                          required
+                          className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
+                          aria-label="Property type"
+                        >
+                          <option value="">Select type</option>
+                          <option value="Flat">Flat</option>
+                          <option value="Villa">Villa</option>
+                          <option value="Plot">Plot</option>
+                          <option value="Commercial">Commercial</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-stone-700 mb-2">
+                          Total Floors *
+                        </label>
+                        <input
+                          type="number"
+                          name="total_floors"
+                          value={newProperty.total_floors}
+                          onChange={handlePropertyChange}
+                          onKeyPress={(e) => handleEnterKey(e, "total_floors")}
+                          required
+                          className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
+                          placeholder="Enter total floors"
+                          aria-label="Total floors"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-stone-700 mb-2">
+                          Total Units *
+                        </label>
+                        <input
+                          type="number"
+                          name="total_units"
+                          value={newProperty.total_units}
+                          onChange={handlePropertyChange}
+                          onKeyPress={(e) => handleEnterKey(e, "total_units")}
+                          required
+                          className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
+                          placeholder="Enter total units"
+                          aria-label="Total units"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-stone-700 mb-2">
+                          Status *
+                        </label>
+                        <select
+                          name="status"
+                          value={newProperty.status}
+                          onChange={handlePropertyChange}
+                          onKeyPress={(e) => handleEnterKey(e, "status")}
+                          required
+                          className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
+                          aria-label="Status"
+                        >
+                          <option value="">Select status</option>
+                          <option value="Ready">Ready to Move</option>
+                          <option value="Under Construction">
+                            Under Construction
+                          </option>
+                          <option value="Upcoming">Upcoming</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-stone-700 mb-2">
+                          RERA Number *
+                        </label>
+                        <input
+                          type="text"
+                          name="rera_number"
+                          value={newProperty.rera_number}
+                          onChange={handlePropertyChange}
+                          onKeyPress={(e) => handleEnterKey(e, "rera_number")}
+                          required
+                          className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
+                          placeholder="Enter RERA number"
+                          aria-label="RERA number"
+                        />
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-semibold text-stone-700 mb-2">
+                          Amenities
+                        </label>
+                        <div className="grid grid-cols-2 gap-2">
+                          {[
+                            "24/7 Security",
+                            "Lift",
+                            "Parking",
+                            "Swimming Pool",
+                            "Gym",
+                            "Clubhouse",
+                          ].map((amenity) => (
+                            <label key={amenity} className="flex items-center">
+                              <input
+                                type="checkbox"
+                                value={amenity}
+                                checked={newProperty.amenities.includes(amenity)}
+                                onChange={handleAmenitiesChange}
+                                className="mr-2"
+                                aria-label={`Amenity: ${amenity}`}
+                              />
+                              {amenity}
+                            </label>
+                          ))}
                         </div>
                       </div>
-                    </motion.div>
-                  ))}
+                      <div>
+                        <label className="block text-sm font-semibold text-stone-700 mb-2">
+                          Developer Name *
+                        </label>
+                        <input
+                          type="text"
+                          name="developer_name"
+                          value={newProperty.developer_name}
+                          onChange={handlePropertyChange}
+                          onKeyPress={(e) => handleEnterKey(e, "developer_name")}
+                          required
+                          className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
+                          placeholder="Enter developer name"
+                          aria-label="Developer name"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-stone-700 mb-2">
+                          Developer Tagline
+                        </label>
+                        <input
+                          type="text"
+                          name="developer_tagline"
+                          value={newProperty.developer_tagline}
+                          onChange={handlePropertyChange}
+                          onKeyPress={(e) => handleEnterKey(e, "developer_tagline")}
+                          className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
+                          placeholder="Enter developer tagline (optional)"
+                          aria-label="Developer tagline"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-stone-700 mb-2">
+                          Developer Experience
+                        </label>
+                        <input
+                          type="number"
+                          name="developer_experience"
+                          value={newProperty.developer_experience}
+                          onChange={handlePropertyChange}
+                          onKeyPress={(e) =>
+                            handleEnterKey(e, "developer_experience")
+                          }
+                          className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
+                          placeholder="Enter developer experience (optional)"
+                          aria-label="Developer experience"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-stone-700 mb-2">
+                          Developer Projects Completed
+                        </label>
+                        <input
+                          type="number"
+                          name="developer_projects_completed"
+                          value={newProperty.developer_projects_completed}
+                          onChange={handlePropertyChange}
+                          onKeyPress={(e) =>
+                            handleEnterKey(e, "developer_projects_completed")
+                          }
+                          className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
+                          placeholder="Enter projects completed (optional)"
+                          aria-label="Developer projects completed"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-stone-700 mb-2">
+                          Developer Happy Families
+                        </label>
+                        <input
+                          type="number"
+                          name="developer_happy_families"
+                          value={newProperty.developer_happy_families}
+                          onChange={handlePropertyChange}
+                          onKeyPress={(e) =>
+                            handleEnterKey(e, "developer_happy_families")
+                          }
+                          className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
+                          placeholder="Enter happy families (optional)"
+                          aria-label="Developer happy families"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-stone-700 mb-2">
+                          Nearby Landmarks *
+                        </label>
+                        <input
+                          type="text"
+                          name="nearby_landmarks"
+                          value={newProperty.nearby_landmarks}
+                          onChange={handlePropertyChange}
+                          onKeyPress={(e) => handleEnterKey(e, "nearby_landmarks")}
+                          required
+                          className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
+                          placeholder="Enter landmarks as text (e.g., Park, School)"
+                          aria-label="Nearby landmarks"
+                        />
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-semibold text-stone-700 mb-2">
+                          Developer Description
+                        </label>
+                        <textarea
+                          name="developer_description"
+                          value={newProperty.developer_description}
+                          onChange={handlePropertyChange}
+                          onKeyPress={(e) =>
+                            handleEnterKey(e, "developer_description")
+                          }
+                          className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
+                          placeholder="Enter a description about your company (max 1000 characters)"
+                          maxLength={1000}
+                          rows={5}
+                          aria-label="Developer description"
+                        />
+                        <p className="text-sm text-stone-600 mt-1">
+                          {newProperty.developer_description.length}/1000 characters
+                        </p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-stone-700 mb-2">
+                          Agent Name
+                        </label>
+                        <input
+                          type="text"
+                          name="agent_name"
+                          value={newProperty.agent_name}
+                          onChange={handlePropertyChange}
+                          onKeyPress={(e) => handleEnterKey(e, "agent_name")}
+                          className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
+                          placeholder="Enter agent name (optional)"
+                          aria-label="Agent name"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-stone-700 mb-2">
+                          Agent Role
+                        </label>
+                        <input
+                          type="text"
+                          name="agent_role"
+                          value={newProperty.agent_role}
+                          onChange={handlePropertyChange}
+                          onKeyPress={(e) => handleEnterKey(e, "agent_role")}
+                          className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
+                          placeholder="Enter agent role (optional)"
+                          aria-label="Agent role"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-stone-700 mb-2">
+                          Agent Phone
+                        </label>
+                        <input
+                          type="text"
+                          name="agent_phone"
+                          value={newProperty.agent_phone}
+                          onChange={handlePropertyChange}
+                          onKeyPress={(e) => handleEnterKey(e, "agent_phone")}
+                          className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
+                          placeholder="Enter agent phone (optional)"
+                          aria-label="Agent phone"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-stone-700 mb-2">
+                          Agent Email
+                        </label>
+                        <input
+                          type="email"
+                          name="agent_email"
+                          value={newProperty.agent_email}
+                          onChange={handlePropertyChange}
+                          onKeyPress={(e) => handleEnterKey(e, "agent_email")}
+                          className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
+                          placeholder="Enter agent email (optional)"
+                          aria-label="Agent email"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-stone-700 mb-2">
+                          Agent Availability
+                        </label>
+                        <input
+                          type="text"
+                          name="agent_availability"
+                          value={newProperty.agent_availability}
+                          onChange={handlePropertyChange}
+                          onKeyPress={(e) =>
+                            handleEnterKey(e, "agent_availability")
+                          }
+                          className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
+                          placeholder="Enter agent availability (optional)"
+                          aria-label="Agent availability"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-stone-700 mb-2">
+                          Agent Rating
+                        </label>
+                        <input
+                          type="number"
+                          step="0.1"
+                          name="agent_rating"
+                          value={newProperty.agent_rating}
+                          onChange={handlePropertyChange}
+                          onKeyPress={(e) => handleEnterKey(e, "agent_rating")}
+                          className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
+                          placeholder="Enter agent rating (optional, 0-5)"
+                          aria-label="Agent rating"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-stone-700 mb-2">
+                          Agent Reviews
+                        </label>
+                        <input
+                          type="number"
+                          name="agent_reviews"
+                          value={newProperty.agent_reviews}
+                          onChange={handlePropertyChange}
+                          onKeyPress={(e) => handleEnterKey(e, "agent_reviews")}
+                          className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
+                          placeholder="Enter agent reviews (optional)"
+                          aria-label="Agent reviews"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-stone-700 mb-2">
+                          Developer Awards
+                        </label>
+                        <input
+                          type="text"
+                          name="developer_awards"
+                          value={newProperty.developer_awards}
+                          onChange={handlePropertyChange}
+                          onKeyPress={(e) => handleEnterKey(e, "developer_awards")}
+                          className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
+                          placeholder="Enter developer awards (optional)"
+                          aria-label="Developer awards"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-stone-700 mb-2">
+                          Developer Certifications
+                        </label>
+                        <input
+                          type="text"
+                          name="developer_certifications"
+                          value={newProperty.developer_certifications}
+                          onChange={handlePropertyChange}
+                          onKeyPress={(e) =>
+                            handleEnterKey(e, "developer_certifications")
+                          }
+                          className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
+                          placeholder="Enter developer certifications (optional)"
+                          aria-label="Developer certifications"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-stone-700 mb-2">
+                          Property Images
+                        </label>
+                        <div className="relative flex gap-4">
+                          <div className="flex-1">
+                            <input
+                              type="file"
+                              id="add-property-images-input"
+                              accept="image/*"
+                              multiple
+                              onChange={(e) => handleImageUpload(e, "images")}
+                              className="absolute opacity-0 w-0 h-0"
+                              aria-label="Upload property images"
+                            />
+                            <button
+                              type="button"
+                              onClick={() =>
+                                document
+                                  .getElementById("add-property-images-input")
+                                  .click()
+                              }
+                              className="w-full px-4 py-3 border border-stone-300 rounded-lg text-stone-700 bg-stone-100 hover:bg-stone-200 transition-colors"
+                            >
+                              Choose Images
+                            </button>
+                          </div>
+                          {previewImages.images.length > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => handleClearImage("images")}
+                              className="text-stone-700 hover:text-stone-900"
+                              aria-label=" Clear property images"
+                            >
+                              <FaTrash className="inline text-xl" />
+                            </button>
+                          )}
+                        </div>
+                        {previewImages.images.length > 0 && (
+                          <div className="mt-2">
+                            <p className="text-sm text-stone-600">
+                              Uploaded Property Images:
+                            </p>
+                            {renderImages(previewImages.images, "Property Image")}
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-stone-700 mb-2">
+                          Agent Image
+                        </label>
+                        <div className="relative flex gap-4">
+                          <div className="flex-1">
+                            <input
+                              type="file"
+                              id="add-agent-image-input"
+                              accept="image/*"
+                              onChange={(e) => handleImageUpload(e, "agents_image")}
+                              className="absolute opacity-0 w-0 h-0"
+                              aria-label="Upload agent image"
+                            />
+                            <button
+                              type="button"
+                              onClick={() =>
+                                document.getElementById("add-agent-image-input").click()
+                              }
+                              className="w-full px-4 py-3 border border-stone-300 rounded-lg text-stone-700 bg-stone-100 hover:bg-stone-200 transition-colors"
+                            >
+                              Choose Image
+                            </button>
+                          </div>
+                          {previewImages.agents_image.length > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => handleClearImage("agents_image")}
+                              className="text-stone-700 hover:text-stone-900"
+                              aria-label="Clear agent image"
+                            >
+                              <FaTrash className="inline text-xl" />
+                            </button>
+                          )}
+                        </div>
+                        {previewImages.agents_image.length > 0 && (
+                          <div className="mt-2">
+                            <p className="text-sm text-stone-600">
+                              Uploaded Agent Image:
+                            </p>
+                            {renderImages(previewImages.agents_image, "Agent Image")}
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-stone-700 mb-2">
+                          Developer Image
+                        </label>
+                        <div className="relative flex gap-4">
+                          <div className="flex-1">
+                            <input
+                              type="file"
+                              id="add-developer-image-input"
+                              accept="image/*"
+                              onChange={(e) => handleImageUpload(e, "developer_image")}
+                              className="absolute opacity-0 w-0 h-0"
+                              aria-label="Upload developer image"
+                            />
+                            <button
+                              type="button"
+                              onClick={() =>
+                                document.getElementById("add-developer-image-input").click()
+                              }
+                              className="w-full px-4 py-3 border border-stone-300 rounded-lg text-stone-700 bg-stone-100 hover:bg-stone-200 transition-colors"
+                            >
+                              Choose Image
+                            </button>
+                          </div>
+                          {previewImages.developer_image.length > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => handleClearImage("developer_image")}
+                              className="text-stone-700 hover:text-stone-900"
+                              aria-label="Clear developer image"
+                            >
+                              <FaTrash className="inline text-xl" />
+                            </button>
+                          )}
+                        </div>
+                        {previewImages.developer_image.length > 0 && (
+                          <div className="mt-2">
+                            <p className="text-sm text-stone-600">
+                              Uploaded Developer Image:
+                            </p>
+                            {renderImages(previewImages.developer_image, "Developer Image")}
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-stone-700 mb-2">
+                          Developer Logo
+                        </label>
+                        <div className="relative flex gap-4">
+                          <div className="flex-1">
+                            <input
+                              type="file"
+                              id="add-developer-logo-input"
+                              accept="image/*"
+                              onChange={(e) => handleImageUpload(e, "developer_logo")}
+                              className="absolute opacity-0 w-0 h-0"
+                              aria-label="Upload developer logo"
+                            />
+                            <button
+                              type="button"
+                              onClick={() =>
+                                document.getElementById("add-developer-logo-input").click()
+                              }
+                              className="w-full px-4 py-3 border border-stone-300 rounded-lg text-stone-700 bg-stone-100 hover:bg-stone-200 transition-colors"
+                            >
+                              Choose Logo
+                            </button>
+                          </div>
+                          {previewImages.developer_logo.length > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => handleClearImage("developer_logo")}
+                              className="text-stone-700 hover:text-stone-900"
+                              aria-label="Clear developer logo"
+                            >
+                              <FaTrash className="inline text-xl" />
+                            </button>
+                          )}
+                        </div>
+                        {previewImages.developer_logo.length > 0 && (
+                          <div className="mt-2">
+                            <p className="text-sm text-stone-600">
+                              Uploaded Developer Logo:
+                            </p>
+                            {renderImages(previewImages.developer_logo, "Developer Logo")}
+                          </div>
+                        )}
+                      </div>
+                      <div className="md:col-span-2 flex justify-end gap-4">
+                        <button
+                          type="submit"
+                          className="relative inline-block w-40 h-9 rounded-lg font-medium text-white bg-stone-700 z-10 overflow-hidden
+                            before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
+                            before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
+                          aria-label="Add property"
+                        >
+                          Add Property
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowAddForm(false);
+                            setNewProperty({
+                              name: "",
+                              location: "",
+                              price: "",
+                              carpet_area: "",
+                              configuration: "",
+                              property_type: "",
+                              total_floors: "",
+                              total_units: "",
+                              status: "",
+                              rera_number: "",
+                              amenities: [],
+                              developer_name: "",
+                              developer_tagline: "",
+                              developer_experience: "",
+                              developer_projects_completed: "",
+                              developer_happy_families: "",
+                              nearby_landmarks: "",
+                              agent_name: "",
+                              agent_role: "",
+                              agent_phone: "",
+                              agent_email: "",
+                              agent_availability: "",
+                              agent_rating: "",
+                              agent_reviews: "",
+                              images: "",
+                              agents_image: "",
+                              developer_image: "",
+                              developer_awards: "",
+                              developer_certifications: "",
+                              developer_description: "",
+                              developer_logo: "",
+                            });
+                            setPreviewImages({
+                              developer_logo: [],
+                              developer_image: [],
+                              images: [],
+                              agents_image: [],
+                            });
+                            document.getElementById("add-property-dialog").close();
+                          }}
+                          className="relative inline-block w-40 h-9 rounded-lg font-medium text-stone-700 border border-stone-700 z-10 overflow-hidden
+                            before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-700
+                            before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:border-none hover:text-white"
+                          aria-label="Cancel add property"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                      {error && (
+                        <div className="mt-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg text-center md:col-span-2">
+                          {error}
+                          <button
+                            onClick={() => setError(null)}
+                            className="ml-2 text-red-700 hover:text-red-900"
+                            aria-label="Dismiss error"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      )}
+                      {successMessage && (
+                        <div className="mt-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg text-center md:col-span-2">
+                          {successMessage}
+                          <button
+                            onClick={() => setSuccessMessage(null)}
+                            className="ml-2 text-green-700 hover:text-green-900"
+                            aria-label="Dismiss success message"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      )}
+                    </form>
+                  </dialog>
+
+                  <h3 className="text-2xl font-bold text-stone-700 mb-4">
+                    Your Properties
+                  </h3>
+                  {properties.length === 0 ? (
+                    <p className="text-stone-600">No properties added yet.</p>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {properties.map((property) => (
+                        <motion.div
+                          key={property.id}
+                          className="bg-white rounded-lg shadow-md overflow-hidden"
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.3 }}
+                        >
+                          <img
+                            src={
+                              property.images?.split(",")[0] || PLACEHOLDER_IMAGE_URL
+                            }
+                            alt={property.name}
+                            className="w-full h-48 object-cover"
+                            onError={(e) => {
+                              e.target.src = PLACEHOLDER_IMAGE_URL;
+                              console.error(
+                                "Profile: Failed to load property image:",
+                                property.images
+                              );
+                            }}
+                          />
+                          <div className="p-4">
+                            <h4 className="text-xl font-semibold text-stone-700">
+                              {property.name}
+                            </h4>
+                            <p className="text-stone-600 flex items-center gap-1">
+                              <FaMapMarkerAlt className="inline" /> {property.location}
+                            </p>
+                            <p className="text-stone-600 flex items-center gap-1">
+                              <FaMoneyBill className="inline" /> ₹{property.price}
+                            </p>
+                            <p className="text-stone-600">{property.property_type}</p>
+                            <p className="text-stone-600">{property.status}</p>
+                            <div className="flex gap-2 mt-4">
+                              <button
+                                onClick={() => {
+                                  setEditProperty(property);
+                                  setPreviewImages({
+                                    images: property.images
+                                      ? property.images.split(",").filter((url) => url.trim())
+                                      : [],
+                                    agents_image: property.agents_image
+                                      ? property.agents_image.split(",").filter((url) => url.trim())
+                                      : [],
+                                    developer_image: property.developer_image
+                                      ? property.developer_image.split(",").filter((url) => url.trim())
+                                      : [],
+                                    developer_logo: property.developer_logo
+                                      ? property.developer_logo.split(",").filter((url) => url.trim())
+                                      : [],
+                                  });
+                                  document.getElementById("edit-property-dialog").showModal();
+                                }}
+                                className="relative inline-block px-4 py-2 rounded-lg font-medium text-white bg-stone-700 z-10 overflow-hidden
+                                  before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
+                                  before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
+                                aria-label={`Edit property ${property.name}`}
+                              >
+                                <FaEdit className="inline mr-1" /> Edit
+                              </button>
+                              <button
+                                onClick={() => handleDeleteProperty(property.id)}
+                                className="relative inline-block px-4 py-2 rounded-lg font-medium text-stone-700 border border-stone-700 z-10 overflow-hidden
+                                  before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-700
+                                  before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:border-none hover:text-white"
+                                aria-label={`Delete property ${property.name}`}
+                              >
+                                <FaTrash className="inline mr-1" /> Delete
+                              </button>
+                            </div>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  )}
+
+                  <dialog
+                    id="edit-property-dialog"
+                    className="fixed inset-0 m-auto bg-white shadow-lg w-full max-w-4xl max-h-screen rounded-lg p-6 sm:p-8 overflow-y-auto"
+                  >
+                    {editProperty && (
+                      <form
+                        onSubmit={handleEditProperty}
+                        className="grid grid-cols-1 sm:grid-cols-2 gap-6"
+                      >
+                        <h3 className="text-2xl font-bold text-stone-700 mb-4 md:col-span-2">
+                          Edit Property
+                        </h3>
+                        <div>
+                          <label className="block text-sm font-semibold text-stone-700 mb-2">
+                            Property Name *
+                          </label>
+                          <input
+                            type="text"
+                            name="name"
+                            value={editProperty.name}
+                            onChange={handlePropertyChange}
+                            onKeyPress={(e) => handleEnterKey(e, "name")}
+                            required
+                            className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
+                            placeholder="Enter property name"
+                            aria-label="Property name"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-stone-700 mb-2">
+                            Location *
+                          </label>
+                          <input
+                            type="text"
+                            name="location"
+                            value={editProperty.location}
+                            onChange={handlePropertyChange}
+                            onKeyPress={(e) => handleEnterKey(e, "location")}
+                            required
+                            className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
+                            placeholder="Enter location"
+                            aria-label="Location"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-stone-700 mb-2">
+                            Price (₹) *
+                          </label>
+                          <input
+                            type="number"
+                            name="price"
+                            value={editProperty.price}
+                            onChange={handlePropertyChange}
+                            onKeyPress={(e) => handleEnterKey(e, "price")}
+                            required
+                            className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
+                            placeholder="Enter price"
+                            aria-label="Price"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-stone-700 mb-2">
+                            Carpet Area (sq.ft) *
+                          </label>
+                          <input
+                            type="number"
+                            name="carpet_area"
+                            value={editProperty.carpet_area}
+                            onChange={handlePropertyChange}
+                            onKeyPress={(e) => handleEnterKey(e, "carpet_area")}
+                            required
+                            className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
+                            placeholder="Enter carpet area"
+                            aria-label="Carpet area"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-stone-700 mb-2">
+                            Configuration *
+                          </label>
+                          <input
+                            type="text"
+                            name="configuration"
+                            value={editProperty.configuration}
+                            onChange={handlePropertyChange}
+                            onKeyPress={(e) => handleEnterKey(e, "configuration")}
+                            required
+                            className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
+                            placeholder="e.g., 2 BHK"
+                            aria-label="Configuration"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-stone-700 mb-2">
+                            Property Type *
+                          </label>
+                          <select
+                            name="property_type"
+                            value={editProperty.property_type}
+                            onChange={handlePropertyChange}
+                            onKeyPress={(e) => handleEnterKey(e, "property_type")}
+                            required
+                            className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
+                            aria-label="Property type"
+                          >
+                            <option value="">Select type</option>
+                            <option value="Flat">Flat</option>
+                            <option value="Villa">Villa</option>
+                            <option value="Plot">Plot</option>
+                            <option value="Commercial">Commercial</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-stone-700 mb-2">
+                            Total Floors *
+                          </label>
+                          <input
+                            type="number"
+                            name="total_floors"
+                            value={editProperty.total_floors}
+                            onChange={handlePropertyChange}
+                            onKeyPress={(e) => handleEnterKey(e, "total_floors")}
+                            required
+                            className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
+                            placeholder="Enter total floors"
+                            aria-label="Total floors"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-stone-700 mb-2">
+                            Total Units *
+                          </label>
+                          <input
+                            type="number"
+                            name="total_units"
+                            value={editProperty.total_units}
+                            onChange={handlePropertyChange}
+                            onKeyPress={(e) => handleEnterKey(e, "total_units")}
+                            required
+                            className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
+                            placeholder="Enter total units"
+                            aria-label="Total units"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-stone-700 mb-2">
+                            Status *
+                          </label>
+                          <select
+                            name="status"
+                            value={editProperty.status}
+                            onChange={handlePropertyChange}
+                            onKeyPress={(e) => handleEnterKey(e, "status")}
+                            required
+                            className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
+                            aria-label="Status"
+                          >
+                            <option value="">Select status</option>
+                            <option value="Ready">Ready to Move</option>
+                            <option value="Under Construction">Under Construction</option>
+                            <option value="Upcoming">Upcoming</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-stone-700 mb-2">
+                            RERA Number *
+                          </label>
+                          <input
+                            type="text"
+                            name="rera_number"
+                            value={editProperty.rera_number}
+                            onChange={handlePropertyChange}
+                            onKeyPress={(e) => handleEnterKey(e, "rera_number")}
+                            required
+                            className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
+                            placeholder="Enter RERA number"
+                            aria-label="RERA number"
+                          />
+                        </div>
+                        <div className="md:col-span-2">
+                          <label className="block text-sm font-semibold text-stone-700 mb-2">
+                            Amenities
+                          </label>
+                          <div className="grid grid-cols-2 gap-2">
+                            {[
+                              "24/7 Security",
+                              "Lift",
+                              "Parking",
+                              "Swimming Pool",
+                              "Gym",
+                              "Clubhouse",
+                            ].map((amenity) => (
+                              <label key={amenity} className="flex items-center">
+                                <input
+                                  type="checkbox"
+                                  value={amenity}
+                                  checked={editProperty.amenities.includes(amenity)}
+                                  onChange={handleAmenitiesChange}
+                                  className="mr-2"
+                                  aria-label={`Amenity: ${amenity}`}
+                                />
+                                {amenity}
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-stone-700 mb-2">
+                            Developer Name *
+                          </label>
+                          <input
+                            type="text"
+                            name="developer_name"
+                            value={editProperty.developer_name}
+                            onChange={handlePropertyChange}
+                            onKeyPress={(e) => handleEnterKey(e, "developer_name")}
+                            required
+                            className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
+                            placeholder="Enter developer name"
+                            aria-label="Developer name"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-stone-700 mb-2">
+                            Developer Tagline
+                          </label>
+                          <input
+                            type="text"
+                            name="developer_tagline"
+                            value={editProperty.developer_tagline}
+                            onChange={handlePropertyChange}
+                            onKeyPress={(e) => handleEnterKey(e, "developer_tagline")}
+                            className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
+                            placeholder="Enter developer tagline (optional)"
+                            aria-label="Developer tagline"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-stone-700 mb-2">
+                            Developer Experience
+                          </label>
+                          <input
+                            type="number"
+                            name="developer_experience"
+                            value={editProperty.developer_experience}
+                            onChange={handlePropertyChange}
+                            onKeyPress={(e) => handleEnterKey(e, "developer_experience")}
+                            className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
+                            placeholder="Enter developer experience (optional)"
+                            aria-label="Developer experience"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-stone-700 mb-2">
+                            Developer Projects Completed
+                          </label>
+                          <input
+                            type="number"
+                            name="developer_projects_completed"
+                            value={editProperty.developer_projects_completed}
+                            onChange={handlePropertyChange}
+                            onKeyPress={(e) =>
+                              handleEnterKey(e, "developer_projects_completed")
+                            }
+                            className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
+                            placeholder="Enter projects completed (optional)"
+                            aria-label="Developer projects completed"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-stone-700 mb-2">
+                            Developer Happy Families
+                          </label>
+                          <input
+                            type="number"
+                            name="developer_happy_families"
+                            value={editProperty.developer_happy_families}
+                            onChange={handlePropertyChange}
+                            onKeyPress={(e) => handleEnterKey(e, "developer_happy_families")}
+                            className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
+                            placeholder="Enter happy families (optional)"
+                            aria-label="Developer happy families"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-stone-700 mb-2">
+                            Nearby Landmarks *
+                          </label>
+                          <input
+                            type="text"
+                            name="nearby_landmarks"
+                            value={editProperty.nearby_landmarks}
+                            onChange={handlePropertyChange}
+                            onKeyPress={(e) => handleEnterKey(e, "nearby_landmarks")}
+                            required
+                            className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
+                            placeholder="Enter landmarks as text (e.g., Park, School)"
+                            aria-label="Nearby landmarks"
+                          />
+                        </div>
+                        <div className="md:col-span-2">
+                          <label className="block text-sm font-semibold text-stone-700 mb-2">
+                            Developer Description
+                          </label>
+                          <textarea
+                            name="developer_description"
+                            value={editProperty.developer_description}
+                            onChange={handlePropertyChange}
+                            onKeyPress={(e) => handleEnterKey(e, "developer_description")}
+                            className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
+                            placeholder="Enter a description about your company (max 1000 characters)"
+                            maxLength={1000}
+                            rows={5}
+                            aria-label="Developer description"
+                          />
+                          <p className="text-sm text-stone-600 mt-1">
+                            {editProperty.developer_description.length}/1000 characters
+                          </p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-stone-700 mb-2">
+                            Agent Name
+                          </label>
+                          <input
+                            type="text"
+                            name="agent_name"
+                            value={editProperty.agent_name}
+                            onChange={handlePropertyChange}
+                            onKeyPress={(e) => handleEnterKey(e, "agent_name")}
+                            className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
+                            placeholder="Enter agent name (optional)"
+                            aria-label="Agent name"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-stone-700 mb-2">
+                            Agent Role
+                          </label>
+                          <input
+                            type="text"
+                            name="agent_role"
+                            value={editProperty.agent_role}
+                            onChange={handlePropertyChange}
+                            onKeyPress={(e) => handleEnterKey(e, "agent_role")}
+                            className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
+                            placeholder="Enter agent role (optional)"
+                            aria-label="Agent role"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-stone-700 mb-2">
+                            Agent Phone
+                          </label>
+                          <input
+                            type="text"
+                            name="agent_phone"
+                            value={editProperty.agent_phone}
+                            onChange={handlePropertyChange}
+                            onKeyPress={(e) => handleEnterKey(e, "agent_phone")}
+                            className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
+                            placeholder="Enter agent phone (optional)"
+                            aria-label="Agent phone"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-stone-700 mb-2">
+                            Agent Email
+                          </label>
+                          <input
+                            type="email"
+                            name="agent_email"
+                            value={editProperty.agent_email}
+                            onChange={handlePropertyChange}
+                            onKeyPress={(e) => handleEnterKey(e, "agent_email")}
+                            className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
+                            placeholder="Enter agent email (optional)"
+                            aria-label="Agent email"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-stone-700 mb-2">
+                            Agent Availability
+                          </label>
+                          <input
+                            type="text"
+                            name="agent_availability"
+                            value={editProperty.agent_availability}
+                            onChange={handlePropertyChange}
+                            onKeyPress={(e) => handleEnterKey(e, "agent_availability")}
+                            className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
+                            placeholder="Enter agent availability (optional)"
+                            aria-label="Agent availability"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-stone-700 mb-2">
+                            Agent Rating
+                          </label>
+                          <input
+                            type="number"
+                            step="0.1"
+                            name="agent_rating"
+                            value={editProperty.agent_rating}
+                            onChange={handlePropertyChange}
+                            onKeyPress={(e) => handleEnterKey(e, "agent_rating")}
+                            className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
+                            placeholder="Enter agent rating (optional, 0-5)"
+                            aria-label="Agent rating"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-stone-700 mb-2">
+                            Agent Reviews
+                          </label>
+                          <input
+                            type="number"
+                            name="agent_reviews"
+                            value={editProperty.agent_reviews}
+                            onChange={handlePropertyChange}
+                            onKeyPress={(e) => handleEnterKey(e, "agent_reviews")}
+                            className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
+                            placeholder="Enter agent reviews (optional)"
+                            aria-label="Agent reviews"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-stone-700 mb-2">
+                            Developer Awards
+                          </label>
+                          <input
+                            type="text"
+                            name="developer_awards"
+                            value={editProperty.developer_awards}
+                            onChange={handlePropertyChange}
+                            onKeyPress={(e) => handleEnterKey(e, "developer_awards")}
+                            className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
+                            placeholder="Enter developer awards (optional)"
+                            aria-label="Developer awards"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-stone-700 mb-2">
+                            Developer Certifications
+                          </label>
+                          <input
+                            type="text"
+                            name="developer_certifications"
+                            value={editProperty.developer_certifications}
+                            onChange={handlePropertyChange}
+                            onKeyPress={(e) => handleEnterKey(e, "developer_certifications")}
+                            className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
+                            placeholder="Enter developer certifications (optional)"
+                            aria-label="Developer certifications"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-stone-700 mb-2">
+                            Property Images
+                          </label>
+                          <div className="relative flex gap-4">
+                            <div className="flex-1">
+                              <input
+                                type="file"
+                                id="edit-property-images-input"
+                                accept="image/*"
+                                multiple
+                                onChange={(e) => handleImageUpload(e, "images", editProperty.id)}
+                                className="absolute opacity-0 w-0 h-0"
+                                aria-label="Upload property images"
+                              />
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  document.getElementById("edit-property-images-input").click()
+                                }
+                                className="w-full px-4 py-3 border border-stone-300 rounded-lg text-stone-700 bg-stone-100 hover:bg-stone-200 transition-colors"
+                              >
+                                Choose Images
+                              </button>
+                            </div>
+                            {previewImages.images.length > 0 && (
+                              <button
+                                type="button"
+                                onClick={() => handleClearImage("images", editProperty.id)}
+                                className="text-stone-700 hover:text-stone-900"
+                                aria-label="Clear property images"
+                              >
+                                <FaTrash className="inline text-xl" />
+                              </button>
+                            )}
+                          </div>
+                          {previewImages.images.length > 0 && (
+                            <div className="mt-2">
+                              <p className="text-sm text-stone-600">
+                                Uploaded Property Images:
+                              </p>
+                              {renderImages(previewImages.images, "Property Image")}
+                            </div>
+                          )}
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-stone-700 mb-2">
+                            Agent Image
+                          </label>
+                          <div className="relative flex gap-4">
+                            <div className="flex-1">
+                              <input
+                                type="file"
+                                id="edit-agent-image-input"
+                                accept="image/*"
+                                onChange={(e) =>
+                                  handleImageUpload(e, "agents_image", editProperty.id)
+                                }
+                                className="absolute opacity-0 w-0 h-0"
+                                aria-label="Upload agent image"
+                              />
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  document.getElementById("edit-agent-image-input").click()
+                                }
+                                className="w-full px-4 py-3 border border-stone-300 rounded-lg text-street-700 bg-stone-100 hover:bg-stone-200 transition-colors"
+                              >
+                                Choose Image
+                              </button>
+                            </div>
+                            {previewImages.agents_image.length > 0 && (
+                              <button
+                                type="button"
+                                onClick={() => handleClearImage("agents_image", editProperty.id)}
+                                className="text-stone-700 hover:text-stone-900"
+                                aria-label="Clear agent image"
+                              >
+                                <FaTrash className="inline text-xl" />
+                              </button>
+                            )}
+                          </div>
+                          {previewImages.agents_image.length > 0 && (
+                            <div className="mt-2">
+                              <p className="text-sm text-stone-600">
+                                Uploaded Agent Image:
+                              </p>
+                              {renderImages(previewImages.agents_image, "Agent Image")}
+                            </div>
+                          )}
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-stone-700 mb-2">
+                            Developer Image
+                          </label>
+                          <div className="relative flex gap-4">
+                            <div className="flex-1">
+                              <input
+                                type="file"
+                                id="edit-developer-image-input"
+                                accept="image/*"
+                                onChange={(e) =>
+                                  handleImageUpload(e, "developer_image", editProperty.id)
+                                }
+                                className="absolute opacity-0 w-0 h-0"
+                                aria-label="Upload developer image"
+                              />
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  document.getElementById("edit-developer-image-input").click()
+                                }
+                                className="w-full px-4 py-3 border border-stone-300 rounded-lg text-stone-700 bg-stone-100 hover:bg-stone-200 transition-colors"
+                              >
+                                Choose Image
+                              </button>
+                            </div>
+                            {previewImages.developer_image.length > 0 && (
+                              <button
+                                type="button"
+                                onClick={() => handleClearImage("developer_image", editProperty.id)}
+                                className="text-stone-700 hover:text-stone-900"
+                                aria-label="Clear developer image"
+                              >
+                                <FaTrash className="inline text-xl" />
+                              </button>
+                            )}
+                          </div>
+                          {previewImages.developer_image.length > 0 && (
+                            <div className="mt-2">
+                              <p className="text-sm text-stone-600">
+                                Uploaded Developer Image:
+                              </p>
+                              {renderImages(previewImages.developer_image, "Developer Image")}
+                            </div>
+                          )}
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-stone-700 mb-2">
+                            Developer Logo
+                          </label>
+                          <div className="relative flex gap-4">
+                            <div className="flex-1">
+                              <input
+                                type="file"
+                                id="edit-developer-logo-input"
+                                accept="image/*"
+                                onChange={(e) =>
+                                  handleImageUpload(e, "developer_logo", editProperty.id)
+                                }
+                                className="absolute opacity-0 w-0 h-0"
+                                aria-label="Upload developer logo"
+                              />
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  document.getElementById("edit-developer-logo-input").click()
+                                }
+                                className="w-full px-4 py-3 border border-stone-300 rounded-lg text-stone-700 bg-stone-100 hover:bg-stone-200 transition-colors"
+                              >
+                                Choose Logo
+                              </button>
+                            </div>
+                            {previewImages.developer_logo.length > 0 && (
+                              <button
+                                type="button"
+                                onClick={() => handleClearImage("developer_logo", editProperty.id)}
+                                className="text-stone-700 hover:text-stone-900"
+                                aria-label="Clear developer logo"
+                              >
+                                <FaTrash className="inline text-xl" />
+                              </button>
+                            )}
+                          </div>
+                          {previewImages.developer_logo.length > 0 && (
+                            <div className="mt-2">
+                              <p className="text-sm text-stone-600">
+                                Uploaded Developer Logo:
+                              </p>
+                              {renderImages(previewImages.developer_logo, "Developer Logo")}
+                            </div>
+                          )}
+                        </div>
+                        <div className="md:col-span-2 flex justify-end gap-4">
+                          <button
+                            type="submit"
+                            className="relative inline-block w-40 h-9 rounded-lg font-medium text-white bg-stone-700 z-10 overflow-hidden
+                              before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
+                              before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
+                            aria-label="Save property"
+                          >
+                            Save
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditProperty(null);
+                              setPreviewImages({
+                                developer_logo: [],
+                                developer_image: [],
+                                images: [],
+                                agents_image: [],
+                              });
+                              document.getElementById("edit-property-dialog").close();
+                            }}
+                            className="relative inline-block w-40 h-9 rounded-lg font-medium text-stone-700 border border-stone-700 z-10 overflow-hidden
+                              before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-700
+                              before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:border-none hover:text-white"
+                            aria-label="Cancel edit property"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                        {error && (
+                          <div className="mt-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg text-center md:col-span-2">
+                            {error}
+                            <button
+                              onClick={() => setError(null)}
+                              className="ml-2 text-red-700 hover:text-red-900"
+                              aria-label="Dismiss error"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        )}
+                        {successMessage && (
+                          <div className="mt-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg text-center md:col-span-2">
+                            {successMessage}
+                            <button
+                              onClick={() => setSuccessMessage(null)}
+                              className="ml-2 text-green-700 hover:text-green-900"
+                              aria-label="Dismiss success message"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        )}
+                      </form>
+                    )}
+                  </dialog>
+                </>
+              )}
+
+              {user.role === "customer" && (
+                <>
+                  <h3 className="text-2xl font-bold text-stone-700 mb-4">
+                    Your Wishlist Criteria
+                  </h3>
+                  <div className="bg-stone-100 rounded-lg shadow-md p-6 mb-8">
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        handleSaveWishlistCriteria();
+                      }}
+                      className="grid grid-cols-1 sm:grid-cols-2 gap-6"
+                    >
+                      <div>
+                        <label className="block text-sm font-semibold text-stone-700 mb-2">
+                          Location
+                        </label>
+                        <input
+                          type="text"
+                          name="location"
+                          value={wishlistCriteria.location}
+                          onChange={handleWishlistCriteriaChange}
+                          className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
+                          placeholder="Enter preferred location"
+                          aria-label="Preferred location"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-stone-700 mb-2">
+                          Price Range
+                        </label>
+                        <select
+                          name="price"
+                          value={wishlistCriteria.price}
+                          onChange={handleWishlistCriteriaChange}
+                          className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
+                          aria-label="Price range"
+                        >
+                          <option value="">Select price range</option>
+                          <option value="0-5000000">Below ₹50L</option>
+                          <option value="5000000-10000000">₹50L - ₹1Cr</option>
+                          <option value="10000000-20000000">₹1Cr - ₹2Cr</option>
+                          <option value="20000000-+">₹2Cr+</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-stone-700 mb-2">
+                          Area (sq.ft)
+                        </label>
+                        <input
+                          type="text"
+                          name="area"
+                          value={wishlistCriteria.area}
+                          onChange={handleWishlistCriteriaChange}
+                          className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
+                          placeholder="Enter minimum area"
+                          aria-label="Minimum area"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-stone-700 mb-2">
+                          Property Type
+                        </label>
+                        <select
+                          name="property_type"
+                          value={wishlistCriteria.property_type}
+                          onChange={handleWishlistCriteriaChange}
+                          className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
+                          aria-label="Property type"
+                        >
+                          <option value="">Select type</option>
+                          <option value="Flat">Flat</option>
+                          <option value="Villa">Villa</option>
+                          <option value="Plot">Plot</option>
+                          <option value="Commercial">Commercial</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-stone-700 mb-2">
+                          Status
+                        </label>
+                        <select
+                          name="status"
+                          value={wishlistCriteria.status}
+                          onChange={handleWishlistCriteriaChange}
+                          className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500"
+                          aria-label="Property status"
+                        >
+                          <option value="">Select status</option>
+                          <option value="Ready">Ready to Move</option>
+                          <option value="Under Construction">Under Construction</option>
+                          <option value="Upcoming">Upcoming</option>
+                        </select>
+                      </div>
+                      <div className="md:col-span-2 flex justify-end">
+                        <button
+                          type="submit"
+                          className="relative inline-block px-6 py-2 rounded-lg font-medium text-white bg-stone-700 z-10 overflow-hidden
+                            before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
+                            before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
+                          aria-label="Save wishlist criteria"
+                        >
+                          Save Criteria
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+
+                  <h3 className="text-2xl font-bold text-stone-700 mb-4">
+                    Your Wishlist
+                  </h3>
+                  {filteredWishlist.length === 0 ? (
+                    <p className="text-stone-600">Your wishlist is empty.</p>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {filteredWishlist.map((item) => (
+                        <motion.div
+                          key={item.property_id}
+                          className="bg-white rounded-lg shadow-md overflow-hidden"
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.3 }}
+                        >
+                          <img
+                            src={
+                              item.properties.images?.split(",")[0] ||
+                              PLACEHOLDER_IMAGE_URL
+                            }
+                            alt={item.properties.name}
+                            className="w-full h-48 object-cover"
+                            onError={(e) => {
+                              e.target.src = PLACEHOLDER_IMAGE_URL;
+                              console.error(
+                                "Profile: Failed to load wishlist property image:",
+                                item.properties.images
+                              );
+                            }}
+                          />
+                          <div className="p-4">
+                            <h4 className="text-xl font-semibold text-stone-700">
+                              {item.properties.name}
+                            </h4>
+                            <p className="text-stone-600 flex items-center gap-1">
+                              <FaMapMarkerAlt className="inline" /> {item.properties.location}
+                            </p>
+                            <p className="text-stone-600 flex items-center gap-1">
+                              <FaMoneyBill className="inline" /> ₹{item.properties.price}
+                            </p>
+                            <p className="text-stone-600">{item.properties.property_type}</p>
+                            <p className="text-stone-600">{item.properties.status}</p>
+                            <div className="flex gap-2 mt-4">
+                              <Link
+                                to={`/property/${item.property_id}`}
+                                className="relative inline-block px-4 py-2 rounded-lg font-medium text-white bg-stone-700 z-10 overflow-hidden
+                                  before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
+                                  before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
+                                aria-label={`View property ${item.properties.name}`}
+                              >
+                                View
+                              </Link>
+                              <button
+                                onClick={() => handleRemoveWishlistItem(item.property_id)}
+                                className="relative inline-block px-4 py-2 rounded-lg font-medium text-stone-700 border border-stone-700 z-10 overflow-hidden
+                                  before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-700
+                                  before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:border-none hover:text-white"
+                                aria-label={`Remove ${item.properties.name} from wishlist`}
+                              >
+                                <FaTrash className="inline mr-1" /> Remove
+                              </button>
+                            </div>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+
+              {error && (
+                <div className="mt-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg text-center">
+                  {error}
+                  <button
+                    onClick={() => setError(null)}
+                    className="ml-2 text-red-700 hover:text-red-900"
+                    aria-label="Dismiss error"
+                  >
+                    ×
+                  </button>
+                </div>
+              )}
+              {successMessage && (
+                <div className="mt-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg text-center">
+                  {successMessage}
+                  <button
+                    onClick={() => setSuccessMessage(null)}
+                    className="ml-2 text-green-700 hover:text-green-900"
+                    aria-label="Dismiss success message"
+                  >
+                    ×
+                  </button>
                 </div>
               )}
             </>
           )}
         </div>
-      </motion.section>
-    </div>
+      </motion.section >
+    </div >
   );
 };
 

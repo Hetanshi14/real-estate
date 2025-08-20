@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
+import { AuthContext } from '../context/AuthContext'; // Corrected import
 import { motion } from 'framer-motion';
 import { FaUser, FaEnvelope, FaLock, FaBuilding } from 'react-icons/fa';
 
 const SignUp = () => {
+  const { user } = useContext(AuthContext); // Access user from AuthContext
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -14,8 +16,14 @@ const SignUp = () => {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [passwordStrength, setPasswordStrength] = useState(0); // Strength level from 0 to 4
+  const [passwordStrength, setPasswordStrength] = useState(0);
   const navigate = useNavigate();
+
+  // Redirect authenticated users to home
+  if (user) {
+    navigate('/');
+    return null;
+  }
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -28,18 +36,16 @@ const SignUp = () => {
 
   const calculatePasswordStrength = (password) => {
     let strength = 0;
-    if (password.length > 0) {
-      strength = 1; // 1/4: At least one character
-      if (/^[A-Z][a-z]*$/.test(password)) {
-        strength = 2; // 2/4: Starts with capital, followed by lowercase
-      }
-      if (/^[A-Z][a-z]*[!@#$%^&*(),.?":{}|<>]/.test(password)) {
-        strength = 3; // 3/4: Includes a special character
-      }
-      if (/^[A-Z][a-z]*[!@#$%^&*(),.?":{}|<>].*\d/.test(password)) {
-        strength = 4; // 4/4: Includes a number
-      }
-    }
+    if (password.length > 0) strength = 1;
+    if (password.length >= 8) strength = 2;
+    if (password.length >= 8 && /[A-Z]/.test(password) && /[a-z]/.test(password)) strength = 3;
+    if (
+      password.length >= 8 &&
+      /[A-Z]/.test(password) &&
+      /[a-z]/.test(password) &&
+      /[!@#$%^&*(),.?":{}|<>]/.test(password) &&
+      /\d/.test(password)
+    ) strength = 4;
     setPasswordStrength(strength);
   };
 
@@ -55,14 +61,27 @@ const SignUp = () => {
       return;
     }
 
+    if (passwordStrength < 4) {
+      setError(
+        'Password is too weak. It must be at least 8 characters, include uppercase and lowercase letters, a number, and a special character.'
+      );
+      setLoading(false);
+      return;
+    }
+
     try {
       const { data: existingUsers, error: checkError } = await supabase
         .from('users')
         .select('username')
         .eq('username', formData.username);
 
-      if (checkError) throw new Error('Error checking username availability.');
-      if (existingUsers.length > 0) throw new Error('Username already taken. Please choose a different one.');
+      if (checkError) {
+        console.error('Error checking username:', checkError.message);
+        throw new Error('Error checking username availability.');
+      }
+      if (existingUsers.length > 0) {
+        throw new Error('Username already taken. Please choose a different one.');
+      }
 
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
@@ -72,22 +91,34 @@ const SignUp = () => {
         },
       });
 
-      if (authError) throw new Error(authError.message);
+      if (authError) {
+        console.error('Auth error:', authError.message);
+        throw new Error(authError.message);
+      }
 
       const { error: insertError } = await supabase.from('users').insert([
         {
           id: authData.user.id,
           username: formData.username,
           email: formData.email,
-          role: formData.role,
+          role: formData.role === 'admin' ? 'customer' : formData.role,
         },
       ]);
 
-      if (insertError) throw new Error(`Failed to create user profile: ${insertError.message}`);
+      if (insertError) {
+        console.error('Insert error:', insertError.message);
+        throw new Error(`Failed to create user profile: ${insertError.message}`);
+      }
 
+      console.log('User created:', authData.user.id, formData.username);
       setSuccess(true);
-      // Delay redirect to allow user to see success message
-      setTimeout(() => navigate('/login', { state: { message: 'Signup successful! Please confirm your email to log in.' } }), 2000);
+      setTimeout(
+        () =>
+          navigate('/login', {
+            state: { message: 'Signup successful! Please log in.' },
+          }),
+        2000
+      );
     } catch (err) {
       setError(
         err.message.includes('email')
@@ -99,23 +130,19 @@ const SignUp = () => {
     }
   };
 
-  const backgroundImageUrl = 'https://znyzyswzocugaxnuvupe.supabase.co/storage/v1/object/public/images/Bg%20img/bgsignup.jpg';
-
   return (
     <div
       className="min-h-screen flex items-center justify-center"
       style={{
-        backgroundImage: "url('/public/bgsignup.jpg')",
+        backgroundImage:
+          "url('/public/bgsignup.jpg')",
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
         position: 'relative',
       }}
     >
-      <div
-        className="absolute inset-0 bg-black/40"
-        style={{ zIndex: 0 }}
-      ></div>
+      <div className="absolute inset-0 bg-black/40" style={{ zIndex: 0 }}></div>
       <motion.section
         className="max-w-md w-full bg-white shadow-md rounded-lg p-8 relative m-5 z-10"
         initial={{ opacity: 0, y: 30 }}
@@ -179,6 +206,22 @@ const SignUp = () => {
               <p className="text-sm text-stone-600">
                 Password Strength: {passwordStrength}/4
               </p>
+              <div className="w-full bg-gray-200 rounded-full h-2.5">
+                <div
+                  className={`h-2.5 rounded-full ${
+                    passwordStrength === 1
+                      ? 'bg-red-500'
+                      : passwordStrength === 2
+                      ? 'bg-yellow-500'
+                      : passwordStrength === 3
+                      ? 'bg-blue-500'
+                      : passwordStrength === 4
+                      ? 'bg-green-500'
+                      : 'bg-gray-200'
+                  }`}
+                  style={{ width: `${(passwordStrength / 4) * 100}%` }}
+                ></div>
+              </div>
             </div>
           </div>
           <div>
@@ -193,6 +236,7 @@ const SignUp = () => {
             >
               <option value="customer">Customer</option>
               <option value="developer">Developer</option>
+              <option value="admin">Admin</option>
             </select>
           </div>
           <button

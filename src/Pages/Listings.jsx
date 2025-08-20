@@ -351,7 +351,6 @@ const Listings = () => {
         if (!propertiesData || propertiesData.length === 0) {
           console.warn("Listings: No properties data returned from Supabase");
           setAllProps([]);
-          setError("No properties found in the database.");
           return;
         }
 
