@@ -678,30 +678,30 @@ const Details = () => {
 
         const normalizedAmenities = Array.isArray(propertyData.amenities)
           ? propertyData.amenities
-              .map((amenity) => {
-                if (typeof amenity !== "string" || !amenity) return null;
-                const trimmed = amenity.trim();
-                return trimmed
-                  .toLowerCase()
-                  .replace(/(^|\s)\w/g, (char) => char.toUpperCase());
-              })
-              .filter((amenity) => amenity !== null)
+            .map((amenity) => {
+              if (typeof amenity !== "string" || !amenity) return null;
+              const trimmed = amenity.trim();
+              return trimmed
+                .toLowerCase()
+                .replace(/(^|\s)\w/g, (char) => char.toUpperCase());
+            })
+            .filter((amenity) => amenity !== null)
           : [];
 
         const landmarks =
           typeof propertyData.nearby_landmarks === "string"
             ? propertyData.nearby_landmarks.split(",").map((landmark) => {
-                const [name, distance] = landmark
-                  .split("(")
-                  .map((s) => s.replace(")", "").trim());
-                return { name, distance: distance || "N/A" };
-              })
+              const [name, distance] = landmark
+                .split("(")
+                .map((s) => s.replace(")", "").trim());
+              return { name, distance: distance || "N/A" };
+            })
             : Array.isArray(propertyData.nearby_landmarks)
-            ? propertyData.nearby_landmarks.map((l) => ({
+              ? propertyData.nearby_landmarks.map((l) => ({
                 name: l.name || l,
                 distance: l.distance || "N/A",
               }))
-            : [];
+              : [];
 
         const { data: floorPlansData, error: floorPlansError } = await supabase
           .from("floor_plans")
@@ -726,27 +726,27 @@ const Details = () => {
         setImages(
           typeof propertyData.images === "string"
             ? propertyData.images.split(",").map((url, index) => ({
-                src: url.trim(),
-                alt: `${propertyData.name || "Property"} - Image ${index + 1}`,
-              }))
+              src: url.trim(),
+              alt: `${propertyData.name || "Property"} - Image ${index + 1}`,
+            }))
             : Array.isArray(propertyData.images) &&
               propertyData.images.length > 0
-            ? propertyData.images.map((url, index) => ({
+              ? propertyData.images.map((url, index) => ({
                 src: url,
                 alt: `${propertyData.name || "Property"} - Image ${index + 1}`,
               }))
-            : []
+              : []
         );
 
         setActivePlan(
           activeTab === "unit-plans"
             ? floorPlansData.find((plan) => plan.type === "residential")?.image ||
-              floorPlansData.find((plan) => plan.type === "commercial")?.image ||
-              "https://via.placeholder.com/800x600?text=No+Unit+Plan+Available"
+            floorPlansData.find((plan) => plan.type === "commercial")?.image ||
+            "https://via.placeholder.com/800x600?text=No+Unit+Plan+Available"
             : activeTab === "site-plan"
-            ? propertyData.site_plan ||
+              ? propertyData.site_plan ||
               "https://via.placeholder.com/800x600?text=No+Site+Plan+Available"
-            : propertyData.tower_layout ||
+              : propertyData.tower_layout ||
               "https://via.placeholder.com/800x600?text=No+Tower+Layout+Available"
         );
 
@@ -760,6 +760,18 @@ const Details = () => {
 
     fetchProperty();
   }, [id]);
+
+  useEffect(() => {
+    setActivePlan(
+      activeTab === "unit-plans"
+        ? floorPlans.find((plan) => plan.type === "residential")?.image ||
+        floorPlans.find((plan) => plan.type === "commercial")?.image ||
+        "https://via.placeholder.com/800x600?text=No+Unit+Plan+Available"
+        : activeTab === "site-plan"
+          ? property?.site_plan || "https://via.placeholder.com/800x600?text=No+Site+Plan+Available"
+          : property?.tower_layout || "https://via.placeholder.com/800x600?text=No+Tower+Layout+Available"
+    );
+  }, [activeTab, floorPlans, property]);
 
   useEffect(() => {
     if (images.length > 0) {
@@ -825,12 +837,12 @@ const Details = () => {
     setActivePlan(
       tab === "unit-plans"
         ? floorPlans.find((plan) => plan.type === "residential")?.image ||
-          floorPlans.find((plan) => plan.type === "commercial")?.image ||
-          "https://via.placeholder.com/800x600?text=No+Unit+Plan+Available"
+        floorPlans.find((plan) => plan.type === "commercial")?.image ||
+        "https://via.placeholder.com/800x600?text=No+Unit+Plan+Available"
         : tab === "site-plan"
-        ? property?.site_plan ||
+          ? property?.site_plan ||
           "https://via.placeholder.com/800x600?text=No+Site+Plan+Available"
-        : property?.tower_layout ||
+          : property?.tower_layout ||
           "https://via.placeholder.com/800x600?text=No+Tower+Layout+Available"
     );
   };
@@ -1092,8 +1104,8 @@ const Details = () => {
                   images.length > 1
                     ? images[1].src
                     : images.length > 0
-                    ? images[0].src
-                    : "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80"
+                      ? images[0].src
+                      : "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400&q=80"
                 }
                 alt={property.name}
                 className="w-full h-full rounded-lg shadow-md object-center"
@@ -1223,11 +1235,10 @@ const Details = () => {
                 {images.map((_, index) => (
                   <span
                     key={index}
-                    className={`w-3 h-3 rounded-full cursor-pointer transition-all duration-300 ${
-                      index === currentIndex
-                        ? "bg-stone-700"
-                        : "border-2 border-stone-700 bg-transparent"
-                    }`}
+                    className={`w-3 h-3 rounded-full cursor-pointer transition-all duration-300 ${index === currentIndex
+                      ? "bg-stone-700"
+                      : "border-2 border-stone-700 bg-transparent"
+                      }`}
                     onClick={() => setCurrentIndex(index)}
                   />
                 ))}
@@ -1259,11 +1270,10 @@ const Details = () => {
               {["unit-plans", "site-plan", "tower-layout"].map((tab) => (
                 <button
                   key={tab}
-                  className={`px-6 py-3 rounded-lg font-medium transition-all duration-300 whitespace-nowrap ${
-                    activeTab === tab
+                  className={`px-6 py-3 rounded-lg font-medium transition-all duration-300 whitespace-nowrap ${activeTab === tab
                       ? "bg-stone-700 text-white"
                       : "bg-white text-stone-700 border border-stone-300 hover:bg-stone-50"
-                  }`}
+                    }`}
                   onClick={() => handleTabChange(tab)}
                 >
                   {tab === "unit-plans" && "Unit Plans"}
@@ -1291,38 +1301,29 @@ const Details = () => {
                     >
                       <img
                         src={
-                          activePlan ||
-                          "https://via.placeholder.com/800x600?text=No+Plan+Available"
+                          activePlan
                         }
                         alt={`${property.name} ${activeTab} Floor Plan`}
                         className="w-full h-full object-contain"
                         onError={(e) => {
-                          e.target.src =
-                            "https://via.placeholder.com/800x600?text=No+Plan+Available";
+                          console.error("Image load failed:", e.target.src);
+                          e.target.onError = null; // Prevent infinite loop
                         }}
                       />
                     </div>
                   </div>
                   <div className="absolute top-4 right-4 flex gap-2 z-10">
                     <button
-                      onClick={() =>
-                        setZoomLevel((prev) => Math.min(prev + 0.1, 2))
-                      }
+                      onClick={() => setZoomLevel((prev) => Math.min(prev + 0.1, 2))}
                       className="bg-transparent rounded-full w-10 h-10 focus:outline-none"
                     >
-                      <span className="text-4xl transition-colors duration-300">
-                        +
-                      </span>
+                      <span className="text-4xl transition-colors duration-300">+</span>
                     </button>
                     <button
-                      onClick={() =>
-                        setZoomLevel((prev) => Math.max(prev - 0.1, 1))
-                      }
+                      onClick={() => setZoomLevel((prev) => Math.max(prev - 0.1, 1))}
                       className="bg-transparent rounded-full w-10 h-10 focus:outline-none"
                     >
-                      <span className="text-4xl transition-colors duration-300">
-                        -
-                      </span>
+                      <span className="text-4xl transition-colors duration-300">-</span>
                     </button>
                   </div>
                 </div>
@@ -1341,11 +1342,10 @@ const Details = () => {
                         .map((plan) => (
                           <div
                             key={plan.id}
-                            className={`plan-item flex items-center gap-4 p-3 rounded-lg cursor-pointer transition-all duration-300 ${
-                              activePlan === plan.image
+                            className={`plan-item flex items-center gap-4 p-3 rounded-lg cursor-pointer transition-all duration-300 ${activePlan === plan.image
                                 ? "bg-stone-50 border-2 border-stone-700"
                                 : "hover:bg-stone-50"
-                            }`}
+                              }`}
                             onClick={() => setActivePlan(plan.image)}
                           >
                             <img
@@ -1353,17 +1353,14 @@ const Details = () => {
                               alt={plan.bhk}
                               className="w-16 h-16 rounded-lg object-cover object-top"
                               onError={(e) => {
-                                e.target.src =
-                                  "https://via.placeholder.com/64x64?text=No+Thumbnail";
+                                console.error("Thumbnail load failed:", e.target.src);
+                                e.target.src = "https://picsum.photos/64/64"; // Secondary fallback
+                                e.target.onError = null;
                               }}
                             />
                             <div>
-                              <h4 className="font-medium text-stone-800">
-                                {plan.bhk}
-                              </h4>
-                              <p className="text-sm text-stone-600">
-                                {plan.size}
-                              </p>
+                              <h4 className="font-medium text-stone-800">{plan.bhk}</h4>
+                              <p className="text-sm text-stone-600">{plan.size}</p>
                             </div>
                           </div>
                         ))}
@@ -1372,11 +1369,10 @@ const Details = () => {
                         .map((plan) => (
                           <div
                             key={plan.id}
-                            className={`plan-item flex items-center gap-4 p-3 rounded-lg cursor-pointer transition-all duration-300 ${
-                              activePlan === plan.image
+                            className={`plan-item flex items-center gap-4 p-3 rounded-lg cursor-pointer transition-all duration-300 ${activePlan === plan.image
                                 ? "bg-stone-50 border-2 border-stone-700"
                                 : "hover:bg-stone-50"
-                            }`}
+                              }`}
                             onClick={() => setActivePlan(plan.image)}
                           >
                             <img
@@ -1384,24 +1380,19 @@ const Details = () => {
                               alt={plan.bhk}
                               className="w-16 h-16 rounded-lg object-cover object-top"
                               onError={(e) => {
-                                e.target.src =
-                                  "https://via.placeholder.com/64x64?text=No+Thumbnail";
+                                console.error("Thumbnail load failed:", e.target.src);
+                                e.target.src = "https://picsum.photos/64/64"; // Secondary fallback
+                                e.target.onError = null;
                               }}
                             />
                             <div>
-                              <h4 className="font-medium text-stone-800">
-                                {plan.bhk}
-                              </h4>
-                              <p className="text-sm text-stone-600">
-                                {plan.size}
-                              </p>
+                              <h4 className="font-medium text-stone-800">{plan.bhk}</h4>
+                              <p className="text-sm text-stone-600">{plan.size}</p>
                             </div>
                           </div>
                         ))}
                       {floorPlans.length === 0 && (
-                        <p className="text-stone-600 text-center">
-                          No unit plans available.
-                        </p>
+                        <p className="text-stone-600 text-center">No unit plans available.</p>
                       )}
                     </>
                   )}
@@ -1482,8 +1473,8 @@ const Details = () => {
                     images.length > 2
                       ? images[2].src
                       : images.length > 0
-                      ? images[0].src
-                      : "https://images.unsplash.com/photo-1568605114967-8130f3a36994?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80"
+                        ? images[0].src
+                        : "https://images.unsplash.com/photo-1568605114967-8130f3a36994?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80"
                   }
                   alt={property.name || "Property"}
                   className="w-full h-80 rounded"
