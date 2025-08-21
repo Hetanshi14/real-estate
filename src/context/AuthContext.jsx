@@ -33,7 +33,12 @@ export const AuthProvider = ({ children }) => {
         }
         return;
       }
-
+      const authContextValue = {
+        user,
+        authLoading,
+        refreshUser,
+        setUser, // Ensure this is included
+      };
       const userInfo = {
         id: session.user.id,
         email: session.user.email,

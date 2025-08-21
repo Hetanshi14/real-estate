@@ -20,7 +20,7 @@ import AdminProperties from "../Admin/AdminProperties";
 const PLACEHOLDER_IMAGE_URL = "https://via.placeholder.com/300?text=No+Image";
 
 const Profile = () => {
-  const { user, authLoading, refreshUser } = useContext(AuthContext);
+  const { user, authLoading, refreshUser, setUser } = useContext(AuthContext);
   const [properties, setProperties] = useState([]);
   const [wishlist, setWishlist] = useState([]);
   const [wishlistCriteria, setWishlistCriteria] = useState({
@@ -63,7 +63,40 @@ const Profile = () => {
     developer_description: "",
     developer_logo: "",
   });
-  const [editProperty, setEditProperty] = useState(null);
+  const [editProperty, setEditProperty] = useState({
+    name: "",
+    location: "",
+    price: "",
+    carpet_area: "",
+    configuration: "",
+    property_type: "",
+    total_floors: "",
+    total_units: "",
+    status: "",
+    rera_number: "",
+    amenities: [],
+    developer_name: "",
+    developer_tagline: "",
+    developer_experience: "",
+    developer_projects_completed: "",
+    developer_happy_families: "",
+    nearby_landmarks: "",
+    agent_name: "",
+    agent_role: "",
+    agent_phone: "",
+    agent_email: "",
+    agent_availability: "",
+    agent_rating: "",
+    agent_reviews: "",
+    images: "",
+    agents_image: "",
+    developer_image: "",
+    developer_awards: "",
+    developer_certifications: "",
+    developer_description: "",
+    developer_logo: "",
+    id: null,
+  });
   const [editProfile, setEditProfile] = useState({
     username: "",
     email: "",
@@ -115,6 +148,7 @@ const Profile = () => {
     "developer_name",
     "nearby_landmarks",
   ];
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -266,7 +300,9 @@ const Profile = () => {
       }
     );
 
-    return () => authListener?.subscription?.unsubscribe?.();
+    return () => {
+      authListener?.subscription?.unsubscribe?.();
+    };
   }, [user, navigate, location.pathname]);
 
   const handlePropertyChange = (e) => {
@@ -297,6 +333,7 @@ const Profile = () => {
     }
   };
 
+  // Update handleImageUpload to ensure previewImages is initialized correctly
   const handleImageUpload = async (e, field, propertyId = null) => {
     const files = e.target.files;
     if (!files || files.length === 0) {
@@ -350,7 +387,7 @@ const Profile = () => {
       const uploadedUrls = await Promise.all(uploadPromises);
       setPreviewImages((prev) => ({
         ...prev,
-        [field]: [...prev[field], ...uploadedUrls],
+        [field]: [...(prev[field] || []), ...uploadedUrls], // Ensure prev[field] is an array
       }));
 
       if (field === "developer_logo" || field === "developer_image") {
@@ -551,6 +588,7 @@ const Profile = () => {
           developer_logo: [],
         }));
         setShowAddForm(false);
+        document.getElementById("add-property-dialog").close();
         setSuccessMessage("Property added successfully!");
         setError(null);
       } catch (err) {
@@ -560,7 +598,6 @@ const Profile = () => {
     },
     [user, newProperty, navigate, location.pathname]
   );
-
   const handleEditProfile = async (e) => {
     e.preventDefault();
     try {
@@ -582,12 +619,9 @@ const Profile = () => {
       const userUpdates = {
         username: editProfile.username,
         email: editProfile.email,
-        developer_image:
-          previewImages.developer_image[0] || user.developer_image || null,
-        developer_logo:
-          previewImages.developer_logo[0] || user.developer_logo || null,
+        developer_image: previewImages.developer_image[0] || user.developer_image || "",
+        developer_logo: previewImages.developer_logo[0] || user.developer_logo || "",
       };
-
       const { error: userError } = await supabase
         .from("users")
         .update(userUpdates)
@@ -601,19 +635,6 @@ const Profile = () => {
           email: editProfile.email,
         });
         if (authError) throw authError;
-      }
-
-      if (authLoading) {
-        console.log('Profile: Waiting for auth to load');
-        return (
-          <div className="min-h-screen flex items-center justify-center">
-            <p className="text-stone-600">Loading...</p>
-          </div>
-        );
-      }
-      if (!user) {
-        console.log('Profile: No user, redirecting to /login');
-        return <Navigate to="/login" state={{ from: location.pathname }} replace />;
       }
 
       // Update property data if a property is selected
@@ -642,11 +663,13 @@ const Profile = () => {
         );
       }
 
-      // Update local user state
-      setUser((prev) => ({
-        ...prev,
-        ...userUpdates,
-      }));
+      // Update local user state using setUser from AuthContext
+      if (setUser) {
+        setUser((prev) => ({
+          ...prev,
+          ...userUpdates,
+        }));
+      }
       setSuccessMessage("Profile updated successfully!");
       setEditProfile({
         username: "",
@@ -734,13 +757,13 @@ const Profile = () => {
           prev.map((p) => (p.id === editProperty.id ? data[0] : p))
         );
         setEditProperty(null);
-        setPreviewImages((prev) => ({
-          ...prev,
+        setPreviewImages({
+          developer_logo: [],
+          developer_image: [],
           images: [],
           agents_image: [],
-          developer_image: [],
-          developer_logo: [],
-        }));
+        });
+        document.getElementById("edit-property-dialog").close();
         setSuccessMessage("Property updated successfully!");
         setError(null);
       } catch (err) {
@@ -877,18 +900,20 @@ const Profile = () => {
     }
   };
 
+  // Updated renderImages function
   const renderImages = (imageUrls, altPrefix) => {
-    if (!imageUrls || imageUrls.length === 0) {
+    // Ensure imageUrls is an array, default to empty array if null or invalid
+    const urls = Array.isArray(imageUrls) ? imageUrls : (imageUrls || "").split(",").filter((url) => url.trim());
+    if (urls.length === 0) {
       return null;
     }
-
     return (
       <div
         className="flex flex-wrap gap-2 mt-2"
         role="region"
         aria-label={`${altPrefix} preview`}
       >
-        {imageUrls.map((url, index) => (
+        {urls.map((url, index) => (
           <div key={index} className="relative">
             <img
               src={url.trim()}
@@ -2294,73 +2319,90 @@ const Profile = () => {
                       {properties.map((property) => (
                         <motion.div
                           key={property.id}
-                          className="bg-white rounded-lg shadow-md overflow-hidden"
+                          className="bg-white text-white rounded-lg shadow-md hover:shadow-lg transition-shadow group"
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
-                          transition={{ duration: 0.3 }}
+                          transition={{ duration: 0.4 }}
                         >
-                          <img
-                            src={
-                              property.images?.split(",")[0] || PLACEHOLDER_IMAGE_URL
-                            }
-                            alt={property.name}
-                            className="w-full h-48 object-cover"
-                            onError={(e) => {
-                              e.target.src = PLACEHOLDER_IMAGE_URL;
-                              console.error(
-                                "Profile: Failed to load property image:",
+                          <div className="relative group h-[300px] w-full overflow-hidden rounded">
+                            <img
+                              src={
                                 property.images
-                              );
-                            }}
-                          />
-                          <div className="p-4">
-                            <h4 className="text-xl font-semibold text-stone-700">
-                              {property.name}
-                            </h4>
-                            <p className="text-stone-600 flex items-center gap-1">
-                              <FaMapMarkerAlt className="inline" /> {property.location}
-                            </p>
-                            <p className="text-stone-600 flex items-center gap-1">
-                              <FaMoneyBill className="inline" /> ₹{property.price}
-                            </p>
-                            <p className="text-stone-600">{property.property_type}</p>
-                            <p className="text-stone-600">{property.status}</p>
-                            <div className="flex gap-2 mt-4">
-                              <button
-                                onClick={() => {
-                                  setEditProperty(property);
-                                  setPreviewImages({
-                                    images: property.images
-                                      ? property.images.split(",").filter((url) => url.trim())
-                                      : [],
-                                    agents_image: property.agents_image
-                                      ? property.agents_image.split(",").filter((url) => url.trim())
-                                      : [],
-                                    developer_image: property.developer_image
-                                      ? property.developer_image.split(",").filter((url) => url.trim())
-                                      : [],
-                                    developer_logo: property.developer_logo
-                                      ? property.developer_logo.split(",").filter((url) => url.trim())
-                                      : [],
-                                  });
-                                  document.getElementById("edit-property-dialog").showModal();
-                                }}
-                                className="relative inline-block px-4 py-2 rounded-lg font-medium text-white bg-stone-700 z-10 overflow-hidden
-                                  before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
-                                  before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
-                                aria-label={`Edit property ${property.name}`}
-                              >
-                                <FaEdit className="inline mr-1" /> Edit
-                              </button>
-                              <button
-                                onClick={() => handleDeleteProperty(property.id)}
-                                className="relative inline-block px-4 py-2 rounded-lg font-medium text-stone-700 border border-stone-700 z-10 overflow-hidden
-                                  before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-700
-                                  before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:border-none hover:text-white"
-                                aria-label={`Delete property ${property.name}`}
-                              >
-                                <FaTrash className="inline mr-1" /> Delete
-                              </button>
+                                  ? property.images.split(",")[0].trim()
+                                  : PLACEHOLDER_IMAGE_URL
+                              }
+                              alt={property.name}
+                              className="w-full h-full transition-transform duration-300 group-hover:scale-105 rounded"
+                              onError={(e) => {
+                                console.error(
+                                  "Profile: Failed to load property image:",
+                                  property.images
+                                );
+                                e.target.src = PLACEHOLDER_IMAGE_URL;
+                              }}
+                            />
+                            <div className="absolute inset-0 bg-black opacity-40 md:opacity-0 md:group-hover:opacity-40 transition-opacity duration-300 z-0"></div>
+                            <div className="absolute inset-0 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity duration-400">
+                              <div className="absolute bottom-4 left-4 text-left">
+                                <h4 className="text-xl font-semibold">
+                                  {property.name}
+                                </h4>
+                                <p className="flex items-center">
+                                  <FaMapMarkerAlt className="mr-2" /> {property.location}
+                                </p>
+                                <p className="flex items-center">
+                                  <FaMoneyBill className="mr-2" /> ₹{property.price.toLocaleString()}
+                                </p>
+                                <p>
+                                  {property.configuration ? `${property.configuration} • ` : ''}
+                                  {property.property_type}
+                                </p>
+                                <p>{property.status}</p>
+                                <p className="text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                  Built by: {property.developer_name || 'Unknown Developer'}
+                                </p>
+                                <div className="mt-4 flex gap-4">
+                                  <button
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      setEditProperty({
+                                        ...property,
+                                        amenities: property.amenities || [],
+                                      });
+                                      setPreviewImages({
+                                        ...previewImages,
+                                        images: property.images
+                                          ? property.images.split(",").filter((url) => url.trim())
+                                          : [],
+                                        agents_image: property.agents_image
+                                          ? property.agents_image.split(",").filter((url) => url.trim())
+                                          : [],
+                                        developer_image: property.developer_image
+                                          ? property.developer_image.split(",").filter((url) => url.trim())
+                                          : [],
+                                        developer_logo: property.developer_logo
+                                          ? property.developer_logo.split(",").filter((url) => url.trim())
+                                          : [],
+                                      });
+                                      document.getElementById("edit-property-dialog").showModal();
+                                    }}
+                                    aria-label={`Edit property ${property.name}`}
+                                  >
+                                    <FaEdit className="inline hover:font-semibold" />
+                                  </button>
+                                  <button
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      handleDeleteProperty(property.id);
+                                    }}
+                                    aria-label={`Delete property ${property.name}`}
+                                  >
+                                    <FaTrash className="inline hover:font-semibold" />
+                                  </button>
+                                </div>
+                              </div>
                             </div>
                           </div>
                         </motion.div>
@@ -3137,6 +3179,7 @@ const Profile = () => {
                           aria-label="Property type"
                         >
                           <option value="">Select type</option>
+                          <option value="Approved">Approved</option>
                           <option value="Flat">Flat</option>
                           <option value="Villa">Villa</option>
                           <option value="Plot">Plot</option>
@@ -3155,6 +3198,7 @@ const Profile = () => {
                           aria-label="Property status"
                         >
                           <option value="">Select status</option>
+                          <option value="Approved">Approved</option>
                           <option value="Ready">Ready to Move</option>
                           <option value="Under Construction">Under Construction</option>
                           <option value="Upcoming">Upcoming</option>
@@ -3189,51 +3233,48 @@ const Profile = () => {
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ duration: 0.3 }}
                         >
-                          <img
-                            src={
-                              item.properties.images?.split(",")[0] ||
-                              PLACEHOLDER_IMAGE_URL
-                            }
-                            alt={item.properties.name}
-                            className="w-full h-48 object-cover"
-                            onError={(e) => {
-                              e.target.src = PLACEHOLDER_IMAGE_URL;
-                              console.error(
-                                "Profile: Failed to load wishlist property image:",
-                                item.properties.images
-                              );
-                            }}
-                          />
-                          <div className="p-4">
-                            <h4 className="text-xl font-semibold text-stone-700">
-                              {item.properties.name}
-                            </h4>
-                            <p className="text-stone-600 flex items-center gap-1">
-                              <FaMapMarkerAlt className="inline" /> {item.properties.location}
-                            </p>
-                            <p className="text-stone-600 flex items-center gap-1">
-                              <FaMoneyBill className="inline" /> ₹{item.properties.price}
-                            </p>
-                            <p className="text-stone-600">{item.properties.property_type}</p>
-                            <p className="text-stone-600">{item.properties.status}</p>
-                            <div className="flex gap-2 mt-4">
-                              <Link
-                                to={`/property/${item.property_id}`}
-                                className="relative inline-block px-4 py-2 rounded-lg font-medium text-white bg-stone-700 z-10 overflow-hidden
-                                  before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-600
-                                  before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:text-white"
-                                aria-label={`View property ${item.properties.name}`}
-                              >
-                                View
-                              </Link>
+                          <div className="relative text-white group h-[300px] w-full overflow-hidden rounded">
+                            <img
+                              src={
+                                item.properties.images?.split(",")[0] ||
+                                PLACEHOLDER_IMAGE_URL
+                              }
+                              alt={item.properties.name}
+                              className="w-full h-full transition-transform duration-300 group-hover:scale-105 rounded"
+                              onError={(e) => {
+                                console.error(
+                                  "Profile: Failed to load wishlist property image:",
+                                  item.properties.images
+                                );
+                                e.target.src = PLACEHOLDER_IMAGE_URL;
+                              }}
+                            />
+                            <div className="absolute inset-0 bg-black opacity-40 md:opacity-0 md:group-hover:opacity-40 transition-opacity duration-300 z-0"></div>
+                            <div className="absolute inset-0 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity duration-400">
+                              <div className="absolute bottom-4 left-4 text-left">
+                                <h4 className="text-xl font-semibold">
+                                  {item.properties.name}
+                                </h4>
+                                <p className="flex items-center">
+                                  <FaMapMarkerAlt className="mr-2" />{" "}
+                                  {item.properties.location}
+                                </p>
+                                <p className="flex items-center">
+                                  <FaMoneyBill className="mr-2" /> ₹{item.properties.price}
+                                </p>
+                                <p>
+                                  • {item.properties.property_type}
+                                </p>
+                                <p>• {item.properties.status}</p>
+                              </div>
                               <button
-                                onClick={() => handleRemoveWishlistItem(item.property_id)}
-                                className="relative inline-block px-4 py-2 rounded-lg font-medium text-stone-700 border border-stone-700 z-10 overflow-hidden
-                                  before:absolute before:left-0 before:top-0 before:h-full before:w-0 before:bg-stone-700
-                                  before:z-[-1] before:transition-all before:duration-300 hover:before:w-full hover:border-none hover:text-white"
+                                onClick={() =>
+                                  handleRemoveWishlistItem(item.property_id)
+                                }
+                                className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-white hover:text-red-500"
                                 aria-label={`Remove ${item.properties.name} from wishlist`}
                               >
-                                <FaTrash className="inline mr-1" /> Remove
+                                <FaHeart className="inline mr-2 text-2xl fill-white" />
                               </button>
                             </div>
                           </div>

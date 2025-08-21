@@ -11,7 +11,7 @@ const SignUp = () => {
     username: '',
     email: '',
     password: '',
-    role: 'customer',
+    role: '',
   });
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -134,8 +134,7 @@ const SignUp = () => {
     <div
       className="min-h-screen flex items-center justify-center"
       style={{
-        backgroundImage:
-          "url('/public/bgsignup.jpg')",
+        backgroundImage: "url('/bgsignup.jpg')",
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
@@ -234,9 +233,9 @@ const SignUp = () => {
               onChange={handleChange}
               className="w-full px-4 py-3 border border-stone-300 rounded-lg focus:ring-none focus:ring-stone-500 focus:border-transparent text-sm"
             >
+              <option value="">Select</option>
               <option value="customer">Customer</option>
               <option value="developer">Developer</option>
-              <option value="admin">Admin</option>
             </select>
           </div>
           <button
