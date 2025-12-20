@@ -493,6 +493,80 @@ const Profile = () => {
     }
   };
 
+  const handleDeleteSingleImage = async (field, imageIndex, propertyId = null) => {
+    try {
+      if (field === "developer_logo" || field === "developer_image") {
+        // Get current images from user data
+        const currentImages = user[field] 
+          ? user[field].split(",").filter((url) => url.trim())
+          : [];
+        
+        // Remove the image at the specified index
+        const updatedImages = currentImages.filter((_, index) => index !== imageIndex);
+        const updatedUrls = updatedImages.length > 0 ? updatedImages.join(",") : null;
+
+        const { error } = await supabase
+          .from("users")
+          .update({ [field]: updatedUrls })
+          .eq("id", user.id);
+
+        if (error)
+          throw new Error(`Failed to delete ${field}: ${error.message}`);
+
+        setUser((prev) => ({ ...prev, [field]: updatedUrls }));
+        setEditProfile((prev) => ({ ...prev, [field]: updatedUrls }));
+        setPreviewImages((prev) => ({
+          ...prev,
+          [field]: updatedImages,
+        }));
+      } else if (propertyId && editProperty) {
+        // Handle property image deletion
+        const currentImages = editProperty[field] 
+          ? editProperty[field].split(",").filter((url) => url.trim())
+          : [];
+        
+        const updatedImages = currentImages.filter((_, index) => index !== imageIndex);
+        const updatedUrls = updatedImages.length > 0 ? updatedImages.join(",") : null;
+
+        const { error } = await supabase
+          .from("properties")
+          .update({ [field]: updatedUrls })
+          .eq("id", propertyId);
+
+        if (error)
+          throw new Error(`Failed to delete ${field}: ${error.message}`);
+
+        setEditProperty((prev) => ({ ...prev, [field]: updatedUrls }));
+        setPreviewImages((prev) => ({
+          ...prev,
+          [field]: updatedImages,
+        }));
+        setProperties((prev) =>
+          prev.map((p) => (p.id === propertyId ? { ...p, [field]: updatedUrls } : p))
+        );
+      } else {
+        // Handle new property image deletion
+        const currentImages = newProperty[field] 
+          ? newProperty[field].split(",").filter((url) => url.trim())
+          : [];
+        
+        const updatedImages = currentImages.filter((_, index) => index !== imageIndex);
+        const updatedUrls = updatedImages.length > 0 ? updatedImages.join(",") : "";
+
+        setNewProperty((prev) => ({ ...prev, [field]: updatedUrls }));
+        setPreviewImages((prev) => ({
+          ...prev,
+          [field]: updatedImages,
+        }));
+      }
+      setSuccessMessage(`Successfully deleted image from ${field}!`);
+      setError(null);
+    } catch (err) {
+      console.error("Profile: Error in handleDeleteSingleImage:", err);
+      setError(`Failed to delete image from ${field}: ${err.message}`);
+    }
+  };
+
   const handleAddProperty = useCallback(
     async (e) => {
       e.preventDefault();
@@ -900,8 +974,8 @@ const Profile = () => {
     }
   };
 
-  // Updated renderImages function
-  const renderImages = (imageUrls, altPrefix) => {
+  // Updated renderImages function with individual delete buttons
+  const renderImages = (imageUrls, altPrefix, field = null, propertyId = null, showDeleteButtons = false) => {
     // Ensure imageUrls is an array, default to empty array if null or invalid
     const urls = Array.isArray(imageUrls) ? imageUrls : (imageUrls || "").split(",").filter((url) => url.trim());
     if (urls.length === 0) {
@@ -914,7 +988,7 @@ const Profile = () => {
         aria-label={`${altPrefix} preview`}
       >
         {urls.map((url, index) => (
-          <div key={index} className="relative">
+          <div key={index} className="relative group">
             <img
               src={url.trim()}
               alt={`${altPrefix} ${index + 1}`}
@@ -933,6 +1007,17 @@ const Profile = () => {
             <span className="text-xs text-stone-600 absolute top-0 right-0 bg-white rounded-full p-1">
               {index + 1}
             </span>
+            {showDeleteButtons && field && (
+              <button
+                type="button"
+                onClick={() => handleDeleteSingleImage(field, index, propertyId)}
+                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                aria-label={`Delete ${altPrefix} ${index + 1}`}
+                title={`Delete ${altPrefix} ${index + 1}`}
+              >
+                <FaTrash className="text-xs" />
+              </button>
+            )}
           </div>
         ))}
       </div>
@@ -1433,7 +1518,10 @@ const Profile = () => {
                           </p>
                           {renderImages(
                             previewImages.developer_image,
-                            "Developer Image"
+                            "Developer Image",
+                            "developer_image",
+                            null,
+                            true
                           )}
                         </div>
                       )}
@@ -2171,7 +2259,13 @@ const Profile = () => {
                             <p className="text-sm text-stone-600">
                               Uploaded Developer Image:
                             </p>
-                            {renderImages(previewImages.developer_image, "Developer Image")}
+                            {renderImages(
+                              previewImages.developer_image, 
+                              "Developer Image",
+                              "developer_image",
+                              editProperty?.id || null,
+                              true
+                            )}
                           </div>
                         )}
                       </div>
@@ -2998,7 +3092,13 @@ const Profile = () => {
                               <p className="text-sm text-stone-600">
                                 Uploaded Developer Image:
                               </p>
-                              {renderImages(previewImages.developer_image, "Developer Image")}
+                              {renderImages(
+                                previewImages.developer_image, 
+                                "Developer Image",
+                                "developer_image",
+                                editProperty?.id || null,
+                                true
+                              )}
                             </div>
                           )}
                         </div>
